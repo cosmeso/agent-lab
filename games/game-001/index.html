@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Puzzle: Escape the Grid</title>
+<style>
+body{margin:0;background:#111;color:#eee;font-family:sans-serif;text-align:center}
+#hud{padding:10px;font-size:18px}
+canvas{background:#000;border:2px solid #444;display:block;margin:0 auto}
+p{color:#aaa}
+</style>
+</head>
+<body>
+<div id="hud">Time: <span id="time">30</span>s &nbsp;&nbsp; Pulses: <span id="pulses">3</span></div>
+<canvas id="c" width="480" height="480"></canvas>
+<p>Arrow keys move. S blasts the wall in front of you. Reach the gold exit. Avoid red blocks.</p>
+<script>
+const SIZE = 20, CELL = 24;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let player, exit, walls, enemies, time, pulses, facing, state, message, timer, enemyTimer;
+
+function key(x, y) { return x + ',' + y; }
+function free(x, y) {
+  return x >= 0 && y >= 0 && x < SIZE && y < SIZE && !walls.has(key(x, y));
+}
+
+function setup() {
+  clearInterval(timer);
+  clearInterval(enemyTimer);
+  player = { x: 0, y: 0 };
+  exit = { x: SIZE - 1, y: SIZE - 1 };
+  facing = { x: 1, y: 0 };
+  walls = new Set();
+  for (let x = 1; x < SIZE - 1; x++) {
+    for (let y = 1; y < SIZE - 1; y++) {
+      if (x % 2 === 0 && y % 2 === 0) walls.add(key(x, y));
+    }
+  }
+  let extra = 0;
+  while (extra < 20) {
+    const x = Math.floor(Math.random() * SIZE);
+    const y = Math.floor(Math.random() * SIZE);
+    if (x + y < 3 || (SIZE - 1 - x) + (SIZE - 1 - y) < 3) continue;
+    walls.add(key(x, y));
+    extra++;
+  }
+  enemies = [];
+  while (enemies.length < 6) {
+    const x = Math.floor(Math.random() * SIZE);
+    const y = Math.floor(Math.random() * SIZE);
+    if (x + y < 8 || walls.has(key(x, y))) continue;
+    if (x === exit.x && y === exit.y) continue;
+    enemies.push({ x: x, y: y });
+  }
+  time = 30;
+  pulses = 3;
+  state = 'play';
+  message = '';
+  document.getElementById('time').textContent = time;
+  document.getElementById('pulses').textContent = pulses;
+  timer = setInterval(tick, 1000);
+  enemyTimer = setInterval(moveEnemies, 400);
+  draw();
+}
+
+function end(result, text) {
+  state = result;
+  message = text;
+  clearInterval(timer);
+  clearInterval(enemyTimer);
+  draw();
+}
+
+function tick() {
+  if (state !== 'play') return;
+  time--;
+  document.getElementById('time').textContent = time;
+  if (time <= 0) end('lost', 'Time is up!');
+}
+
+function moveEnemies() {
+  if (state !== 'play') return;
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  enemies.forEach(function (e) {
+    const d = dirs[Math.floor(Math.random() * 4)];
+    const nx = e.x + d[0];
+    const ny = e.y + d[1];
+    if (free(nx, ny) && !(nx === exit.x && ny === exit.y)) {
+      e.x = nx;
+      e.y = ny;
+    }
+  });
+  checkHit();
+  draw();
+}
+
+function checkHit() {
+  if (state !== 'play') return;
+  if (enemies.some(function (e) { return e.x === player.x && e.y === player.y; })) {
+    end('lost', 'Caught by a red block!');
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 480, 480);
+  ctx.fillStyle = '#666';
+  walls.forEach(function (k) {
+    const p = k.split(',').map(Number);
+    ctx.fillRect(p[0] * CELL, p[1] * CELL, CELL, CELL);
+  });
+  ctx.fillStyle = 'gold';
+  ctx.fillRect(exit.x * CELL + 3, exit.y * CELL + 3, CELL - 6, CELL - 6);
+  ctx.fillStyle = 'red';
+  enemies.forEach(function (e) {
+    ctx.fillRect(e.x * CELL + 3, e.y * CELL + 3, CELL - 6, CELL - 6);
+  });
+  ctx.fillStyle = '#0f0';
+  ctx.fillRect(player.x * CELL + 2, player.y * CELL + 2, CELL - 4, CELL - 4);
+  if (state !== 'play') {
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(0, 180, 480, 120);
+    ctx.fillStyle = '#fff';
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(state === 'won' ? 'You escaped the grid!' : message, 240, 235);
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Press Enter to play again', 240, 270);
+  }
+}
+
+document.addEventListener('keydown', function (e) {
+  const dirs = {
+    ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0]
+  };
+  if (dirs[e.key]) {
+    e.preventDefault();
+    if (state !== 'play') return;
+    facing = { x: dirs[e.key][0], y: dirs[e.key][1] };
+    const nx = player.x + facing.x;
+    const ny = player.y + facing.y;
+    if (free(nx, ny)) {
+      player.x = nx;
+      player.y = ny;
+    }
+    if (player.x === exit.x && player.y === exit.y) {
+      end('won', '');
+      return;
+    }
+    checkHit();
+    draw();
+  } else if (e.key === 's' || e.key === 'S') {
+    if (state !== 'play' || pulses <= 0) return;
+    const tx = player.x + facing.x;
+    const ty = player.y + facing.y;
+    if (walls.has(key(tx, ty))) {
+      walls.delete(key(tx, ty));
+      pulses--;
+      document.getElementById('pulses').textContent = pulses;
+      draw();
+    }
+  } else if (e.key === 'Enter' && state !== 'play') {
+    setup();
+  }
+});
+
+setup();
+</script>
+</body>
+</html>
