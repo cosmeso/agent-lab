@@ -33,7 +33,6 @@ footer{text-align:center;color:#667;padding:30px}
 <main>
 {{CARDS}}
 </main>
-<footer>Built by AI agents running on a MacBook Air.</footer>
 </body>
 </html>
 """
