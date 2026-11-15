@@ -9,7 +9,7 @@
 html, body { margin: 0; height: 100%; overflow: hidden; background: #05060b; }
 #world { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 #hud-quest {
-  position: fixed; top: 12px; left: 12px; max-width: 46vw; padding: 10px 14px; border-radius: 12px;
+  position: fixed; top: 12px; left: 12px; max-width: min(380px, 40vw); padding: 10px 14px; border-radius: 12px;
   background: rgba(8, 10, 16, 0.78); color: #ebe7f2; font: 14px/1.4 Inter, system-ui, sans-serif;
   border: 1px solid rgba(143, 127, 209, 0.5); z-index: 5; pointer-events: none;
 }
@@ -49,7 +49,52 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #05060b; }
 #intro .keys { color: #a6a2b8; font-size: 13px; margin-top: 14px; }
 #enter { width: auto; margin-top: 18px; padding: 13px 30px; border-radius: 12px; border: 0; background: #efeae0; color: #15151d; font: 700 16px Inter, system-ui, sans-serif; cursor: pointer; }
 #nogl { display: none; position: fixed; inset: 0; z-index: 100003; background: #05060b; color: #ebe7f2; font: 16px Inter, system-ui, sans-serif; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-body.in-game #creature-badge, body.in-game #fb { display: none !important; }
+body.in-game #creature-badge, body.in-game #fb, body.creating #creature-badge { display: none !important; }
+#creator { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(390px, 94vw); display: none; z-index: 100000; box-sizing: border-box;
+  background: rgba(8, 10, 16, 0.9); border: 1px solid rgba(143, 127, 209, 0.55); border-radius: 16px; color: #ebe7f2;
+  font: 14px/1.45 Inter, system-ui, sans-serif; flex-direction: column; overflow: hidden; }
+#creator h2 { margin: 14px 16px 4px; font: 700 20px Cinzel, Georgia, serif; letter-spacing: .06em; }
+#creator .lead { margin: 0 16px 8px; color: #a6a2b8; font-size: 13px; }
+#creator .tabs { display: flex; gap: 4px; padding: 0 12px; }
+#creator .tabs button { flex: 1; width: auto; margin: 0; padding: 8px 4px; font-size: 13px; border-radius: 9px; cursor: pointer; }
+#creator .tabs button.on { background: #efeae0 !important; color: #15151d !important; }
+#creator .pane { flex: 1; overflow-y: auto; padding: 10px 16px; }
+#creator label, #creator .lbl { display: block; margin: 10px 0 4px; color: #e6d3a1; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+#creator input[type=text], #creator select { width: 100%; box-sizing: border-box; padding: 9px 10px; border-radius: 9px; font-size: 15px; }
+#creator input[type=range] { width: 100%; }
+#creator .note { color: #a6a2b8; font-size: 12px; margin: 12px 0 0; }
+#creator .sw { display: flex; flex-wrap: wrap; gap: 6px; }
+#creator .sw button, #creator .sw input { width: 30px; height: 30px; margin: 0; padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.25) !important; cursor: pointer; }
+#creator .sw button.on { border-color: #efeae0 !important; box-shadow: 0 0 0 2px #e6d3a1; }
+#creator .list { max-height: 210px; overflow-y: auto; margin-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+#creator .list button, #creator .opts button { width: auto; margin: 0; padding: 7px 8px; font-size: 13px; text-align: left; border-radius: 8px; cursor: pointer; }
+#creator .list button.on, #creator .opts button.on { background: #efeae0 !important; color: #15151d !important; }
+#creator .opts { display: grid; gap: 4px; }
+#creator .card2 { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: rgba(239,234,224,.07); border: 1px solid rgba(239,234,224,.15); font-size: 13px; }
+#creator .card2 b { color: #e6d3a1; font-family: Cinzel, Georgia, serif; }
+#creator .foot { display: flex; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid rgba(255,255,255,.08); }
+#creator .foot button { flex: 1; width: auto; margin: 0; padding: 12px; border-radius: 11px; font-weight: 700; font-size: 15px; cursor: pointer; }
+#c-emerge { background: #efeae0 !important; color: #15151d !important; }
+#c-err { color: #ff9a9a; font-size: 13px; padding: 0 16px 10px; display: none; }
+#toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 7; pointer-events: none; text-align: center;
+  color: #ebe7f2; font: 700 26px Cinzel, Georgia, serif; letter-spacing: .08em; text-shadow: 0 2px 18px rgba(0,0,0,.9); opacity: 0; transition: opacity .8s; }
+#toast small { display: block; font: 14px Inter, system-ui, sans-serif; letter-spacing: 0; color: #e6d3a1; margin-top: 4px; }
+#guide { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 5; display: none; pointer-events: none;
+  padding: 6px 14px; border-radius: 20px; background: rgba(8,10,16,.75); border: 1px solid rgba(70,194,180,.5); color: #ebe7f2; font: 13px Inter, system-ui, sans-serif; white-space: nowrap; }
+#guide span { display: inline-block; margin-right: 6px; color: #46c2b4; }
+#me-btn { position: fixed; left: 12px; bottom: 14px; z-index: 5; display: none; width: auto; margin: 0; padding: 8px 14px; border-radius: 12px; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
+#me-card { position: fixed; left: 12px; bottom: 60px; z-index: 8; display: none; width: min(330px, 90vw); padding: 14px 16px; border-radius: 14px;
+  background: rgba(8,10,16,.92); border: 1px solid rgba(232,163,207,.55); color: #ebe7f2; font: 13px/1.5 Inter, system-ui, sans-serif; }
+#me-card b { color: #e6d3a1; }
+#me-card button { width: auto; margin: 10px 8px 0 0; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; }
+#intro .choices button { display: block; width: 260px; margin: 10px auto 0; padding: 13px 20px; border-radius: 12px; border: 0; font: 700 16px Inter, system-ui, sans-serif; cursor: pointer; }
+#intro .choices .main { background: #efeae0 !important; color: #15151d !important; }
+body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
+@media (max-width: 700px) {
+  #creator { top: auto; left: 8px; right: 8px; width: auto; height: 56vh; bottom: 8px; }
+  #hud-quest { max-width: 60vw; font-size: 12px; }
+  #guide { top: auto; bottom: 156px; }
+}
 </style>
 <link rel="stylesheet" href="../../shared/theme.css">
 </head>
@@ -65,13 +110,56 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
 <div id="intro"><div class="box">
   <h1>Abimael's Andromeda</h1>
   <div class="sub">THE UTOPIAN GALAXIES</div>
-  <p>Night has settled over a small village, half above the earth and half below it. Burrow homes of ash wood and glistening blue mud glow softly, and the old arcade machines still hum.</p>
-  <p>Somewhere in the village, the Egg Shrine has awoken. It is waiting to find the egg that matches you.</p>
-  <button id="enter">Enter the village</button>
+  <p>Every life here begins inside a petal sac of living abalone, sealed and glowing, somewhere in the world.</p>
+  <p>Inside it, you choose who you are. When you are ready, the petals open, and the world finds you wherever you emerge.</p>
+  <div class="choices" id="choices"></div>
   <div class="keys">Computer: WASD or arrows to walk, Shift to run, drag to look, E to interact.<br>Phone: left circle to walk, drag the screen to look, tap the button that appears.</div>
 </div></div>
+<div id="toast"></div>
+<div id="guide"></div>
+<button id="me-btn"></button>
+<div id="me-card"></div>
+<div id="creator">
+  <h2>Shape your form</h2>
+  <p class="lead">You are sealed in your petal sac. Choose who you are, then emerge.</p>
+  <div class="tabs"><button data-tab="who" class="on">Identity</button><button data-tab="people">People</button><button data-tab="look">Look</button><button data-tab="essence">Essence</button></div>
+  <div class="pane">
+    <div data-pane="who">
+      <label for="c-name">Name</label><input type="text" id="c-name" maxlength="20" placeholder="What will the world call you?">
+      <label for="c-gender">Gender</label><select id="c-gender"></select>
+      <input type="text" id="c-gender-custom" maxlength="30" placeholder="Describe your gender" style="display:none;margin-top:6px">
+      <label for="c-sex">Sex</label><select id="c-sex"></select>
+      <label for="c-orient">Orientation</label><select id="c-orient"></select>
+      <p class="note">Only you can see these choices. They never change your abilities or where you begin.</p>
+    </div>
+    <div data-pane="people" style="display:none">
+      <label for="c-lineage">Lineage</label><select id="c-lineage"></select>
+      <label for="c-search">Find a people</label><input type="text" id="c-search" placeholder="Search by name">
+      <div class="note" id="c-count"></div>
+      <div class="list" id="c-races"></div>
+      <div class="card2" id="c-race-card"></div>
+      <div class="foot" style="padding:8px 0 0;border:0"><button id="c-race-random">Surprise me</button></div>
+    </div>
+    <div data-pane="look" style="display:none">
+      <div class="lbl">Skin</div><div class="sw" id="c-skin"></div>
+      <div class="lbl">Hair style</div><select id="c-hair"></select>
+      <div class="lbl">Hair color</div><div class="sw" id="c-haircolor"></div>
+      <div class="lbl">Eyes</div><div class="sw" id="c-eyes"></div>
+      <div class="lbl">Height</div><input type="range" id="c-height" min="0.85" max="1.15" step="0.01">
+      <div class="lbl">Build</div><input type="range" id="c-build" min="0.8" max="1.25" step="0.01">
+      <div class="lbl">Clothing</div><div class="sw" id="c-cloth"></div>
+    </div>
+    <div data-pane="essence" style="display:none">
+      <div class="lbl">Scent</div><div class="opts" id="c-scent"></div>
+      <p class="note">Your scent drifts behind you as a trail of colored light that other travelers will notice.</p>
+    </div>
+  </div>
+  <div id="c-err"></div>
+  <div class="foot"><button id="c-random">Randomize</button><button id="c-emerge">Emerge</button></div>
+</div>
 <div id="nogl">Your browser can't show this 3D world. Try the latest Chrome, Safari, or Firefox.</div>
 <script src="../../shared/creature.js"></script>
+<script src="../../shared/character.js"></script>
 <script>
 (function () {
   "use strict";
@@ -106,6 +194,10 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
     var c = Math.cos(rotY) * s, n = Math.sin(rotY) * s;
     return [c, 0, -n, 0, 0, s, 0, 0, n, 0, c, 0, x, y, z, 1];
   }
+  function model2(x, y, z, ry, rx, s) {
+    var c = Math.cos(ry), n = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx);
+    return [c * s, 0, -n * s, 0, n * sx * s, cx * s, c * sx * s, 0, n * cx * s, -sx * s, c * cx * s, 0, x, y, z, 1];
+  }
   function hex(h) { var v = parseInt(h.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255]; }
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
@@ -119,7 +211,7 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   var FS = "#version 300 es\nprecision highp float;\n" +
     "in vec3 vP; in vec3 vN; in vec3 vC; in vec3 vMat; out vec4 frag;\n" +
     "uniform vec3 uCam; uniform vec3 uMoon; uniform vec3 uMoonCol; uniform vec3 uAmb; uniform vec3 uFog; uniform float uFogD;\n" +
-    "uniform float uTime; uniform float uNoFog; uniform vec4 uL[12]; uniform vec3 uLC[12]; uniform int uNL;\n" +
+    "uniform float uTime; uniform float uNoFog; uniform float uAlpha; uniform vec4 uL[12]; uniform vec3 uLC[12]; uniform int uNL;\n" +
     "float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }\n" +
     "void main(){\n" +
     "  vec3 N = normalize(vN); vec3 V = normalize(uCam - vP); float f = clamp(dot(N,V),0.0,1.0);\n" +
@@ -137,7 +229,7 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
     "    col += vec3(0.25,0.7,1.0)*wave*0.35*vMat.z + vec3(1.0)*step(0.965,s)*vMat.z; }\n" +
     "  float fogF = (1.0 - exp(-length(uCam - vP)*uFogD)) * (1.0 - uNoFog);\n" +
     "  col = mix(col, uFog, fogF);\n" +
-    "  frag = vec4(pow(col, vec3(0.92)), 1.0);\n" +
+    "  frag = vec4(pow(col, vec3(0.92)), uAlpha);\n" +
     "}";
   function compile(type, src) {
     var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
@@ -153,7 +245,7 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { throw new Error(gl.getProgramInfoLog(prog)); }
   gl.useProgram(prog);
   var U = {};
-  ["uVP", "uM", "uCam", "uMoon", "uMoonCol", "uAmb", "uFog", "uFogD", "uTime", "uNoFog", "uL", "uLC", "uNL"].forEach(function (n) {
+  ["uVP", "uM", "uCam", "uMoon", "uMoonCol", "uAmb", "uFog", "uFogD", "uTime", "uNoFog", "uAlpha", "uL", "uLC", "uNL"].forEach(function (n) {
     U[n] = gl.getUniformLocation(prog, n);
   });
 
@@ -354,6 +446,121 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   lantern(9.6, 2, C.warm); lantern(-9.6, -2, C.warm); lantern(2, -9.6, C.warm);
   mudPool(-6, -9, 2.4); mudPool(13, 15, 1.8);
 
+  // ---------- the wider world: places where lives begin ----------
+  var VIOLET = hex("#8f7fd1"), ROSE = hex("#e8a3cf"), MINT = hex("#9fe3c4");
+  // shimmer tree: twisting abalone trunk, faceted crystal canopy, hanging threads of light
+  function shimmerTree(x, z, s, lit) {
+    var y = ground(x, z), tints = [VIOLET, C.teal, ROSE, MINT];
+    world.cyl(x, y - 0.2, z, 0.3 * s, 0.2 * s, 1.7 * s, 7, C.pearl, [1, 0.25, 0]);
+    world.cyl(x + 0.16 * s, y + 1.45 * s, z + 0.1 * s, 0.21 * s, 0.14 * s, 1.5 * s, 7, C.pearl, [1, 0.25, 0]);
+    world.cyl(x - 0.05 * s, y + 2.85 * s, z + 0.22 * s, 0.15 * s, 0.07 * s, 1.3 * s, 7, C.pearl, [1, 0.3, 0]);
+    var top = y + 4.1 * s;
+    for (var k = 0; k < 6; k++) {
+      var a = k / 6 * Math.PI * 2 + rnd(), rr = k === 0 ? 0 : 1.1 * s;
+      var cx = x + Math.cos(a) * rr, cz = z + Math.sin(a) * rr, cy = top + (k === 0 ? 0.6 * s : rnd() * 0.6 * s);
+      var sz = (k === 0 ? 1.15 : 0.8) * s;
+      world.sphere(cx, cy, cz, sz, sz * 0.85, sz, 5, tints[k % 4], [0.95, 0.55, 0.7]);
+      if (k > 0) {
+        var len = (1 + rnd() * 1.4) * s;
+        world.cyl(cx, cy - sz * 0.6 - len, cz, 0.025, 0.025, len, 4, tints[(k + 1) % 4], [0.4, 1.6, 0]);
+        world.sphere(cx, cy - sz * 0.6 - len, cz, 0.08, 0.1, 0.08, 6, C.pearl, [0.6, 2.2, 0]);
+      }
+    }
+    solids.push([x, z, 0.45 * s]);
+    if (lit) { lights.push([x, top, z, 9, 0.38, 0.28, 0.6]); }
+  }
+  function boulder(x, z, r) {
+    var y = ground(x, z);
+    world.sphere(x, y + r * 0.3, z, r, r * 0.75, r * 0.9, 6, C.stone, M0, undefined, 0.25);
+    solids.push([x, z, r * 0.85]);
+  }
+  function reeds(x, z) {
+    var y = ground(x, z);
+    for (var k = 0; k < 7; k++) {
+      var ox = (rnd() - 0.5) * 0.9, oz = (rnd() - 0.5) * 0.9, h = 0.8 + rnd() * 1.1;
+      world.cyl(x + ox, y - 0.1, z + oz, 0.03, 0.015, h, 4, C.moss.map(function (v) { return v * 2.2; }), M0);
+      world.sphere(x + ox, y + h - 0.05, z + oz, 0.05, 0.12, 0.05, 6, C.mudGlow, [0.2, 1.8, 0]);
+    }
+  }
+  function bud(x, z, s, col) {
+    var y = ground(x, z);
+    world.cyl(x, y - 0.1, z, 0.06 * s, 0.05 * s, 0.5 * s, 6, C.moss.map(function (v) { return v * 2; }), M0);
+    world.sphere(x, y + 0.85 * s, z, 0.42 * s, 0.62 * s, 0.42 * s, 12, col, [1, 0.45, 0]);
+    world.cyl(x, y + 1.3 * s, z, 0.12 * s, 0.0, 0.3 * s, 6, col, [1, 0.4, 0]);
+    solids.push([x, z, 0.4 * s]);
+  }
+  function mushroom(x, z, col) {
+    var y = ground(x, z), h = 0.2 + rnd() * 0.3;
+    world.cyl(x, y - 0.05, z, 0.05, 0.04, h, 5, C.pearl, M0);
+    world.sphere(x, y + h, z, 0.16, 0.08, 0.16, 8, col, [0.3, 1.7, 0]);
+  }
+
+  var SPAWNS = [
+    { key: "heart", name: "The Village Heart", line: "Where the burrows glow and the old arcade hums.", x: 0, z: 13 },
+    { key: "grove", name: "The Shimmer Grove", line: "Abalone trees that hum and glimmer in the dark.", x: -27, z: -21 },
+    { key: "flats", name: "The Blue Mud Flats", line: "Pools of glistening blue mud, warm under the night.", x: 28, z: 20 },
+    { key: "ridge", name: "Ash Ridge", line: "Old stones and the tallest ash trees in the valley.", x: 9, z: -31 },
+    { key: "meadow", name: "The Petal Meadow", line: "Where sealed petal sacs wait for new lives.", x: -30, z: 16 }
+  ];
+  SPAWNS.forEach(function (s) { pools.push([s.x, s.z, s.key === "heart" ? 3 : 8.5]); });
+
+  (function grove() {
+    var g = SPAWNS[1];
+    for (var k = 0; k < 7; k++) {
+      var a = k / 7 * Math.PI * 2 + 0.3;
+      shimmerTree(g.x + Math.cos(a) * 5.6, g.z + Math.sin(a) * 5.6, 0.85 + rnd() * 0.35, k % 2 === 0);
+    }
+    for (var m = 0; m < 4; m++) {
+      var b = m / 4 * Math.PI * 2 + 0.8;
+      shimmerTree(g.x + Math.cos(b) * 9.5, g.z + Math.sin(b) * 9.5, 1.2 + rnd() * 0.3, false);
+    }
+    for (var q = 0; q < 18; q++) {
+      var c = rnd() * Math.PI * 2, rr = 1.8 + rnd() * 3.2;
+      mushroom(g.x + Math.cos(c) * rr, g.z + Math.sin(c) * rr, [VIOLET, C.teal, ROSE][q % 3]);
+    }
+    lights.push([g.x, ground(g.x, g.z) + 2, g.z, 11, 0.3, 0.25, 0.55]);
+  })();
+  (function flats() {
+    var f = SPAWNS[2];
+    [[3.5, 0.2, 1.9], [4.2, 2.1, 1.4], [5.2, 3.9, 2.2], [3.8, 5.3, 1.3], [6.3, 1.2, 1.1]].forEach(function (pl) {
+      var x = f.x + Math.cos(pl[1]) * pl[0], z = f.z + Math.sin(pl[1]) * pl[0];
+      mudPool(x, z, pl[2]);
+      reeds(x + pl[2] + 0.6, z + 0.4);
+    });
+    reeds(f.x - 2.5, f.z - 2.2);
+  })();
+  (function ridge() {
+    var r = SPAWNS[3];
+    for (var k = 0; k < 9; k++) {
+      var a = k / 9 * Math.PI * 2;
+      boulder(r.x + Math.cos(a) * (4 + rnd() * 2), r.z + Math.sin(a) * (4 + rnd() * 2), 0.6 + rnd() * 0.9);
+    }
+    for (var m = 0; m < 5; m++) {
+      var b = m / 5 * Math.PI * 2 + 0.6;
+      ashTree(r.x + Math.cos(b) * 8, r.z + Math.sin(b) * 8, 1.4 + rnd() * 0.4);
+    }
+    var y = ground(r.x + 2.2, r.z - 1.5);
+    for (var s = 0; s < 4; s++) {
+      world.sphere(r.x + 2.2, y + 0.25 + s * 0.42, r.z - 1.5, 0.45 - s * 0.08, 0.22, 0.4 - s * 0.07, 6, C.stone.map(function (v) { return v * (1.1 + s * 0.1); }), M0);
+    }
+    world.sphere(r.x + 2.2, y + 1.95, r.z - 1.5, 0.1, 0.1, 0.1, 6, C.gold, [0.4, 2.2, 0]);
+    solids.push([r.x + 2.2, r.z - 1.5, 0.5]);
+    lights.push([r.x + 2.2, y + 2.2, r.z - 1.5, 7, 0.45, 0.38, 0.2]);
+  })();
+  (function meadow() {
+    var md = SPAWNS[4], cols = [C.pearl, ROSE, MINT, VIOLET];
+    for (var k = 0; k < 12; k++) {
+      var a = k / 12 * Math.PI * 2 + rnd() * 0.3, rr = 3.6 + rnd() * 3.5;
+      bud(md.x + Math.cos(a) * rr, md.z + Math.sin(a) * rr, 0.7 + rnd() * 0.5, cols[k % 4]);
+    }
+    for (var q = 0; q < 24; q++) {
+      var c = rnd() * Math.PI * 2, d = 1.5 + rnd() * 6;
+      var x = md.x + Math.cos(c) * d, z = md.z + Math.sin(c) * d;
+      world.disc(x, ground(x, z) + 0.05, z, 0.18, 6, cols[q % 4], [0.4, 1.2, 0]);
+    }
+    lights.push([md.x, ground(md.x, md.z) + 2, md.z, 10, 0.5, 0.3, 0.45]);
+  })();
+
   // the Monument at the heart of the village
   (function monument() {
     var y = ground(0, 0);
@@ -456,12 +663,12 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
     spots.push({ id: "talk", who: p, x: p.x, z: p.z, r: 2.6, label: "Talk to " + p.name, tag: p.name, y: y + 2.6 });
   });
 
-  for (var t = 0; t < 46; t++) {
+  for (var t = 0; t < 70; t++) {
     var ang = rnd() * Math.PI * 2, rad = 13 + rnd() * 25, tx = Math.cos(ang) * rad, tz = Math.sin(ang) * rad;
     if (pathAmount(tx, tz) > 0.15) { continue; }
     var near = solids.some(function (s) { return Math.hypot(s[0] - tx, s[1] - tz) < s[2] + 2.4; }) ||
       pools.some(function (q) { return Math.hypot(q[0] - tx, q[1] - tz) < q[2] + 2; });
-    if (!near) { ashTree(tx, tz, 0.8 + rnd() * 0.6); }
+    if (!near) { if (rnd() < 0.18) { shimmerTree(tx, tz, 0.8 + rnd() * 0.4, false); } else { ashTree(tx, tz, 0.8 + rnd() * 0.6); } }
   }
 
   var worldMesh = upload(world);
@@ -501,16 +708,92 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   var skyMesh = upload(skyB);
 
   // ---------- moving things ----------
-  function figureMesh() {
-    var b = new Builder();
-    b.cyl(0, 0, 0, 0.45, 0.2, 1.45, 14, hex("#232a44"), [0.25, 0.05, 0]);
-    b.cyl(0, 1.05, 0, 0.36, 0.2, 0.35, 14, hex("#46c2b4"), [0.6, 0.4, 0]);
-    b.sphere(0, 1.72, 0, 0.27, 0.3, 0.27, 14, hex("#c08f6e"), M0);
-    b.sphere(0, 1.84, -0.03, 0.29, 0.22, 0.31, 12, hex("#151320"), M0);
-    b.box(0, 1.66, 0.22, 0.34, 0.07, 0.08, 0, hex("#9fe3c4"), [0.4, 1.8, 0]);
+  // ---------- the player's body, built from their choices ----------
+  var ch = null;
+  function buildFigure(c) {
+    var b = new Builder(), rc = Character.race(c.race), lin = rc.lineage;
+    var skin = hex(c.skin), hairC = hex(c.hairColor), eye = hex(c.eyes), cloth = hex(c.cloth), glow = hex(rc.glow), w = c.build;
+    var skinM = lin === "lumen" ? [0.7, 0.6, 0] : (lin === "tidal" || lin === "petal") ? [0.45, 0.08, 0] : lin === "star" ? [0.3, 0.05, 0.4] : M0;
+    var dark = cloth.map(function (v) { return v * 0.65; });
+    [-1, 1].forEach(function (s) { b.cyl(s * 0.12 * w, 0, 0, 0.09 * w, 0.08 * w, 0.75, 8, dark, M0); });
+    b.cyl(0, 0.52, 0, 0.36 * w, 0.23 * w, 0.8, 14, cloth, [0.25, 0.05, 0]);
+    b.sphere(0, 1.3, 0, 0.3 * w, 0.12, 0.2 * w, 12, cloth, [0.2, 0.05, 0]);
+    [-1, 1].forEach(function (s) {
+      b.cyl(s * 0.33 * w, 0.74, 0, 0.065, 0.08, 0.58, 8, cloth, M0);
+      b.sphere(s * 0.33 * w, 0.7, 0, 0.075, 0.08, 0.075, 8, skin, skinM);
+    });
+    b.cyl(0, 1.32, 0, 0.08, 0.08, 0.15, 8, skin, skinM);
+    b.sphere(0, 1.64, 0, 0.21, 0.25, 0.22, 16, skin, skinM);
+    var big = lin === "nocturne" ? 1.6 : 1, eyeM = ["lumen", "nocturne", "ember", "star", "tidal"].indexOf(lin) >= 0 ? [0, 1.8, 0] : [0, 0.5, 0];
+    [-1, 1].forEach(function (s) { b.sphere(s * 0.075, 1.67, 0.19, 0.036 * big, 0.04 * big, 0.022, 8, eye, eyeM); });
+    // ears
+    [-1, 1].forEach(function (s) {
+      if (rc.ears === "round") { b.sphere(s * 0.21, 1.64, 0, 0.04, 0.06, 0.03, 8, skin, skinM); }
+      if (rc.ears === "pointed") { b.sphere(s * 0.25, 1.69, -0.01, 0.1, 0.045, 0.03, 8, skin, skinM); }
+      if (rc.ears === "long") { b.sphere(s * 0.33, 1.73, -0.02, 0.2, 0.05, 0.03, 8, skin, skinM); }
+      if (rc.ears === "fins") { b.sphere(s * 0.22, 1.66, -0.05, 0.03, 0.13, 0.12, 8, glow, [0.9, 0.5, 0]); }
+    });
+    // horns
+    if (rc.horns === "nubs") { [-1, 1].forEach(function (s) { b.cyl(s * 0.09, 1.82, 0.02, 0.04, 0, 0.12, 6, C.pearl, [0.5, 0.1, 0]); }); }
+    if (rc.horns === "spiral") {
+      [-1, 1].forEach(function (s) {
+        for (var k = 0; k < 4; k++) { b.cyl(s * (0.09 + k * 0.035), 1.8 + k * 0.08, -0.02 - k * 0.03, 0.045 - k * 0.009, 0.03 - k * 0.006, 0.1, 6, C.gold, [0.6, 0.2, 0]); }
+      });
+    }
+    if (rc.horns === "antlers") {
+      [-1, 1].forEach(function (s) {
+        b.cyl(s * 0.1, 1.8, 0, 0.022, 0.015, 0.32, 5, C.ash, M0);
+        b.cyl(s * 0.17, 1.95, 0, 0.016, 0.01, 0.18, 5, C.ash, M0);
+        b.sphere(s * 0.1, 2.12, 0, 0.03, 0.03, 0.03, 6, glow, [0.3, 1.6, 0]);
+      });
+    }
+    // tail
+    if (rc.tail === "slim") { for (var k = 0; k < 7; k++) { var f = k / 6; b.sphere(0, 0.62 - f * 0.25 + f * f * 0.5, -0.25 - f * 0.45, 0.06 - f * 0.03, 0.06 - f * 0.03, 0.06 - f * 0.03, 6, k === 6 ? glow : skin, k === 6 ? [0.3, 1.5, 0] : skinM); } }
+    if (rc.tail === "fin") { b.sphere(0, 0.5, -0.38, 0.03, 0.26, 0.3, 10, glow, [0.9, 0.5, 0]); }
+    if (rc.tail === "plume") { [-0.12, 0, 0.12].forEach(function (o) { b.sphere(o, 0.75, -0.38, 0.05, 0.28, 0.07, 8, hairC, [0.5, 0.2, 0]); }); }
+    // markings
+    var mk = rc.marks;
+    if (mk === "mud") { [-1, 1].forEach(function (s) { b.box(s * 0.12, 1.6, 0.17, 0.12, 0.025, 0.05, 0, C.mudGlow, [0.3, 1.6, 0]); b.ring(s * 0.33 * w, 1.0, 0, 0.085, 0.03, 10, C.mudGlow, [0.2, 1.5, 0]); }); }
+    if (mk === "stars") { for (var q = 0; q < 7; q++) { b.sphere(-0.12 + q * 0.04, 1.6 + (q % 2) * 0.03, 0.2, 0.012, 0.012, 0.012, 4, [1, 1, 1], [0, 3, 0]); } }
+    if (mk === "embers") { [-1, 1].forEach(function (s) { b.sphere(s * 0.13, 1.58, 0.17, 0.02, 0.02, 0.02, 5, hex("#ff9a57"), [0, 2.5, 0]); b.sphere(s * 0.1, 1.55, 0.18, 0.015, 0.015, 0.015, 5, hex("#ff9a57"), [0, 2.5, 0]); }); }
+    if (mk === "pearl") { [-1, 1].forEach(function (s) { b.sphere(s * 0.12, 1.62, 0.17, 0.025, 0.025, 0.02, 6, C.pearl, [1, 0.6, 0]); }); b.sphere(0, 1.78, 0.17, 0.03, 0.03, 0.02, 6, C.pearl, [1, 0.6, 0]); }
+    if (mk === "bark") { [-1, 1].forEach(function (s) { b.box(s * 0.13, 1.52, 0.16, 0.025, 0.14, 0.04, 0, skin.map(function (v) { return v * 0.5; }), M0); }); }
+    if (mk === "moss") { [-1, 1].forEach(function (s) { b.sphere(s * 0.22 * w, 1.38, 0, 0.09, 0.05, 0.09, 6, hex("#6d9a4e"), [0.1, 0.3, 0]); }); }
+    if (mk === "veins") { [-1, 1].forEach(function (s) { b.box(s * 0.12, 1.55, 0.17, 0.015, 0.12, 0.04, s * 0.4, C.gold, [0.5, 1.2, 0]); }); }
+    if (mk === "glow") { b.ring(0, 1.0, 0, 0.36 * w, 0.04, 20, glow, [0.4, 2.0, 0]); }
+    if (mk === "petals") { for (var pt = 0; pt < 7; pt++) { var pa = pt / 7 * Math.PI * 2; b.sphere(Math.cos(pa) * 0.17, 1.84, Math.sin(pa) * 0.17, 0.07, 0.04, 0.07, 6, pt % 2 ? ROSE : C.pearl, [0.6, 0.6, 0]); } }
+    // hair
+    var hairM = lin === "sylvan" ? [0.4, 0.15, 0] : lin === "lumen" ? [0.5, 0.8, 0] : [0.15, 0.05, 0];
+    var hs = c.hair;
+    if (hs !== "Shaved" && hs !== "Crest") { b.sphere(0, 1.75, -0.03, 0.225, 0.2, 0.23, 14, hairC, hairM); }
+    if (hs === "Curls") { for (var cu = 0; cu < 11; cu++) { var ca = cu / 11 * Math.PI * 2; b.sphere(Math.cos(ca) * 0.19, 1.8 + (cu % 3) * 0.03, Math.sin(ca) * 0.19 - 0.05, 0.075, 0.075, 0.075, 7, hairC, hairM); } }
+    if (hs === "Long flow") { b.sphere(0, 1.45, -0.13, 0.21, 0.36, 0.1, 12, hairC, hairM); }
+    if (hs === "Braids") { [-1, 1].forEach(function (s) { b.cyl(s * 0.14, 1.0, -0.1, 0.035, 0.04, 0.62, 6, hairC, hairM); b.sphere(s * 0.14, 1.0, -0.1, 0.045, 0.045, 0.045, 6, C.gold, [0.4, 0.6, 0]); }); }
+    if (hs === "Crest") { for (var cr = 0; cr < 5; cr++) { b.cyl(0, 1.8, 0.12 - cr * 0.075, 0.05, 0, 0.18 + (cr === 1 || cr === 2 ? 0.06 : 0), 6, hairC, hairM); } }
+    if (hs === "Bun") { b.sphere(0, 1.93, -0.1, 0.1, 0.1, 0.1, 10, hairC, hairM); }
+    if (hs === "Locs") { for (var lc = 0; lc < 9; lc++) { var la = Math.PI * (0.15 + lc / 8 * 0.7); b.cyl(Math.cos(la) * 0.19, 1.08, -Math.sin(la) * 0.17, 0.03, 0.035, 0.66, 5, hairC, hairM); } }
     return upload(b);
   }
-  var playerMesh = figureMesh();
+  var playerMesh = null;
+  function rebuildPlayer() { free(playerMesh); playerMesh = ch ? buildFigure(ch) : null; buildScent(); }
+
+  // scent: a trail of soft colored motes behind the player
+  var scentMesh = null, trail = [];
+  function buildScent() {
+    free(scentMesh); scentMesh = null;
+    if (!ch) { return; }
+    var b = new Builder(); b.sphere(0, 0, 0, 0.05, 0.05, 0.05, 6, hex(Character.OPTIONS.scents[ch.scent].color), [0.3, 2.6, 0]);
+    scentMesh = upload(b);
+  }
+
+  // the petal sac every life begins in
+  var petalMesh = (function () {
+    var b = new Builder();
+    b.sphere(0, 1.3, 0, 0.82, 1.4, 0.09, 18, C.pearl, [1, 0.5, 0]);
+    b.sphere(0, 1.3, 0.05, 0.5, 1.05, 0.04, 12, ROSE, [0.8, 0.9, 0]);
+    return upload(b);
+  })();
+  var sac = null; // { x, z, open: 0..1 }
 
   var eggMesh = (function () {
     var b = new Builder();
@@ -565,12 +848,12 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   // ---------- player, camera, input ----------
   var player = { x: 0, z: 13, face: Math.PI, y: 0 };
   var cam = { yaw: 0, pitch: 0.38, dist: 9 };
-  var keys = {}, stick = { x: 0, y: 0 }, active = false;
+  var keys = {}, stick = { x: 0, y: 0 }, active = false, mode = "title", emergeT = 0, saveT = 0, areaName = "";
   window.addEventListener("keydown", function (e) {
     keys[e.key.toLowerCase()] = true;
     if (!active) { return; }
     if (e.key === "e" || e.key === "E" || e.key === "Enter") { interact(); }
-    if (e.key === "Escape") { closeOverlay(); hideTalk(); }
+    if (e.key === "Escape") { closeOverlay(); hideTalk(); meCard.style.display = "none"; }
   });
   window.addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
   window.addEventListener("blur", function () { keys = {}; });
@@ -589,7 +872,8 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
 
   var stickEl = document.getElementById("stick"), knob = document.getElementById("knob"), stickId = null;
   if (window.matchMedia && matchMedia("(pointer: coarse)").matches) {
-    stickEl.style.display = "block";
+    document.body.classList.add("coarse");
+    stickEl.dataset.on = "1";
     document.getElementById("help").style.display = "none";
   }
   function moveStick(e) {
@@ -643,7 +927,7 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
   }
   function updateQuest() {
     var q = document.getElementById("hud-quest");
-    if (!pet) { q.innerHTML = "<b>QUEST</b><br>Find the Egg Shrine. Look for the floating egg and the teal light."; }
+    if (!pet) { q.innerHTML = "<b>QUEST</b><br>Find the Egg Shrine in the village. Follow the arrow at the top of the screen."; }
     else if (pet.stage === 0) { q.innerHTML = "<b>QUEST</b><br>Your egg is waiting to hatch. Play at the old arcade, under the pink and teal lights, to help it grow."; }
     else { q.innerHTML = "<b>QUEST</b><br>" + Creature.esc(pet.name) + " has hatched. Keep playing to help it evolve."; }
   }
@@ -712,10 +996,16 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
       if (dd < s.r && dd < best) { best = dd; near = s; }
     });
     if (near && overlay.style.display !== "block") {
-      promptEl.textContent = near.label + (stickEl.style.display === "block" ? "" : "  (E)");
+      promptEl.textContent = near.label + (stickEl.dataset.on ? "" : "  (E)");
       promptEl.style.display = "block";
     } else { promptEl.style.display = "none"; if (!near) { hideTalk(); } }
 
+    updateTrail(dt);
+    var an = areaAt(player.x, player.z);
+    if (an !== areaName) { if (areaName) { toast(an, ""); } areaName = an; }
+    saveT += dt;
+    if (saveT > 2 && ch) { saveT = 0; ch.pos = { x: Math.round(player.x * 10) / 10, z: Math.round(player.z * 10) / 10 }; Character.save(ch); }
+    updateGuide();
     if (pet) {
       var tx = player.x - Math.sin(player.face) * 1.3 + Math.cos(player.face) * 0.9;
       var tz = player.z - Math.cos(player.face) * 1.3 - Math.sin(player.face) * 0.9;
@@ -727,18 +1017,34 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
 
   function render() {
     var now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
-    if (active) { step(dt); }
-    else { cam.yaw += dt * 0.05; player.y = ground(player.x, player.z); }
+    var targetY = 1.4, camDist = cam.dist, pitch = cam.pitch;
+    if (mode === "play") { step(dt); }
+    else {
+      player.y = ground(player.x, player.z);
+      if (mode === "title") { cam.yaw += dt * 0.05; }
+      if (mode === "create") {
+        if (!drag) { cam.yaw += dt * 0.22; }
+        var narrow = W < 700;
+        targetY = narrow ? 0.35 : 1.05; camDist = narrow ? 5.4 : 4.3; pitch = 0.16;
+      }
+      if (mode === "emerge") {
+        emergeT += dt;
+        var e = Math.min(1, emergeT / 2.6); sac.open = e * e * (3 - 2 * e);
+        targetY = 1.05 + 0.35 * sac.open; camDist = 4.3 + (cam.dist - 4.3) * sac.open; pitch = 0.16 + (cam.pitch - 0.16) * sac.open;
+        updateTrail(dt);
+        if (emergeT > 2.9) { finishEmerge(); }
+      }
+    }
 
-    var cp = Math.cos(cam.pitch), dist = cam.dist, eye;
+    var cp = Math.cos(pitch), dist = camDist, eye;
     for (;;) {
-      eye = [player.x + Math.sin(cam.yaw) * dist * cp, player.y + 1.4 + Math.sin(cam.pitch) * dist, player.z + Math.cos(cam.yaw) * dist * cp];
+      eye = [player.x + Math.sin(cam.yaw) * dist * cp, player.y + targetY + Math.sin(pitch) * dist, player.z + Math.cos(cam.yaw) * dist * cp];
       var blocked = solids.some(function (s) { return s[2] > 1.5 && Math.hypot(eye[0] - s[0], eye[2] - s[1]) < s[2] + 0.6; });
       if (!blocked || dist <= 2.5) { break; }
       dist -= 0.5;
     }
     var gy = ground(eye[0], eye[2]) + 0.6; if (eye[1] < gy) { eye[1] = gy; }
-    var vp = mul(perspective(1.0, W / H, 0.1, 400), lookAt(eye, [player.x, player.y + 1.4, player.z], [0, 1, 0]));
+    var vp = mul(perspective(1.0, W / H, 0.1, 400), lookAt(eye, [player.x, player.y + targetY, player.z], [0, 1, 0]));
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniformMatrix4fv(U.uVP, false, vp);
@@ -751,27 +1057,42 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
     gl.uniform1f(U.uTime, time);
 
     // pick the 12 lights closest to the player
-    var ls = lights.slice().sort(function (a, b) { return Math.hypot(a[0] - player.x, a[2] - player.z) - Math.hypot(b[0] - player.x, b[2] - player.z); }).slice(0, 12);
+    var all = sac ? lights.concat([[sac.x, ground(sac.x, sac.z) + 1.5, sac.z, 6 + sac.open * 2, 0.55, 0.45, 0.65]]) : lights;
+    var ls = all.slice().sort(function (a, b) { return Math.hypot(a[0] - player.x, a[2] - player.z) - Math.hypot(b[0] - player.x, b[2] - player.z); }).slice(0, 12);
     ls.forEach(function (l, i) {
       var flick = 1 + Math.sin(time * 3 + i * 1.7) * 0.06;
       lightArr.set([l[0], l[1], l[2], l[3]], i * 4); lightCol.set([l[4] * flick, l[5] * flick, l[6] * flick], i * 3);
     });
     gl.uniform4fv(U.uL, lightArr); gl.uniform3fv(U.uLC, lightCol); gl.uniform1i(U.uNL, ls.length);
 
+    gl.uniform1f(U.uAlpha, 1);
     gl.uniform1f(U.uNoFog, 1);
     gl.depthMask(false);
     draw(skyMesh, model(eye[0], 0, eye[2], 0, 1));
     gl.depthMask(true);
     gl.uniform1f(U.uNoFog, 0);
     draw(worldMesh, model(0, 0, 0, 0, 1));
-    draw(playerMesh, model(player.x, player.y, player.z, player.face, 1));
+    if (playerMesh && mode !== "title") { draw(playerMesh, model(player.x, player.y, player.z, player.face, ch.height)); }
+    if (scentMesh && (mode === "play" || mode === "emerge")) {
+      trail.forEach(function (m, i) { draw(scentMesh, model(m.x, m.y + Math.sin(time * 2 + i) * 0.08, m.z, 0, 1 - i * 0.1)); });
+    }
     draw(eggMesh, model(SHRINE.x, ground(SHRINE.x, SHRINE.z) + 2.3 + Math.sin(time * 1.3) * 0.2, SHRINE.z, time * 0.6, 1));
     motes.forEach(function (m) {
       var a = m.a + time * m.s * 0.2;
       var x = Math.cos(a) * m.r, z = Math.sin(a) * m.r;
       draw(moteMesh, model(x, ground(x, z) + m.h + Math.sin(time * m.s * 3 + m.p) * 0.4, z, 0, 1));
     });
-    if (petMesh) { draw(petMesh, model(petPos.x, petPos.y, petPos.z, player.face + Math.sin(time) * 0.2, 1)); }
+    if (petMesh && mode === "play") { draw(petMesh, model(petPos.x, petPos.y, petPos.z, player.face + Math.sin(time) * 0.2, 1)); }
+    if (sac) {
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+      gl.uniform1f(U.uAlpha, mode === "create" ? 0.26 : 0.5 - sac.open * 0.12);
+      var sy = ground(sac.x, sac.z) - 0.05, breathe = sac.open < 0.01 ? Math.sin(time * 1.5) * 0.02 : 0;
+      for (var pk = 0; pk < 7; pk++) {
+        var pa = pk / 7 * Math.PI * 2 + 0.2;
+        draw(petalMesh, model2(sac.x + Math.cos(pa) * 0.72, sy, sac.z + Math.sin(pa) * 0.72, Math.PI / 2 - pa, -0.3 + breathe + sac.open * 1.55, 1));
+      }
+      gl.depthMask(true); gl.disable(gl.BLEND); gl.uniform1f(U.uAlpha, 1);
+    }
     gl.bindVertexArray(null);
 
     // name tags
@@ -789,16 +1110,233 @@ body.in-game #creature-badge, body.in-game #fb { display: none !important; }
     requestAnimationFrame(render);
   }
 
-  document.getElementById("enter").addEventListener("click", function () {
-    document.getElementById("intro").style.display = "none";
-    active = true;
-    cam.yaw = 0;
-    canvas.focus && canvas.focus();
-  });
+  // ---------- toast, area names, guide arrow ----------
+  var toastEl = document.getElementById("toast"), toastTimer = null;
+  function toast(title, line) {
+    toastEl.innerHTML = Creature.esc(title) + (line ? "<small>" + Creature.esc(line) + "</small>" : "");
+    toastEl.style.opacity = "1";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.style.opacity = "0"; }, 3200);
+  }
+  function areaAt(x, z) {
+    for (var i = 1; i < SPAWNS.length; i++) { if (Math.hypot(x - SPAWNS[i].x, z - SPAWNS[i].z) < 11) { return SPAWNS[i].name; } }
+    return Math.hypot(x, z) < 29 ? "The Village" : "The Wilds";
+  }
+  var guideEl = document.getElementById("guide");
+  function updateGuide() {
+    var target = null;
+    if (!pet) { target = { x: SHRINE.x, z: SHRINE.z, name: "Egg Shrine" }; }
+    else if (pet.stage === 0) { target = { x: ARC.x, z: ARC.z, name: "The old arcade" }; }
+    if (!target) { guideEl.style.display = "none"; return; }
+    var dx = target.x - player.x, dz = target.z - player.z, d = Math.hypot(dx, dz);
+    if (d < 7) { guideEl.style.display = "none"; return; }
+    var rel = Math.atan2(dx, dz) - Math.atan2(-Math.sin(cam.yaw), -Math.cos(cam.yaw));
+    guideEl.innerHTML = '<span style="transform:rotate(' + (-rel * 180 / Math.PI).toFixed(0) + 'deg)">&#8593;</span>' + target.name + " &middot; " + Math.round(d) + " m";
+    guideEl.style.display = "block";
+  }
+  function updateTrail(dt) {
+    if (!ch) { return; }
+    if (trail.length !== 6) { trail = []; for (var i = 0; i < 6; i++) { trail.push({ x: player.x, y: player.y + 1, z: player.z }); } }
+    var hx = player.x - Math.sin(player.face) * 0.6, hz = player.z - Math.cos(player.face) * 0.6;
+    trail.forEach(function (m, i) {
+      var tx = i === 0 ? hx : trail[i - 1].x, tz = i === 0 ? hz : trail[i - 1].z, k = Math.min(1, dt * (i === 0 ? 6 : 4));
+      m.x += (tx - m.x) * k; m.z += (tz - m.z) * k;
+      m.y = ground(m.x, m.z) + 0.9 + Math.sin(time * 1.7 + i * 0.9) * 0.25 + i * 0.05;
+    });
+  }
+
+  // ---------- who you are ----------
+  var OPT = Character.OPTIONS;
+  var meBtn = document.getElementById("me-btn"), meCard = document.getElementById("me-card");
+  var creator = document.getElementById("creator");
+  function $(id) { return document.getElementById(id); }
+  function showHud(on) {
+    ["hud-quest", "help"].forEach(function (id) { $(id).style.display = on ? "block" : "none"; });
+    meBtn.style.display = on ? "block" : "none";
+    stickEl.style.display = on && stickEl.dataset.on ? "block" : "none";
+    if (!on) { guideEl.style.display = "none"; promptEl.style.display = "none"; meCard.style.display = "none"; }
+  }
+  function fillSelect(el, list, val) {
+    el.innerHTML = list.map(function (o) { return "<option" + (o === val ? " selected" : "") + ">" + o + "</option>"; }).join("");
+  }
+  function swatches(el, colors, cur, onPick, custom) {
+    el.innerHTML = "";
+    colors.forEach(function (c) {
+      var b = document.createElement("button"); b.style.background = c; b.title = c; if (c === cur) { b.className = "on"; }
+      b.addEventListener("click", function () { onPick(c); }); el.appendChild(b);
+    });
+    if (custom) {
+      var inp = document.createElement("input"); inp.type = "color"; inp.value = cur; inp.title = "Any color";
+      inp.addEventListener("input", function () { onPick(inp.value, true); }); el.appendChild(inp);
+    }
+  }
+  function skinChoices() {
+    var rc = Character.race(ch.race), L = Character.lineageOf(rc.lineage), out = [];
+    rc.skins.concat(L.skins).forEach(function (c) { if (out.indexOf(c) < 0) { out.push(c); } });
+    return out;
+  }
+  function changed() { rebuildPlayer(); }
+  function renderLook() {
+    swatches($("c-skin"), skinChoices(), ch.skin, function (c, live) { ch.skin = c; changed(); if (!live) { renderLook(); } }, true);
+    fillSelect($("c-hair"), OPT.hair, ch.hair);
+    swatches($("c-haircolor"), OPT.hairColor, ch.hairColor, function (c, live) { ch.hairColor = c; changed(); if (!live) { renderLook(); } }, true);
+    swatches($("c-eyes"), OPT.eyes, ch.eyes, function (c, live) { ch.eyes = c; changed(); if (!live) { renderLook(); } }, true);
+    swatches($("c-cloth"), OPT.cloth, ch.cloth, function (c, live) { ch.cloth = c; changed(); if (!live) { renderLook(); } }, true);
+    $("c-height").value = ch.height; $("c-build").value = ch.build;
+  }
+  function raceCard() {
+    var rc = Character.race(ch.race), L = Character.lineageOf(rc.lineage);
+    var traits = [];
+    if (rc.ears !== "round") { traits.push(rc.ears + " ears"); }
+    if (rc.horns !== "none") { traits.push(rc.horns === "nubs" ? "small horns" : rc.horns + " horns"); }
+    if (rc.tail !== "none") { traits.push(rc.tail + " tail"); }
+    if (rc.marks !== "none") { traits.push(rc.marks + " markings"); }
+    $("c-race-card").innerHTML = "<b>" + Creature.esc(rc.name) + "</b> &middot; " + L.name + "<br>" + L.blurb +
+      (traits.length ? '<br><span style="color:#a6a2b8">Traits: ' + traits.join(", ") + "</span>" : "");
+  }
+  function renderRaces() {
+    var lin = $("c-lineage").value, q = $("c-search").value.trim().toLowerCase();
+    var list = Character.RACES.filter(function (r) { return (lin === "all" || r.lineage === lin) && (!q || r.name.toLowerCase().indexOf(q) >= 0); });
+    $("c-count").textContent = list.length + " peoples" + (list.length > 90 ? ", showing 90. Search to narrow it down." : "");
+    $("c-races").innerHTML = list.slice(0, 90).map(function (r) {
+      return '<button data-id="' + r.id + '"' + (r.id === ch.race ? ' class="on"' : "") + ">" + Creature.esc(r.name) + "</button>";
+    }).join("");
+    raceCard();
+  }
+  function pickRace(id) {
+    ch.race = id;
+    var choices = skinChoices(); if (choices.indexOf(ch.skin) < 0) { ch.skin = Character.race(id).skins[0]; }
+    renderRaces(); renderLook(); changed();
+  }
+  function renderScents() {
+    $("c-scent").innerHTML = OPT.scents.map(function (s, i) {
+      return '<button data-i="' + i + '"' + (i === ch.scent ? ' class="on"' : "") + '><span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:' + s.color + '"></span>' + s.name + "</button>";
+    }).join("");
+  }
+  function renderCreator() {
+    $("c-name").value = ch.name || "";
+    fillSelect($("c-gender"), OPT.gender, ch.gender);
+    $("c-gender-custom").style.display = ch.gender === "Custom" ? "block" : "none";
+    $("c-gender-custom").value = ch.genderCustom || "";
+    fillSelect($("c-sex"), OPT.sex, ch.sex);
+    fillSelect($("c-orient"), OPT.orientation, ch.orientation);
+    $("c-lineage").innerHTML = '<option value="all">All lineages</option>' + Character.LINEAGES.map(function (L) {
+      return '<option value="' + L.key + '">' + L.name + "</option>";
+    }).join("");
+    $("c-lineage").value = Character.race(ch.race).lineage;
+    $("c-search").value = "";
+    renderRaces(); renderLook(); renderScents();
+  }
+  (function wireCreator() {
+    creator.querySelectorAll(".tabs button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        creator.querySelectorAll(".tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
+        creator.querySelectorAll("[data-pane]").forEach(function (pn) { pn.style.display = pn.dataset.pane === b.dataset.tab ? "block" : "none"; });
+      });
+    });
+    $("c-name").addEventListener("input", function () { ch.name = this.value; });
+    $("c-gender").addEventListener("change", function () { ch.gender = this.value; $("c-gender-custom").style.display = ch.gender === "Custom" ? "block" : "none"; });
+    $("c-gender-custom").addEventListener("input", function () { ch.genderCustom = this.value; });
+    $("c-sex").addEventListener("change", function () { ch.sex = this.value; });
+    $("c-orient").addEventListener("change", function () { ch.orientation = this.value; });
+    $("c-lineage").addEventListener("change", renderRaces);
+    $("c-search").addEventListener("input", renderRaces);
+    $("c-races").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { pickRace(Number(b.dataset.id)); } });
+    $("c-race-random").addEventListener("click", function () {
+      var r = Character.RACES[Math.floor(Math.random() * Character.RACES.length)];
+      $("c-lineage").value = r.lineage; pickRace(r.id);
+    });
+    $("c-hair").addEventListener("change", function () { ch.hair = this.value; changed(); });
+    $("c-height").addEventListener("input", function () { ch.height = Number(this.value); });
+    $("c-build").addEventListener("input", function () { ch.build = Number(this.value); changed(); });
+    $("c-scent").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { ch.scent = Number(b.dataset.i); buildScent(); renderScents(); } });
+    $("c-random").addEventListener("click", function () {
+      var keep = { name: ch.name, gender: ch.gender, genderCustom: ch.genderCustom, sex: ch.sex, orientation: ch.orientation, spawn: ch.spawn };
+      ch = Character.random(); for (var k in keep) { ch[k] = keep[k]; }
+      renderCreator(); changed();
+    });
+    $("c-emerge").addEventListener("click", function () {
+      var nm = (ch.name || "").trim(), err = $("c-err");
+      if (nm.length < 2) { err.textContent = "Give yourself a name of at least 2 letters first."; err.style.display = "block"; return; }
+      err.style.display = "none";
+      ch.name = nm; ch.born = Date.now(); ch.pos = null;
+      Character.save(ch);
+      creator.style.display = "none";
+      document.body.classList.remove("creating");
+      keys = {};
+      mode = "emerge"; emergeT = 0; trail = [];
+    });
+  })();
+
+  function startCreate() {
+    $("intro").style.display = "none";
+    var idx = Math.floor(Math.random() * SPAWNS.length), sp = SPAWNS[idx];
+    ch = Character.random(); ch.name = ""; ch.spawn = idx;
+    player.x = sp.x; player.z = sp.z; player.y = ground(sp.x, sp.z);
+    player.face = Math.atan2(-sp.x, -sp.z); cam.yaw = player.face;
+    sac = { x: sp.x, z: sp.z, open: 0 };
+    mode = "create"; active = false;
+    showHud(false);
+    document.body.classList.add("creating");
+    creator.style.display = "flex";
+    renderCreator(); rebuildPlayer();
+  }
+  function finishEmerge() {
+    mode = "play"; active = true;
+    var sp = SPAWNS[ch.spawn || 0];
+    areaName = areaAt(player.x, player.z);
+    showHud(true); updateQuest(); buildPet(); refreshMe();
+    toast("You emerged in " + sp.name, sp.line);
+  }
+  function continueLife(saved) {
+    $("intro").style.display = "none";
+    ch = saved;
+    var sp = SPAWNS[ch.spawn || 0], at = ch.pos || sp;
+    player.x = at.x; player.z = at.z; player.y = ground(at.x, at.z);
+    player.face = Math.atan2(-at.x, -at.z); cam.yaw = player.face + Math.PI;
+    sac = { x: sp.x, z: sp.z, open: 1 };
+    rebuildPlayer();
+    mode = "play"; active = true; trail = [];
+    areaName = areaAt(player.x, player.z);
+    showHud(true); updateQuest(); buildPet(); refreshMe();
+    toast("Welcome back, " + ch.name, areaName);
+  }
+  function refreshMe() {
+    if (!ch) { return; }
+    meBtn.textContent = ch.name;
+    var rc = Character.race(ch.race), L = Character.lineageOf(rc.lineage);
+    var gender = ch.gender === "Custom" ? (ch.genderCustom || "Custom") : ch.gender;
+    meCard.innerHTML = "<b style=\"font-family:Cinzel,Georgia,serif;font-size:16px\">" + Creature.esc(ch.name) + "</b><br>" +
+      "<b>People:</b> " + Creature.esc(rc.name) + " (" + L.name + ")<br>" +
+      "<b>Gender:</b> " + Creature.esc(gender) + "<br><b>Sex:</b> " + ch.sex + "<br><b>Orientation:</b> " + ch.orientation + "<br>" +
+      "<b>Scent:</b> " + OPT.scents[ch.scent].name + "<br><b>Emerged in:</b> " + SPAWNS[ch.spawn || 0].name +
+      '<br><span style="color:#a6a2b8;font-size:12px">Only you can see this card.</span><br>' +
+      '<button id="me-close">Close</button><button id="me-new">Start a new life</button>';
+    $("me-close").addEventListener("click", function () { meCard.style.display = "none"; });
+    $("me-new").addEventListener("click", function () {
+      if (!confirm("Start a new life? Your current character will be replaced. Your egg stays with you.")) { return; }
+      Character.clear(); meCard.style.display = "none"; startCreate();
+    });
+  }
+  meBtn.addEventListener("click", function () { meCard.style.display = meCard.style.display === "block" ? "none" : "block"; });
+
+  (function titleScreen() {
+    var saved = Character.load(), box = $("choices");
+    if (saved && saved.name) {
+      box.innerHTML = '<button class="main" id="t-continue">Continue as ' + Creature.esc(saved.name) + '</button><button id="t-new">Start a new life</button>';
+      $("t-continue").addEventListener("click", function () { continueLife(saved); });
+      $("t-new").addEventListener("click", function () { if (confirm("Start a new life? Your current character will be replaced.")) { Character.clear(); startCreate(); } });
+    } else {
+      box.innerHTML = '<button class="main" id="t-begin">Begin</button>';
+      $("t-begin").addEventListener("click", startCreate);
+    }
+  })();
+  showHud(false);
 
   buildPet();
   updateQuest();
-  window.__world = { player: player, spots: spots, interact: interact, closeOverlay: closeOverlay, nearest: function () { return near; } };
+  window.__world = { player: player, spots: spots, interact: interact, closeOverlay: closeOverlay, nearest: function () { return near; },
+    mode: function () { return mode; }, ch: function () { return ch; }, spawns: SPAWNS, sac: function () { return sac; } };
   requestAnimationFrame(render);
 })();
 </script>
