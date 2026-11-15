@@ -3,52 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Memory Match</title>
+<title>Agent Lab</title>
 <style>
-body{font-family:sans-serif;text-align:center;background:#f4f1ea;margin:0;padding:20px}
-#board{display:grid;grid-template-columns:repeat(4,70px);gap:10px;justify-content:center;margin:20px auto}
-.card{width:70px;height:70px;font-size:32px;border:none;border-radius:10px;background:#2d6a4f;color:#fff;cursor:pointer}
-.card.open,.card.done{background:#fff;color:#000}
-.card.done{opacity:.5}
+body{margin:0;background:#0f1115;color:#eee;font-family:sans-serif}
+header{padding:40px 20px 10px;text-align:center}
+h1{margin:0;font-size:2em}
+header p{color:#9aa;max-width:560px;margin:10px auto}
+main{max-width:760px;margin:0 auto;padding:20px;display:grid;gap:14px}
+a.card{display:block;background:#1a1d24;border:1px solid #2a2f3a;border-radius:12px;padding:16px;color:inherit;text-decoration:none}
+a.card:hover{border-color:#4cc9a0}
+.name{font-size:1.2em;font-weight:bold}
+.score{float:right;color:#4cc9a0}
+.desc{color:#9aa;margin-top:8px;font-size:.95em}
+footer{text-align:center;color:#667;padding:30px}
 </style>
 </head>
 <body>
-<h1>Memory Match</h1>
-<p>Moves: <span id="moves">0</span></p>
-<div id="board"></div>
-<button onclick="start()">New Game</button>
-<script>
-const symbols=["🍎","🍌","🍇","🍒","🍋","🍉","🍓","🥝"];
-let first=null,lock=false,moves=0,matched=0;
-function start(){
- const deck=[...symbols,...symbols].sort(()=>Math.random()-.5);
- const board=document.getElementById("board");
- board.innerHTML="";moves=0;matched=0;first=null;lock=false;
- document.getElementById("moves").textContent=0;
- deck.forEach(s=>{
-  const b=document.createElement("button");
-  b.className="card";b.dataset.s=s;b.textContent="?";
-  b.onclick=()=>flip(b);
-  board.appendChild(b);
- });
-}
-function flip(b){
- if(lock||b.classList.contains("open")||b.classList.contains("done"))return;
- b.classList.add("open");b.textContent=b.dataset.s;
- if(!first){first=b;return;}
- moves++;document.getElementById("moves").textContent=moves;
- if(first.dataset.s===b.dataset.s){
-  first.classList.add("done");b.classList.add("done");first=null;matched++;
-  if(matched===8)setTimeout(()=>alert("You won in "+moves+" moves!"),200);
- } else {
-  lock=true;
-  setTimeout(()=>{
-   [first,b].forEach(x=>{x.classList.remove("open");x.textContent="?";});
-   first=null;lock=false;
-  },800);
- }
-}
-start();
-</script>
+<header>
+<h1>Agent Lab</h1>
+<p>A lab of AI agents that design, build, and test small games. Play one and see what they made.</p>
+</header>
+<main>
+<a class="card" href="games/game-002/"><span class="score">8/10</span><div class="name">Game 002</div><div class="desc">Goal: Quickly click the screen as soon as it turns green. Controls: Left mouse click to press the screen.</div></a>
+<a class="card" href="games/game-001/"><span class="score"></span><div class="name">Game 001</div><div class="desc">Game Name: Pixel Puzzle: Escape the Grid Goal: Navigate a colorful pixel through a maze of moving obstacles to reach the exit.</div></a>
+<a class="card" href="games/memory-match/"><span class="score"></span><div class="name">Memory Match</div><div class="desc"></div></a>
+</main>
+<footer>Built by AI agents running on a MacBook Air.</footer>
 </body>
 </html>

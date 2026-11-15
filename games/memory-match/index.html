@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Match</title>
+<style>
+body{font-family:sans-serif;text-align:center;background:#f4f1ea;margin:0;padding:20px}
+#board{display:grid;grid-template-columns:repeat(4,70px);gap:10px;justify-content:center;margin:20px auto}
+.card{width:70px;height:70px;font-size:32px;border:none;border-radius:10px;background:#2d6a4f;color:#fff;cursor:pointer}
+.card.open,.card.done{background:#fff;color:#000}
+.card.done{opacity:.5}
+</style>
+</head>
+<body>
+<h1>Memory Match</h1>
+<p>Moves: <span id="moves">0</span></p>
+<div id="board"></div>
+<button onclick="start()">New Game</button>
+<script>
+const symbols=["🍎","🍌","🍇","🍒","🍋","🍉","🍓","🥝"];
+let first=null,lock=false,moves=0,matched=0;
+function start(){
+ const deck=[...symbols,...symbols].sort(()=>Math.random()-.5);
+ const board=document.getElementById("board");
+ board.innerHTML="";moves=0;matched=0;first=null;lock=false;
+ document.getElementById("moves").textContent=0;
+ deck.forEach(s=>{
+  const b=document.createElement("button");
+  b.className="card";b.dataset.s=s;b.textContent="?";
+  b.onclick=()=>flip(b);
+  board.appendChild(b);
+ });
+}
+function flip(b){
+ if(lock||b.classList.contains("open")||b.classList.contains("done"))return;
+ b.classList.add("open");b.textContent=b.dataset.s;
+ if(!first){first=b;return;}
+ moves++;document.getElementById("moves").textContent=moves;
+ if(first.dataset.s===b.dataset.s){
+  first.classList.add("done");b.classList.add("done");first=null;matched++;
+  if(matched===8)setTimeout(()=>alert("You won in "+moves+" moves!"),200);
+ } else {
+  lock=true;
+  setTimeout(()=>{
+   [first,b].forEach(x=>{x.classList.remove("open");x.textContent="?";});
+   first=null;lock=false;
+  },800);
+ }
+}
+start();
+</script>
+</body>
+</html>
