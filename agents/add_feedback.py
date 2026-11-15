@@ -2,8 +2,8 @@ from pathlib import Path
 
 BAR = """<div id="fb" style="position:fixed;bottom:0;left:0;right:0;padding:6px;background:rgba(0,0,0,.8);color:#fff;font-family:sans-serif;font-size:14px;text-align:center;z-index:99999">
 Enjoying this game?
-<button onclick="vote('up')" style="font-size:18px">&#128077;</button>
-<button onclick="vote('down')" style="font-size:18px">&#128078;</button>
+<button onclick="vote('up')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128077;</button>
+<button onclick="vote('down')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128078;</button>
 <span id="fbmsg"></span>
 </div>
 <script>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Egg Finder</title>
+<style>
+body{margin:0;background:#0b1118;color:#eee;font-family:sans-serif}
+main{max-width:560px;margin:0 auto;padding:70px 16px 90px}
+h1,h2{text-align:center}
+.card{background:#141d2a;border:1px solid #2a3a4f;border-radius:12px;padding:14px;margin:12px 0;text-align:center}
+button{background:#2a8c8c;color:#fff;border:0;border-radius:8px;padding:12px 16px;font-size:16px;margin:6px 0;cursor:pointer;width:100%}
+button.opt{background:#1d2a3c;text-align:left}
+button.alt{background:#5a4bb0}
+input{width:100%;padding:10px;font-size:16px;margin:6px 0;border-radius:8px;border:1px solid #2a3a4f;background:#0b1118;color:#eee;box-sizing:border-box}
+.small{color:#9fb3c8;font-size:14px}
+.bar{height:10px;border-radius:5px;background:#223046;margin:4px 0 10px;overflow:hidden}
+.bar div{height:10px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.grid button{background:#141d2a;border:1px solid #2a3a4f;padding:4px;margin:0;font-size:11px;color:#cfe}
+.grid svg{display:block;margin:0 auto}
+.v3d{display:inline-block;vertical-align:middle;margin:4px}
+a.btn{display:block;background:#b8642b;color:#fff;text-align:center;padding:12px;border-radius:8px;text-decoration:none;margin:6px 0}
+</style>
+<link rel="stylesheet" href="../../shared/theme.css">
+</head>
+<body>
+<main id="app"></main>
+<script src="../../shared/creature.js"></script>
+<script src="../../shared/creature3d.js"></script>
+<script>
+var C = window.Creature, T = C.TYPES, P = C.PALETTES, app = document.getElementById("app");
+var QS = [
+  ["A new game shows up. You...", [["Jump in and chase the top score", "ember"], ["Look for someone to play it with", "tide"], ["Poke around to find its secrets", "gale"], ["Learn the rules and master it slowly", "root"], ["Imagine your own version of it", "lumen"]]],
+  ["Your perfect weekend is...", [["A big competition or race", "ember"], ["Time with the people you love", "tide"], ["Somewhere you have never been", "gale"], ["A slow morning cooking or gardening", "root"], ["Making art or music late at night", "lumen"]]],
+  ["In a group project, you usually...", [["Take charge and push for results", "ember"], ["Keep everyone connected and happy", "tide"], ["Come up with the strange new idea", "gale"], ["Do the careful work nobody sees", "root"], ["Dream up the big vision", "lumen"]]],
+  ["When you get stuck, you...", [["Push harder until it breaks", "ember"], ["Talk it through with someone", "tide"], ["Try a totally different approach", "gale"], ["Step back and wait it out", "root"], ["Sleep on it and let an answer come", "lumen"]]],
+  ["Pick a power:", [["Blazing speed and strength", "ember"], ["Healing and protection", "tide"], ["Seeing what is hidden", "gale"], ["Endurance that never runs out", "root"], ["Shaping light and illusions", "lumen"]]],
+  ["Which sound feels best?", [["Crackling fire", "ember"], ["Rain on the window", "tide"], ["Wind through the trees", "gale"], ["A slow, deep drumbeat", "root"], ["Chimes far away at night", "lumen"]]],
+  ["A friend is feeling down. You...", [["Hype them up and get them moving", "ember"], ["Sit with them and listen", "tide"], ["Take them somewhere new", "gale"], ["Bring them food and stay close", "root"], ["Tell them a story that changes how they see it", "lumen"]]],
+  ["What matters most?", [["Winning", "ember"], ["Belonging", "tide"], ["Discovering", "gale"], ["Lasting", "root"], ["Wonder", "lumen"]]]
+];
+var qi = 0, answers = {}, order = [], mounts = [];
+
+function shuffle(a) {
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function view(p, size) {
+  return '<div class="v3d" data-p="' + encodeURIComponent(JSON.stringify(p)) + '" data-s="' + size + '"></div>';
+}
+function render(h) {
+  mounts.forEach(function (m) { m.dispose(); });
+  mounts = [];
+  app.innerHTML = h;
+  window.scrollTo(0, 0);
+  app.querySelectorAll(".v3d").forEach(function (el) {
+    var p = JSON.parse(decodeURIComponent(el.dataset.p)), s = Number(el.dataset.s);
+    if (window.Creature3D) { mounts.push(Creature3D.mount(el, p, s)); }
+    else { el.innerHTML = C.svg(p, s); }
+  });
+}
+function bar(pc, col) { return '<div class="bar"><div style="width:' + pc + '%;background:' + col + '"></div></div>'; }
+function info(p) {
+  var t = T[p.type], sk = C.SKINS[p.skin] || C.SKINS[C.skinFor(p.type)];
+  return '<p><b>' + C.esc(C.eggTitle(p)) + '</b> &middot; No. ' + C.eggNumber(p) + ' of 50</p>' +
+    '<p class="small">Skin when hatched: ' + sk.name + ', ' + sk.text + '.</p>' +
+    '<p><b>Power: ' + t.power + '</b><br>' + t.powerText + '</p>' +
+    '<p class="small"><b>How to grow it:</b> ' + t.grow + '</p>';
+}
+function petCard(p) {
+  var t = T[p.type], pct = Math.round(C.progress(p) * 100);
+  var target = p.stage >= 3 ? "Fully grown" : "Growth: " + p.growth + " / " + t.need[p.stage];
+  return '<div class="card">' + view(p, 230) + '<p class="small">Drag to spin</p><h2>' + C.esc(p.name) + '</h2><p>' + C.STAGES[p.stage] + '</p>' +
+    bar(pct, t.glow) + '<p class="small">' + target + '</p>' + info(p) + '</div>';
+}
+
+function home() {
+  var p = C.get();
+  render('<h1>Egg Finder</h1>' + (p ? petCard(p) : '') +
+    '<div class="card"><p>' + (p ? 'Want a different companion? A new egg replaces your current one.' :
+    'Answer 9 quick questions to find which of the 50 eggs matches you.') +
+    '</p><p class="small">Just for fun. This is not a real personality test.</p></div>' +
+    '<button id="go">' + (p ? 'Find a new egg' : 'Find my egg') + '</button>' +
+    '<button id="cx" class="alt">See all 50 eggs</button>' +
+    '<a class="btn" href="../pop-time-machine/">Play Pop Time Machine</a>');
+  document.getElementById("go").addEventListener("click", function () {
+    qi = 0;
+    answers = {};
+    C.LINES.forEach(function (k) { answers[k] = 0; });
+    question();
+  });
+  document.getElementById("cx").addEventListener("click", codex);
+}
+
+function question() {
+  if (qi >= QS.length) {
+    order = shuffle(C.LINES).sort(function (a, b) { return answers[b] - answers[a]; });
+    treasure();
+    return;
+  }
+  var q = QS[qi], opts = shuffle(q[1]);
+  var h = '<h1>Question ' + (qi + 1) + ' of ' + (QS.length + 1) + '</h1><div class="card"><p><b>' + q[0] + '</b></p></div>';
+  opts.forEach(function (o, i) { h += '<button class="opt" data-i="' + i + '">' + o[0] + '</button>'; });
+  render(h);
+  app.querySelectorAll("button.opt").forEach(function (b) {
+    b.addEventListener("click", function () {
+      answers[opts[Number(b.dataset.i)][1]]++;
+      qi++;
+      question();
+    });
+  });
+}
+
+function treasure() {
+  var type = order[0];
+  var h = '<h1>Question ' + (QS.length + 1) + ' of ' + (QS.length + 1) + '</h1><div class="card"><p><b>Which treasure calls to you?</b></p></div><div class="grid">';
+  C.PAL_ORDER.forEach(function (k) {
+    h += '<button data-k="' + k + '">' + C.svg({ type: type, second: type, palette: k, stage: 0 }, 56) + P[k].name + '</button>';
+  });
+  render(h + '</div>');
+  app.querySelectorAll(".grid button").forEach(function (b) {
+    b.addEventListener("click", function () { result(b.dataset.k); });
+  });
+}
+
+function result(pal) {
+  var type = order[0], second = answers[order[1]] > 0 ? order[1] : order[0];
+  var pet = { type: type, second: second, palette: pal, skin: C.skinFor(second), stage: 0, growth: 0, name: T[type].name };
+  var adult = { type: type, second: second, palette: pal, skin: C.skinFor(second), stage: 3, growth: 0, name: T[type].name };
+  var h = '<h1>Your egg</h1><div class="card">' + view(pet, 160) + view(adult, 160) +
+          '<p class="small">Your egg, and a glimpse of it fully grown. Drag to spin.</p>' + info(pet) + '<p class="small">Your mix:</p>';
+  order.forEach(function (k) {
+    var pc = Math.round(100 * answers[k] / QS.length);
+    h += '<div class="small">' + T[k].name + ' (' + T[k].trait + ') ' + pc + '%</div>' + bar(pc, T[k].glow);
+  });
+  h += '<p class="small">It hatches at ' + T[type].need[0] + ' growth, which takes many correct answers.</p></div>' +
+       '<input id="nm" placeholder="Name your creature" maxlength="16">' +
+       '<button id="take">Take this egg</button><button id="back" class="alt">Start over</button>';
+  render(h);
+  document.getElementById("take").addEventListener("click", function () {
+    var old = C.get();
+    if (old && old.growth > 0 && !confirm("This replaces " + old.name + " and its progress. Continue?")) { return; }
+    var name = document.getElementById("nm").value.trim() || C.eggTitle(pet);
+    C.newEgg(type, second, pal, name);
+    render('<h1>It is yours!</h1>' + petCard(C.get()) +
+      '<a class="btn" href="../pop-time-machine/">Grow it in Pop Time Machine</a><button id="h" class="alt">Back</button>');
+    document.getElementById("h").addEventListener("click", home);
+  });
+  document.getElementById("back").addEventListener("click", home);
+}
+
+function codex() {
+  var h = '<h1>The 50 eggs</h1><p class="small" style="text-align:center">Tap an egg to see it in 3D with its grown form. Your egg comes from your personality, and its skin comes from your second trait.</p><div class="grid">';
+  C.LINES.forEach(function (line) {
+    C.PAL_ORDER.forEach(function (k) {
+      h += '<button data-l="' + line + '" data-k="' + k + '">' + C.svg({ type: line, second: line, palette: k, stage: 0 }, 56) + P[k].name + '</button>';
+    });
+  });
+  render(h + '</div><button id="h" class="alt">Back</button>');
+  app.querySelectorAll(".grid button").forEach(function (b) {
+    b.addEventListener("click", function () { detail(b.dataset.l, b.dataset.k); });
+  });
+  document.getElementById("h").addEventListener("click", home);
+}
+
+function detail(line, k) {
+  var egg = { type: line, second: line, palette: k, skin: C.skinFor(line), stage: 0, name: P[k].name };
+  var grown = { type: line, second: line, palette: k, skin: C.skinFor(line), stage: 3, name: P[k].name };
+  render('<h1>' + C.esc(C.eggTitle(egg)) + '</h1><div class="card">' + view(egg, 150) + view(grown, 150) +
+    '<p class="small">Egg and Adult. Drag to spin.</p>' + info(egg) + '</div><button id="b" class="alt">Back to all eggs</button>');
+  document.getElementById("b").addEventListener("click", codex);
+}
+
+home();
+</script>
+<script data-goatcounter="https://abimaels-andromeda.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<div id="fb" style="position:fixed;bottom:0;left:0;right:0;padding:6px;background:rgba(0,0,0,.8);color:#fff;font-family:sans-serif;font-size:14px;text-align:center;z-index:99999">
+Enjoying this game?
+<button onclick="vote('up')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128077;</button>
+<button onclick="vote('down')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128078;</button>
+<span id="fbmsg"></span>
+</div>
+<script>
+function vote(kind) {
+  var key = 'voted:' + location.pathname;
+  try {
+    if (localStorage.getItem(key)) {
+      document.getElementById('fbmsg').textContent = 'You already voted';
+      return;
+    }
+  } catch (e) {}
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({path: 'thumbs-' + kind + location.pathname, title: 'Thumbs ' + kind, event: true});
+  }
+  try { localStorage.setItem(key, '1'); } catch (e) {}
+  document.getElementById('fbmsg').textContent = 'Thanks!';
+}
+</script>
+</body>
+</html>

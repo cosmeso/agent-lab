@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pop Time Machine</title>
+<style>
+body{margin:0;background:#14111f;color:#eee;font-family:sans-serif}
+main{max-width:620px;margin:0 auto;padding:70px 16px 80px}
+h1{text-align:center}
+.card{background:#1f1a33;border:1px solid #3a3160;border-radius:12px;padding:14px;margin:12px 0}
+button{background:#6d4bd8;color:#fff;border:0;border-radius:8px;padding:12px 16px;font-size:16px;margin:6px 0;cursor:pointer;width:100%}
+button.opt{background:#2c2550;text-align:left}
+button.good{background:#2e9e5b}
+button.bad{background:#a33}
+input,select{width:100%;padding:10px;font-size:16px;margin:6px 0;border-radius:8px;border:1px solid #3a3160;background:#14111f;color:#eee;box-sizing:border-box}
+.small{color:#a9a3c4;font-size:14px}
+.sc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pl{padding:6px 10px;border-radius:20px;background:#2c2550}
+.pl.on{background:#6d4bd8}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tile{padding:18px 0;margin:0;font-weight:bold}
+.gone{display:flex;align-items:center;justify-content:center;opacity:.5;font-size:22px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:6px;text-align:left;border-bottom:1px solid #3a3160}
+</style>
+<link rel="stylesheet" href="../../shared/theme.css">
+</head>
+<body>
+<main id="app"></main>
+<script src="../../shared/creature.js"></script>
+<script>
+// [year, tier, question, right answer, wrong, wrong, wrong]
+var Q = [
+[1000,2,"Beowulf, an Old English epic from around the year 1000, features a hero who fights which monster?","Grendel","Fafnir","Medusa","Cerberus"],
+[1010,4,"The Tale of Genji, often called the world's first novel, was written around 1010 in which country?","Japan","China","Korea","India"],
+[1136,3,"A 1136 history by Geoffrey of Monmouth helped popularize which legendary king?","King Arthur","Charlemagne","Robin Hood","Richard the Lionheart"],
+[1300,2,"Which traveler's famous book described a journey to the court of Kublai Khan?","Marco Polo","Christopher Columbus","Vasco da Gama","Leif Erikson"],
+[1320,3,"Dante's 'Inferno' is the first part of which epic poem?","The Divine Comedy","The Decameron","The Aeneid","Paradise Lost"],
+[1400,2,"Who wrote 'The Canterbury Tales' around the year 1400?","Geoffrey Chaucer","William Shakespeare","Dante Alighieri","John Milton"],
+[1429,2,"Which French heroine helped lift the siege of Orleans in 1429?","Joan of Arc","Marie Antoinette","Catherine de Medici","Eleanor of Aquitaine"],
+[1455,1,"Johannes Gutenberg's printing press made which book famous in the 1450s?","The Bible","The Odyssey","The Canterbury Tales","Romeo and Juliet"],
+[1503,1,"Who painted the Mona Lisa?","Leonardo da Vinci","Michelangelo","Raphael","Botticelli"],
+[1595,2,"Shakespeare's 'Romeo and Juliet' is mainly set in which Italian city?","Verona","Venice","Florence","Rome"],
+[1600,1,"Which Shakespeare play includes the line 'To be, or not to be'?","Hamlet","Macbeth","Othello","King Lear"],
+[1605,2,"In 'Don Quixote', the hero famously charges at what?","Windmills","Castles","Dragons","Ships"],
+[1718,4,"Which pirate known as Blackbeard died in 1718?","Edward Teach","Henry Morgan","Calico Jack","Captain Kidd"],
+[1719,3,"Who wrote 'Robinson Crusoe'?","Daniel Defoe","Jonathan Swift","Henry Fielding","Samuel Richardson"],
+[1726,3,"In 'Gulliver's Travels', what are the tiny people called?","Lilliputians","Brobdingnagians","Yahoos","Houyhnhnms"],
+[1791,2,"Which composer wrote the opera 'The Magic Flute'?","Mozart","Haydn","Bach","Vivaldi"],
+[1813,2,"Which Jane Austen heroine marries Mr. Darcy?","Elizabeth Bennet","Emma Woodhouse","Anne Elliot","Elinor Dashwood"],
+[1818,1,"Who wrote 'Frankenstein'?","Mary Shelley","Jane Austen","Emily Bronte","Charlotte Bronte"],
+[1824,3,"Beethoven's Ninth Symphony ends with a famous 'Ode to ___'","Joy","Sorrow","Spring","Freedom"],
+[1843,3,"In 'A Christmas Carol', what is the name of Scrooge's late business partner?","Jacob Marley","Bob Cratchit","Fezziwig","Tiny Tim"],
+[1851,1,"In 'Moby-Dick', Captain Ahab hunts what?","A white whale","A giant squid","A shark","A sea serpent"],
+[1865,1,"In 'Alice's Adventures in Wonderland', what does Alice follow down the rabbit hole?","The White Rabbit","The Cheshire Cat","The Mad Hatter","The Dormouse"],
+[1870,3,"Jules Verne's 'Twenty Thousand Leagues Under the Sea' features which submarine captain?","Captain Nemo","Captain Ahab","Captain Hook","Captain Flint"],
+[1887,2,"Which author created Sherlock Holmes?","Arthur Conan Doyle","Agatha Christie","H. G. Wells","Wilkie Collins"],
+[1889,2,"The Eiffel Tower was built as the entrance to which 1889 event?","The Paris World's Fair","The Summer Olympics","The Great Exhibition","A royal coronation"],
+[1897,2,"Who wrote 'Dracula'?","Bram Stoker","Mary Shelley","Oscar Wilde","Edgar Allan Poe"],
+[1914,2,"Which silent film star was famous for playing 'The Tramp'?","Charlie Chaplin","Buster Keaton","Harold Lloyd","Rudolph Valentino"],
+[1925,2,"Who wrote 'The Great Gatsby'?","F. Scott Fitzgerald","Ernest Hemingway","John Steinbeck","William Faulkner"],
+[1925,2,"Louis Armstrong, a jazz legend, was famous for playing which instrument?","Trumpet","Saxophone","Clarinet","Trombone"],
+[1928,1,"Which Disney character debuted in the 1928 cartoon 'Steamboat Willie'?","Mickey Mouse","Donald Duck","Goofy","Bugs Bunny"],
+[1933,2,"In the original 1933 'King Kong', which New York building does Kong climb?","Empire State Building","Chrysler Building","Woolworth Building","Flatiron Building"],
+[1939,1,"In 'The Wizard of Oz', what color is the road Dorothy follows?","Yellow","Red","Green","Silver"],
+[1939,3,"In 'Gone with the Wind', which character is played by Clark Gable?","Rhett Butler","Ashley Wilkes","Charles Hamilton","Frank Kennedy"],
+[1941,3,"In 'Citizen Kane', what is the mysterious last word Kane whispers?","Rosebud","Xanadu","Mother","Snowfall"],
+[1942,3,"Which actor played Rick Blaine in 'Casablanca'?","Humphrey Bogart","Cary Grant","Clark Gable","James Stewart"],
+[1950,3,"Which cartoonist created 'Peanuts'?","Charles Schulz","Jim Davis","Bill Watterson","Walt Kelly"],
+[1951,1,"Which comedian starred in 'I Love Lucy'?","Lucille Ball","Betty White","Carol Burnett","Doris Day"],
+[1954,4,"Which group recorded 'Rock Around the Clock'?","Bill Haley and His Comets","The Platters","Buddy Holly and the Crickets","Little Richard"],
+[1955,2,"In which California city did Disneyland open in 1955?","Anaheim","Los Angeles","Burbank","San Diego"],
+[1956,2,"Which singer scored a 1956 hit with 'Heartbreak Hotel'?","Elvis Presley","Chuck Berry","Buddy Holly","Little Richard"],
+[1957,2,"Which country launched Sputnik, the first artificial satellite, in 1957?","Soviet Union","United States","United Kingdom","Germany"],
+[1959,4,"Which star played Sugar Kane in 'Some Like It Hot'?","Marilyn Monroe","Grace Kelly","Audrey Hepburn","Elizabeth Taylor"],
+[1960,3,"Who directed the 1960 thriller 'Psycho'?","Alfred Hitchcock","Stanley Kubrick","Orson Welles","Billy Wilder"],
+[1964,1,"Which band drew a huge TV audience on 'The Ed Sullivan Show' in February 1964?","The Beatles","The Rolling Stones","The Beach Boys","The Monkees"],
+[1964,3,"Who was the lead singer of The Supremes?","Diana Ross","Aretha Franklin","Gladys Knight","Tina Turner"],
+[1966,2,"What was the starship called in the original 'Star Trek'?","USS Enterprise","USS Voyager","USS Discovery","USS Defiant"],
+[1966,4,"Which actor starred as Batman in the 1966 TV series?","Adam West","Michael Keaton","Val Kilmer","George Clooney"],
+[1969,1,"Who was the first person to walk on the Moon?","Neil Armstrong","Buzz Aldrin","Yuri Gagarin","John Glenn"],
+[1969,2,"In which U.S. state was the 1969 Woodstock festival held?","New York","California","Pennsylvania","New Jersey"],
+[1972,3,"Which company released the arcade game Pong in 1972?","Atari","Nintendo","Sega","Commodore"],
+[1974,2,"Which country was the band ABBA from?","Sweden","Norway","Denmark","Finland"],
+[1975,2,"Who directed 'Jaws'?","Steven Spielberg","George Lucas","Martin Scorsese","Brian De Palma"],
+[1975,2,"Which band recorded 'Bohemian Rhapsody'?","Queen","Led Zeppelin","Pink Floyd","The Who"],
+[1977,1,"Who directed the original 'Star Wars'?","George Lucas","Steven Spielberg","Francis Ford Coppola","Ridley Scott"],
+[1977,3,"Which actor starred as Tony Manero in 'Saturday Night Fever'?","John Travolta","Al Pacino","Sylvester Stallone","Richard Gere"],
+[1978,3,"Which actress played Sandy in the film 'Grease'?","Olivia Newton-John","Stockard Channing","Farrah Fawcett","Goldie Hawn"],
+[1978,4,"Which Japanese company released 'Space Invaders' in 1978?","Taito","Namco","Nintendo","Capcom"],
+[1980,4,"Erno Rubik, inventor of the Rubik's Cube, was from which country?","Hungary","Romania","Austria","Poland"],
+[1981,4,"What was the first music video played on MTV in 1981?","Video Killed the Radio Star","Thriller","Girls Just Want to Have Fun","Take On Me"],
+[1982,1,"Which artist released the album 'Thriller' in 1982?","Michael Jackson","Prince","Madonna","Stevie Wonder"],
+[1982,1,"In 'E.T. the Extra-Terrestrial', what does the alien want to do?","Phone home","Fly a plane","Win a race","Join a band"],
+[1984,3,"In which country was the game Tetris created?","Soviet Union","Japan","United States","Germany"],
+[1984,2,"Which singer released 'Like a Virgin' in 1984?","Madonna","Cyndi Lauper","Whitney Houston","Janet Jackson"],
+[1985,1,"What kind of car is the time machine in 'Back to the Future'?","DeLorean","Mustang","Corvette","Camaro"],
+[1985,2,"Which company released 'Super Mario Bros.' in 1985?","Nintendo","Sega","Atari","Sony"],
+[1991,2,"Which band released the album 'Nevermind' in 1991?","Nirvana","Pearl Jam","Soundgarden","Foo Fighters"],
+[1994,1,"In 'Friends', what is the name of the coffee shop?","Central Perk","Java Joe's","The Grind","Starbrew"],
+[1995,3,"'Toy Story' was the first feature-length film made entirely with what?","Computer animation","Stop motion","Hand-drawn animation","Puppets"],
+[1996,1,"In 'Pokemon', which Pokemon is Ash's main partner?","Pikachu","Charmander","Bulbasaur","Squirtle"],
+[1996,2,"Which group released the 1996 hit 'Wannabe'?","Spice Girls","All Saints","Destiny's Child","TLC"],
+[1996,4,"Tamagotchi, the 1996 digital pet, came from which country?","Japan","South Korea","China","United States"],
+[1997,1,"Which actor played Jack in 'Titanic'?","Leonardo DiCaprio","Brad Pitt","Matt Damon","Tom Cruise"],
+[1997,1,"Who wrote 'Harry Potter and the Philosopher's Stone'?","J. K. Rowling","Roald Dahl","C. S. Lewis","Philip Pullman"],
+[1999,2,"In 'The Matrix', which color pill does Neo take to learn the truth?","Red","Blue","Green","Yellow"],
+[2001,1,"What kind of creature is Shrek?","An ogre","A troll","A giant","A goblin"],
+[2001,2,"Which company released the iPod in 2001?","Apple","Sony","Microsoft","Samsung"],
+[2001,2,"Who directed 'The Lord of the Rings' film trilogy?","Peter Jackson","James Cameron","Ridley Scott","George Lucas"],
+[2004,1,"Who is best known as the founder of Facebook?","Mark Zuckerberg","Jack Dorsey","Evan Spiegel","Larry Page"],
+[2005,4,"What was the title of the first video uploaded to YouTube in 2005?","Me at the zoo","Charlie bit my finger","Evolution of Dance","Leave Britney Alone"],
+[2005,2,"Who wrote the novel 'Twilight'?","Stephenie Meyer","Suzanne Collins","J. K. Rowling","Veronica Roth"],
+[2006,2,"Which company made the Wii console?","Nintendo","Sony","Microsoft","Sega"],
+[2007,2,"Which Apple CEO unveiled the first iPhone in 2007?","Steve Jobs","Tim Cook","Steve Wozniak","Bill Gates"],
+[2009,3,"What are the blue beings in 'Avatar' called?","Na'vi","Klingons","Vulcans","Ewoks"],
+[2011,2,"Which house's motto in 'Game of Thrones' is 'Winter Is Coming'?","Stark","Lannister","Targaryen","Baratheon"],
+[2012,1,"Which actor played Iron Man in the Marvel films?","Robert Downey Jr.","Chris Evans","Chris Hemsworth","Mark Ruffalo"],
+[2012,3,"Which company bought Instagram in 2012?","Facebook","Google","Twitter","Snapchat"],
+[2013,1,"Which song from 'Frozen' won an Oscar for Best Original Song?","Let It Go","Do You Want to Build a Snowman?","For the First Time in Forever","Love Is an Open Door"],
+[2015,3,"Who created the Broadway musical 'Hamilton'?","Lin-Manuel Miranda","Andrew Lloyd Webber","Stephen Sondheim","Jonathan Larson"],
+[2017,3,"Which company made 'Fortnite'?","Epic Games","Activision","Valve","Riot Games"],
+[2019,2,"Which artist had the 2019 hit 'Old Town Road'?","Lil Nas X","Post Malone","Drake","Travis Scott"],
+[2020,2,"Which K-pop group released the 2020 hit 'Dynamite'?","BTS","BLACKPINK","EXO","TWICE"],
+[2021,2,"Which country is the series 'Squid Game' from?","South Korea","Japan","China","Thailand"],
+[2022,1,"Which company launched ChatGPT in November 2022?","OpenAI","Google","Meta","Microsoft"],
+[2022,3,"Which newspaper bought the word game Wordle in 2022?","The New York Times","The Washington Post","The Guardian","USA Today"],
+[2022,4,"Which film won Best Picture at the 2023 Oscars?","Everything Everywhere All at Once","The Banshees of Inisherin","Top Gun: Maverick","Avatar: The Way of Water"],
+[2023,1,"Which singer's 'Eras Tour' became a record-breaking 2023 tour?","Taylor Swift","Beyonce","Adele","Harry Styles"],
+[2023,3,"Who directed the 2023 film 'Barbie'?","Greta Gerwig","Sofia Coppola","Nora Ephron","Patty Jenkins"],
+[2023,3,"Who directed the 2023 film 'Oppenheimer'?","Christopher Nolan","Denis Villeneuve","Martin Scorsese","Ridley Scott"]
+];
+
+var ERAS = [
+["The whole millennium (1000 to 2029)",1000,2029],
+["Medieval (1000 to 1499)",1000,1499],
+["Early modern (1500 to 1799)",1500,1799],
+["The 1800s",1800,1899],
+["1900 to 1949",1900,1949],
+["The 1950s",1950,1959],["The 1960s",1960,1969],["The 1970s",1970,1979],
+["The 1980s",1980,1989],["The 1990s",1990,1999],["The 2000s",2000,2009],
+["The 2010s",2010,2019],["The 2020s",2020,2029]
+];
+
+var COLS = 5, tiles = [], players = [], cur = 0, eraName = "";
+var app = document.getElementById("app");
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+function shuffle(a) {
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function loadLB() {
+  try { return JSON.parse(localStorage.getItem("pt_lb") || "[]"); } catch (e) { return []; }
+}
+function badges(p) {
+  return (p.double > 0 ? " [2x]" : "") + (p.shield > 0 ? " [shield]" : "");
+}
+function cell(r, c) {
+  return tiles.filter(function (t) { return t.r === r && t.c === c; })[0];
+}
+function neighbors(t) {
+  return tiles.filter(function (o) {
+    return !o.gone && o !== t &&
+      ((o.c === t.c && Math.abs(o.r - t.r) === 1) || (o.r === t.r && Math.abs(o.c - t.c) === 1));
+  });
+}
+
+function home() {
+  var h = '<h1>Pop Time Machine</h1><div class="card"><p><b>Pick your era</b></p><select id="era">';
+  ERAS.forEach(function (e, i) { h += '<option value="' + i + '">' + e[0] + '</option>'; });
+  h += '</select></div><div class="card"><p><b>Players</b> (1 to 4, leave extras blank)</p>';
+  for (var i = 0; i < 4; i++) { h += '<input class="nm" placeholder="Player ' + (i + 1) + '" maxlength="16">'; }
+  h += '</div><div class="card small">Tiles are worth 100 to 400. Miss a question and the next player can steal it. ' +
+       'Hidden bomb tiles blow up their neighbors, and prize tiles give power-ups. Player 1\'s creature grows with every correct answer.</div>' +
+       '<button id="go">Start</button><button id="lb">Leaderboard</button>' +
+       '<p class="small">Fan-made trivia. The question bank is a sample set.</p>';
+  app.innerHTML = h;
+  document.getElementById("go").addEventListener("click", start);
+  document.getElementById("lb").addEventListener("click", showLB);
+}
+
+function start() {
+  var era = ERAS[Number(document.getElementById("era").value)];
+  eraName = era[0];
+  var names = [];
+  app.querySelectorAll("input.nm").forEach(function (i) {
+    if (i.value.trim()) { names.push(i.value.trim()); }
+  });
+  if (!names.length) { names = ["Player 1", "Player 2"]; }
+  players = names.map(function (n) { return { name: n, score: 0, double: 0, shield: 0 }; });
+  cur = 0;
+  if (window.Creature) { players[0].shield += Creature.startShields(); Creature.startRun(); }
+  buildBoard(era);
+  showBoard();
+}
+
+function buildBoard(era) {
+  var pool = Q.filter(function (q) { return q[0] >= era[1] && q[0] <= era[2]; });
+  tiles = [];
+  for (var r = 0; r < 4; r++) {
+    var row = shuffle(pool.filter(function (q) { return q[1] === r + 1; })).slice(0, COLS);
+    row.forEach(function (q, c) {
+      tiles.push({ r: r, c: c, tier: r + 1, q: q, gone: false, boom: false, dead: false, bomb: false, prize: null });
+    });
+  }
+  var mid = shuffle(tiles.filter(function (t) { return t.tier >= 2; }));
+  var nb = Math.min(2, Math.floor(tiles.length / 8));
+  var np = Math.min(3, Math.floor(tiles.length / 6));
+  for (var i = 0; i < nb && i < mid.length; i++) { mid[i].bomb = true; }
+  for (var j = nb; j < nb + np && j < mid.length; j++) {
+    mid[j].prize = Math.random() < 0.5 ? "2x" : "shield";
+  }
+}
+
+function showBoard() {
+  var h = '<h1>Pop Time Machine</h1><p class="small" style="text-align:center">' + esc(eraName) + '</p><div class="sc">';
+  players.forEach(function (p, i) {
+    h += '<span class="pl' + (i === cur ? ' on' : '') + '">' + esc(p.name) + ' ' + p.score + badges(p) + '</span>';
+  });
+  h += '</div><p class="small" style="text-align:center">' + esc(players[cur].name) + ', pick a tile.</p><div class="grid">';
+  for (var r = 0; r < 4; r++) {
+    if (!tiles.some(function (t) { return t.r === r; })) { continue; }
+    for (var c = 0; c < COLS; c++) {
+      var t = cell(r, c);
+      if (!t) { h += '<div></div>'; }
+      else if (t.gone) { h += '<div class="gone">' + (t.boom ? '&#128165;' : t.dead ? '&#10007;' : '&#10003;') + '</div>'; }
+      else { h += '<button class="tile" data-r="' + r + '" data-c="' + c + '">' + ((r + 1) * 100) + '</button>'; }
+    }
+  }
+  h += '</div>';
+  app.innerHTML = h;
+  app.querySelectorAll("button.tile").forEach(function (b) {
+    b.addEventListener("click", function () {
+      ask(cell(Number(b.dataset.r), Number(b.dataset.c)), cur, false, null);
+    });
+  });
+}
+
+function ask(t, who, steal, banned) {
+  var opts = shuffle(t.q.slice(3)).filter(function (o) { return o !== banned; });
+  if (who === 0 && window.Creature) { opts = Creature.trim(opts, t.q[3]); }
+  var h = '<h1>' + (steal ? 'STEAL! ' : '') + (t.tier * 100) + ' points</h1><div class="card">' +
+          '<p class="small">' + esc(players[who].name) + ' is up</p>' + (who === 0 && window.Creature ? Creature.note() : '');
+  if (t.bomb) { h += '<p>&#128163; Bomb tile: a correct answer blows up the tiles next to it!</p>'; }
+  if (t.prize) { h += '<p>&#127873; Prize tile: a correct answer wins a power-up!</p>'; }
+  h += '<p><b>' + esc(t.q[2]) + '</b></p>';
+  opts.forEach(function (o, i) { h += '<button class="opt" data-i="' + i + '">' + esc(o) + '</button>'; });
+  h += '</div>';
+  app.innerHTML = h;
+  var btns = app.querySelectorAll("button.opt");
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var picked = opts[Number(b.dataset.i)];
+      var right = picked === t.q[3];
+      btns.forEach(function (x) {
+        x.disabled = true;
+        if (opts[Number(x.dataset.i)] === t.q[3]) { x.className = "opt good"; }
+      });
+      if (!right) { b.className = "opt bad"; }
+      resolve(t, who, steal, right, picked);
+    });
+  });
+}
+
+function resolve(t, who, steal, right, picked) {
+  var p = players[who], n = players.length, msg = "", after;
+  if (right) {
+    var pts = t.tier * 100;
+    if (who === 0 && window.Creature) { pts = Math.round(pts * Creature.scoreBoost()); }
+    if (p.double > 0) { pts *= 2; p.double--; msg += "2x power-up used! "; }
+    p.score += pts; t.gone = true;
+    msg += esc(p.name) + " scores " + pts + "! ";
+    if (who === 0 && window.Creature) { var cn = Creature.feed(t.tier, eraName); if (cn) { msg += cn + " "; } }
+    if (t.bomb) {
+      var ns = neighbors(t), bonus = 0;
+      ns.forEach(function (x) { x.gone = true; x.boom = true; bonus += x.tier * 50; });
+      p.score += bonus;
+      msg += "&#128165; BOOM! " + ns.length + " nearby questions explode (+" + bonus + " bonus). ";
+    }
+    if (t.prize) {
+      if (t.prize === "2x") { p.double++; msg += "&#127873; Prize: double points on your next correct answer! "; }
+      else { p.shield++; msg += "&#127873; Prize: a shield against steals! "; }
+    }
+    after = function () { cur = steal ? who : (who + 1) % n; next(); };
+  } else if (!steal && n > 1 && p.shield <= 0) {
+    msg = esc(p.name) + " missed. " + esc(players[(who + 1) % n].name) + " can try to steal it!";
+    after = function () { ask(t, (who + 1) % n, true, picked); };
+  } else {
+    if (!steal && p.shield > 0) { p.shield--; msg += "Shield used: no steal allowed. "; }
+    msg += "Nobody scored. The tile is burned." + (t.bomb ? " The bomb was a dud." : "");
+    t.gone = true; t.dead = true;
+    after = function () { cur = (who + 1) % n; next(); };
+  }
+  var box = document.createElement("div");
+  box.className = "card";
+  box.innerHTML = msg;
+  app.appendChild(box);
+  var nb = document.createElement("button");
+  nb.textContent = "Continue";
+  nb.addEventListener("click", function () { after(); });
+  app.appendChild(nb);
+}
+
+function next() {
+  if (tiles.every(function (t) { return t.gone; })) { end(); } else { showBoard(); }
+}
+
+function end() {
+  var ranked = players.slice().sort(function (a, b) { return b.score - a.score; });
+  var lb = loadLB();
+  ranked.forEach(function (p) { lb.push({ name: p.name, era: eraName, score: p.score }); });
+  lb.sort(function (a, b) { return b.score - a.score; });
+  try { localStorage.setItem("pt_lb", JSON.stringify(lb.slice(0, 50))); } catch (e) {}
+  var h = '<h1>Game over!</h1><div class="card"><p><b>' + esc(ranked[0].name) + ' wins!</b></p><table><tr><th>#</th><th>Player</th><th>Score</th></tr>';
+  ranked.forEach(function (p, i) { h += '<tr><td>' + (i + 1) + '</td><td>' + esc(p.name) + '</td><td>' + p.score + '</td></tr>'; });
+  h += '</table></div><button id="lb">Leaderboard</button><button id="again">Play again</button>';
+  app.innerHTML = h;
+  document.getElementById("lb").addEventListener("click", showLB);
+  document.getElementById("again").addEventListener("click", home);
+}
+
+function showLB() {
+  var lb = loadLB().slice(0, 10);
+  var h = '<h1>Leaderboard</h1><div class="card">';
+  if (!lb.length) { h += '<p>No scores yet.</p>'; }
+  else {
+    h += '<table><tr><th>#</th><th>Player</th><th>Era</th><th>Score</th></tr>';
+    lb.forEach(function (e, i) {
+      h += '<tr><td>' + (i + 1) + '</td><td>' + esc(e.name) + '</td><td>' + esc(e.era) + '</td><td>' + e.score + '</td></tr>';
+    });
+    h += '</table>';
+  }
+  h += '<p class="small">Scores are saved on this device.</p></div><button id="back">Back</button>';
+  app.innerHTML = h;
+  document.getElementById("back").addEventListener("click", home);
+}
+
+home();
+</script>
+<script data-goatcounter="https://abimaels-andromeda.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<div id="fb" style="position:fixed;bottom:0;left:0;right:0;padding:6px;background:rgba(0,0,0,.8);color:#fff;font-family:sans-serif;font-size:14px;text-align:center;z-index:99999">
+Enjoying this game?
+<button onclick="vote('up')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128077;</button>
+<button onclick="vote('down')" style="font-size:18px;width:auto;margin:0 4px;padding:4px 10px">&#128078;</button>
+<span id="fbmsg"></span>
+</div>
+<script>
+function vote(kind) {
+  var key = 'voted:' + location.pathname;
+  try {
+    if (localStorage.getItem(key)) {
+      document.getElementById('fbmsg').textContent = 'You already voted';
+      return;
+    }
+  } catch (e) {}
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({path: 'thumbs-' + kind + location.pathname, title: 'Thumbs ' + kind, event: true});
+  }
+  try { localStorage.setItem(key, '1'); } catch (e) {}
+  document.getElementById('fbmsg').textContent = 'Thanks!';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;600&display=swap");
+
+:root {
+  --ink: #06070a;
+  --panel: rgba(15, 17, 25, 0.9);
+  --pearl: #efeae0;
+  --text: #ebe7f2;
+  --muted: #a6a2b8;
+  --gold: #e6d3a1;
+  --ab: linear-gradient(120deg, #1d7a74, #46c2b4, #8f7fd1, #e8a3cf, #9fe3c4, #3a8fc1);
+}
+
+html { background: var(--ink); }
+body {
+  background:
+    radial-gradient(1100px 600px at 8% -10%, rgba(70, 194, 180, 0.14), transparent 60%),
+    radial-gradient(900px 520px at 110% 8%, rgba(143, 127, 209, 0.16), transparent 60%),
+    radial-gradient(900px 640px at 50% 120%, rgba(232, 163, 207, 0.1), transparent 60%),
+    var(--ink);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+}
+h1, h2 {
+  font-family: Cinzel, Georgia, serif;
+  letter-spacing: 0.06em;
+  background: var(--ab);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.small, header p, .desc { color: var(--muted); }
+.card, a.card {
+  background: linear-gradient(var(--panel), var(--panel)) padding-box, var(--ab) border-box;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text);
+}
+a.card .score { color: var(--gold); }
+button, a.btn {
+  font-family: inherit;
+  background: linear-gradient(#10121a, #10121a) padding-box, var(--ab) border-box;
+  border: 1px solid transparent;
+  color: var(--text);
+  border-radius: 10px;
+}
+button:hover, a.btn:hover { filter: brightness(1.18); }
+button.alt { background: linear-gradient(#1a1430, #1a1430) padding-box, var(--ab) border-box; }
+button.opt { background: linear-gradient(#0b0d13, #0b0d13) padding-box, linear-gradient(120deg, #2a3040, #3b3552) border-box; }
+button.good { background: #2e9e5b; border: 1px solid #2e9e5b; color: #fff; }
+button.bad { background: #b03a3a; border: 1px solid #b03a3a; color: #fff; }
+.tile { color: var(--gold); font-family: Cinzel, Georgia, serif; }
+.pl { background: #131622; border: 1px solid #2a2e3e; }
+.pl.on { background: linear-gradient(#1b1630, #1b1630) padding-box, var(--ab) border-box; border: 1px solid transparent; }
+input, select { background: #0b0d13; border: 1px solid #2a2e3e; color: var(--text); }
+.bar { background: #1b1f2c; }
+td, th { border-bottom: 1px solid #262a38; }
+
+/* The one light color: creatures stand on pearl */
+.v3d {
+  background: var(--pearl);
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+}
+.grid button:not(.tile) { background: var(--pearl); color: #15151d; border: 0; }
+#creature-badge { background: var(--pearl) !important; color: #15151d !important; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
+#creature-badge a { color: #15151d !important; }
