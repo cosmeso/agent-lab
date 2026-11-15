@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Village</title>
+<!-- no-feedback-bar -->
+<style>
+html, body { margin: 0; height: 100%; overflow: hidden; background: #05060b; }
+#world { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#hud-quest {
+  position: fixed; top: 12px; left: 12px; max-width: 46vw; padding: 10px 14px; border-radius: 12px;
+  background: rgba(8, 10, 16, 0.78); color: #ebe7f2; font: 14px/1.4 Inter, system-ui, sans-serif;
+  border: 1px solid rgba(143, 127, 209, 0.5); z-index: 5; pointer-events: none;
+}
+#hud-quest b { color: #e6d3a1; font-family: Cinzel, Georgia, serif; letter-spacing: .05em; }
+.tag {
+  position: fixed; transform: translate(-50%, -100%); padding: 3px 9px; border-radius: 10px; white-space: nowrap;
+  background: rgba(8, 10, 16, 0.72); color: #ebe7f2; font: 12px Inter, system-ui, sans-serif;
+  border: 1px solid rgba(70, 194, 180, 0.55); pointer-events: none; z-index: 4;
+}
+#prompt {
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); display: none; z-index: 6;
+  padding: 12px 22px; border-radius: 14px; font: 600 16px Inter, system-ui, sans-serif; color: #15151d; cursor: pointer;
+  background: #efeae0; border: 0; box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6); width: auto;
+}
+#talk {
+  position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); width: min(560px, 90vw); display: none; z-index: 6;
+  padding: 14px 18px; border-radius: 14px; background: rgba(8, 10, 16, 0.9); color: #ebe7f2;
+  font: 15px/1.5 Inter, system-ui, sans-serif; border: 1px solid rgba(232, 163, 207, 0.6);
+}
+#talk b { display: block; color: #e6d3a1; font-family: Cinzel, Georgia, serif; margin-bottom: 4px; }
+#stick {
+  position: fixed; left: 24px; bottom: 24px; width: 120px; height: 120px; border-radius: 50%; display: none; z-index: 5;
+  background: rgba(239, 234, 224, 0.12); border: 2px solid rgba(239, 234, 224, 0.35); touch-action: none;
+}
+#knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(239, 234, 224, 0.55); }
+#help { position: fixed; right: 12px; bottom: 12px; color: #a6a2b8; font: 12px Inter, system-ui, sans-serif; z-index: 4; pointer-events: none; }
+#overlay { position: fixed; inset: 0; display: none; z-index: 100001; background: rgba(4, 5, 9, 0.85); }
+#overlay iframe { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); border: 0; background: #06070a; }
+#overlay-bar { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box; }
+#overlay-title { color: #e6d3a1; font: 700 18px Cinzel, Georgia, serif; letter-spacing: .06em; }
+#overlay-close { width: auto; margin: 0; padding: 9px 16px; border-radius: 10px; border: 0; background: #efeae0; color: #15151d; font: 600 14px Inter, system-ui, sans-serif; cursor: pointer; }
+#intro { position: fixed; inset: 0; z-index: 100002; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 30%, rgba(70, 194, 180, 0.18), rgba(5, 6, 11, 0.96) 70%); }
+#intro .box { max-width: 520px; padding: 28px; text-align: center; color: #ebe7f2; font: 15px/1.6 Inter, system-ui, sans-serif; }
+#intro h1 { margin: 0 0 4px; font: 700 34px Cinzel, Georgia, serif; letter-spacing: .06em;
+  background: linear-gradient(120deg, #46c2b4, #8f7fd1, #e8a3cf, #9fe3c4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#intro .sub { color: #e6d3a1; font-family: Cinzel, Georgia, serif; letter-spacing: .12em; margin-bottom: 18px; }
+#intro .keys { color: #a6a2b8; font-size: 13px; margin-top: 14px; }
+#enter { width: auto; margin-top: 18px; padding: 13px 30px; border-radius: 12px; border: 0; background: #efeae0; color: #15151d; font: 700 16px Inter, system-ui, sans-serif; cursor: pointer; }
+#nogl { display: none; position: fixed; inset: 0; z-index: 100003; background: #05060b; color: #ebe7f2; font: 16px Inter, system-ui, sans-serif; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+body.in-game #creature-badge, body.in-game #fb { display: none !important; }
+</style>
+<link rel="stylesheet" href="../../shared/theme.css">
+</head>
+<body>
+<canvas id="world"></canvas>
+<div id="hud-quest"></div>
+<div id="tags"></div>
+<button id="prompt"></button>
+<div id="talk"></div>
+<div id="stick"><div id="knob"></div></div>
+<div id="help">WASD or arrows to walk &middot; Shift to run &middot; drag to look &middot; E to interact</div>
+<div id="overlay"><div id="overlay-bar"><span id="overlay-title"></span><button id="overlay-close">Back to the village</button></div><iframe id="frame" title="Game"></iframe></div>
+<div id="intro"><div class="box">
+  <h1>Abimael's Andromeda</h1>
+  <div class="sub">THE UTOPIAN GALAXIES</div>
+  <p>Night has settled over a small village, half above the earth and half below it. Burrow homes of ash wood and glistening blue mud glow softly, and the old arcade machines still hum.</p>
+  <p>Somewhere in the village, the Egg Shrine has awoken. It is waiting to find the egg that matches you.</p>
+  <button id="enter">Enter the village</button>
+  <div class="keys">Computer: WASD or arrows to walk, Shift to run, drag to look, E to interact.<br>Phone: left circle to walk, drag the screen to look, tap the button that appears.</div>
+</div></div>
+<div id="nogl">Your browser can't show this 3D world. Try the latest Chrome, Safari, or Firefox.</div>
+<script src="../../shared/creature.js"></script>
+<script>
+(function () {
+  "use strict";
+  var canvas = document.getElementById("world");
+  var gl = canvas.getContext("webgl2", { antialias: true });
+  if (!gl) { document.getElementById("nogl").style.display = "flex"; return; }
+
+  // ---------- small math library ----------
+  function perspective(fovy, aspect, near, far) {
+    var f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+    return [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0];
+  }
+  function lookAt(e, c, up) {
+    var zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2];
+    var l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+    var xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+    l = Math.hypot(xx, xy, xz); xx /= l; xy /= l; xz /= l;
+    var yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    return [xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0,
+      -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1];
+  }
+  function mul(a, b) {
+    var o = new Array(16);
+    for (var i = 0; i < 4; i++) {
+      for (var j = 0; j < 4; j++) {
+        o[j * 4 + i] = a[i] * b[j * 4] + a[4 + i] * b[j * 4 + 1] + a[8 + i] * b[j * 4 + 2] + a[12 + i] * b[j * 4 + 3];
+      }
+    }
+    return o;
+  }
+  function model(x, y, z, rotY, s) {
+    var c = Math.cos(rotY) * s, n = Math.sin(rotY) * s;
+    return [c, 0, -n, 0, 0, s, 0, 0, n, 0, c, 0, x, y, z, 1];
+  }
+  function hex(h) { var v = parseInt(h.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255]; }
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+  // ---------- shaders ----------
+  var VS = "#version 300 es\n" +
+    "in vec3 aPos; in vec3 aNor; in vec3 aCol; in vec3 aMat;\n" +
+    "uniform mat4 uVP; uniform mat4 uM;\n" +
+    "out vec3 vP; out vec3 vN; out vec3 vC; out vec3 vMat;\n" +
+    "void main(){ vec4 w = uM * vec4(aPos,1.0); vP = w.xyz; vN = normalize(mat3(uM) * aNor); vC = aCol; vMat = aMat; gl_Position = uVP * w; }";
+  var FS = "#version 300 es\nprecision highp float;\n" +
+    "in vec3 vP; in vec3 vN; in vec3 vC; in vec3 vMat; out vec4 frag;\n" +
+    "uniform vec3 uCam; uniform vec3 uMoon; uniform vec3 uMoonCol; uniform vec3 uAmb; uniform vec3 uFog; uniform float uFogD;\n" +
+    "uniform float uTime; uniform float uNoFog; uniform vec4 uL[12]; uniform vec3 uLC[12]; uniform int uNL;\n" +
+    "float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }\n" +
+    "void main(){\n" +
+    "  vec3 N = normalize(vN); vec3 V = normalize(uCam - vP); float f = clamp(dot(N,V),0.0,1.0);\n" +
+    "  vec3 base = vC;\n" +
+    "  vec3 iri = 0.5 + 0.5*cos(6.2831*(f*1.4 + vP.y*0.06 + uTime*0.04 + vec3(0.0,0.33,0.67)));\n" +
+    "  base = mix(base, base*0.35 + iri*0.8, vMat.x);\n" +
+    "  vec3 lit = uAmb*(0.55+0.45*N.y) + uMoonCol*max(dot(N,uMoon),0.0);\n" +
+    "  for(int i=0;i<12;i++){ if(i>=uNL) break; vec3 d = uL[i].xyz - vP; float dist = length(d);\n" +
+    "    float att = clamp(1.0 - dist/uL[i].w, 0.0, 1.0); att *= att;\n" +
+    "    lit += uLC[i]*att*(0.35 + 0.65*max(dot(N, d/dist),0.0)); }\n" +
+    "  vec3 col = base*lit + base*vMat.y;\n" +
+    "  col += iri*pow(1.0-f,3.0)*0.55*vMat.x;\n" +
+    "  if(vMat.z > 0.0){ float s = hash(floor(vP.xz*7.0) + floor(uTime*2.5));\n" +
+    "    float wave = 0.5+0.5*sin(vP.x*1.7 + vP.z*1.3 + uTime*1.6);\n" +
+    "    col += vec3(0.25,0.7,1.0)*wave*0.35*vMat.z + vec3(1.0)*step(0.965,s)*vMat.z; }\n" +
+    "  float fogF = (1.0 - exp(-length(uCam - vP)*uFogD)) * (1.0 - uNoFog);\n" +
+    "  col = mix(col, uFog, fogF);\n" +
+    "  frag = vec4(pow(col, vec3(0.92)), 1.0);\n" +
+    "}";
+  function compile(type, src) {
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { throw new Error(gl.getShaderInfoLog(s)); }
+    return s;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.bindAttribLocation(prog, 0, "aPos"); gl.bindAttribLocation(prog, 1, "aNor");
+  gl.bindAttribLocation(prog, 2, "aCol"); gl.bindAttribLocation(prog, 3, "aMat");
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { throw new Error(gl.getProgramInfoLog(prog)); }
+  gl.useProgram(prog);
+  var U = {};
+  ["uVP", "uM", "uCam", "uMoon", "uMoonCol", "uAmb", "uFog", "uFogD", "uTime", "uNoFog", "uL", "uLC", "uNL"].forEach(function (n) {
+    U[n] = gl.getUniformLocation(prog, n);
+  });
+
+  // ---------- geometry builder ----------
+  function Builder() { this.d = []; }
+  Builder.prototype.v = function (p, n, c, m) { this.d.push(p[0], p[1], p[2], n[0], n[1], n[2], c[0], c[1], c[2], m[0], m[1], m[2]); };
+  Builder.prototype.tri = function (a, b, c, na, nb, nc, col, m) { this.v(a, na, col, m); this.v(b, nb, col, m); this.v(c, nc, col, m); };
+  Builder.prototype.flat = function (a, b, c, col, m) {
+    var ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    var n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx], l = Math.hypot(n[0], n[1], n[2]) || 1;
+    n = [n[0] / l, n[1] / l, n[2] / l];
+    this.tri(a, b, c, n, n, n, col, m);
+  };
+  function jit(c, a) { var k = 1 + (rnd() - 0.5) * a; return [c[0] * k, c[1] * k, c[2] * k]; }
+  var M0 = [0, 0, 0];
+
+  // ellipsoid, optionally cut below a height fraction (for domes)
+  Builder.prototype.sphere = function (cx, cy, cz, rx, ry, rz, seg, col, m, cut, jitter) {
+    var rings = Math.max(4, Math.round(seg / 2)), lo = cut === undefined ? -2 : cut;
+    for (var i = 0; i < rings; i++) {
+      var t0 = i / rings, t1 = (i + 1) / rings;
+      if (Math.cos(t0 * Math.PI) <= lo) { continue; }
+      var a0 = t0 * Math.PI, a1 = t1 * Math.PI;
+      for (var j = 0; j < seg; j++) {
+        var b0 = j / seg * Math.PI * 2, b1 = (j + 1) / seg * Math.PI * 2;
+        var pts = [[a0, b0], [a1, b0], [a1, b1], [a0, b1]].map(function (ab) {
+          var x = Math.sin(ab[0]) * Math.cos(ab[1]), y = Math.cos(ab[0]), z = Math.sin(ab[0]) * Math.sin(ab[1]);
+          var n = [x / rx, y / ry, z / rz], l = Math.hypot(n[0], n[1], n[2]);
+          return { p: [cx + x * rx, cy + y * ry, cz + z * rz], n: [n[0] / l, n[1] / l, n[2] / l] };
+        });
+        var c = jitter ? jit(col, jitter) : col;
+        this.tri(pts[0].p, pts[2].p, pts[1].p, pts[0].n, pts[2].n, pts[1].n, c, m);
+        this.tri(pts[0].p, pts[3].p, pts[2].p, pts[0].n, pts[3].n, pts[2].n, c, m);
+      }
+    }
+  };
+  Builder.prototype.cyl = function (cx, cy, cz, r0, r1, h, seg, col, m, jitter) {
+    var slope = (r0 - r1) / h;
+    for (var j = 0; j < seg; j++) {
+      var b0 = j / seg * Math.PI * 2, b1 = (j + 1) / seg * Math.PI * 2;
+      var c0 = Math.cos(b0), s0 = Math.sin(b0), c1 = Math.cos(b1), s1 = Math.sin(b1);
+      var n0 = [c0, slope, s0], n1 = [c1, slope, s1];
+      var l0 = Math.hypot(c0, slope, s0); n0 = n0.map(function (v) { return v / l0; }); n1 = n1.map(function (v) { return v / l0; });
+      var p00 = [cx + c0 * r0, cy, cz + s0 * r0], p01 = [cx + c1 * r0, cy, cz + s1 * r0];
+      var p10 = [cx + c0 * r1, cy + h, cz + s0 * r1], p11 = [cx + c1 * r1, cy + h, cz + s1 * r1];
+      var c = jitter ? jit(col, jitter) : col;
+      this.tri(p00, p11, p01, n0, n1, n1, c, m);
+      this.tri(p00, p10, p11, n0, n0, n1, c, m);
+      if (r1 > 0) { this.tri([cx, cy + h, cz], p11, p10, [0, 1, 0], [0, 1, 0], [0, 1, 0], c, m); }
+    }
+  };
+  Builder.prototype.box = function (cx, cy, cz, sx, sy, sz, rot, col, m) {
+    var c = Math.cos(rot), s = Math.sin(rot), self = this;
+    function P(x, y, z) { return [cx + x * c - z * s, cy + y, cz + x * s + z * c]; }
+    var hx = sx / 2, hz = sz / 2;
+    var v = [P(-hx, 0, -hz), P(hx, 0, -hz), P(hx, 0, hz), P(-hx, 0, hz), P(-hx, sy, -hz), P(hx, sy, -hz), P(hx, sy, hz), P(-hx, sy, hz)];
+    [[4, 7, 6, 5], [0, 1, 2, 3], [3, 2, 6, 7], [1, 0, 4, 5], [2, 1, 5, 6], [0, 3, 7, 4]].forEach(function (f) {
+      self.flat(v[f[0]], v[f[1]], v[f[2]], col, m);
+      self.flat(v[f[0]], v[f[2]], v[f[3]], col, m);
+    });
+  };
+  Builder.prototype.disc = function (cx, cy, cz, r, seg, col, m) {
+    for (var j = 0; j < seg; j++) {
+      var b0 = j / seg * Math.PI * 2, b1 = (j + 1) / seg * Math.PI * 2;
+      this.tri([cx, cy, cz], [cx + Math.cos(b1) * r, cy, cz + Math.sin(b1) * r], [cx + Math.cos(b0) * r, cy, cz + Math.sin(b0) * r],
+        [0, 1, 0], [0, 1, 0], [0, 1, 0], col, m);
+    }
+  };
+  Builder.prototype.ring = function (cx, cy, cz, r, tube, seg, col, m) {
+    for (var j = 0; j < seg; j++) {
+      var b = j / seg * Math.PI * 2;
+      this.box(cx + Math.cos(b) * r, cy, cz + Math.sin(b) * r, tube, tube, (Math.PI * 2 * r) / seg * 1.15, b, col, m);
+    }
+  };
+  function upload(b) {
+    var vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(b.d), gl.STATIC_DRAW);
+    for (var i = 0; i < 4; i++) { gl.enableVertexAttribArray(i); gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 48, i * 12); }
+    gl.bindVertexArray(null);
+    return { vao: vao, n: b.d.length / 12, buf: buf };
+  }
+  function free(mesh) { if (mesh) { gl.deleteBuffer(mesh.buf); gl.deleteVertexArray(mesh.vao); } }
+
+  // ---------- the land ----------
+  var WORLD_R = 46;
+  function height(x, z) {
+    var r = Math.hypot(x, z);
+    var h = 0.55 * Math.sin(x * 0.17) * Math.cos(z * 0.13) + 0.35 * Math.sin((x + z) * 0.09);
+    h *= Math.min(1, r / 14);
+    if (r > 36) { h += Math.pow((r - 36) / 10, 2) * 7; }
+    return h;
+  }
+  var C = {
+    soil: hex("#1b1a24"), moss: hex("#1f3b33"), path: hex("#5a4a3e"), ash: hex("#a49a8c"), ashLeaf: hex("#a9c3b4"),
+    leafDeep: hex("#5f8f86"), mud: hex("#2c6fb5"), mudGlow: hex("#47b6ff"), stone: hex("#4a4658"), wood: hex("#6b4c36"),
+    door: hex("#0b0b12"), warm: hex("#ffcf8a"), pink: hex("#ff7ad9"), teal: hex("#46c2b4"), gold: hex("#e6d3a1"), pearl: hex("#efeae0")
+  };
+  function pathAmount(x, z) {
+    var r = Math.hypot(x, z);
+    var ring = Math.max(0, 1 - Math.abs(r - 9) / 1.6);
+    var spokes = 0;
+    [[16, -10], [-15, 7], [7, 14], [-9, -15]].forEach(function (t) {
+      var tx = t[0], tz = t[1], L = Math.hypot(tx, tz), u = Math.max(0, Math.min(1, (x * tx + z * tz) / (L * L)));
+      var d = Math.hypot(x - tx * u, z - tz * u);
+      spokes = Math.max(spokes, Math.max(0, 1 - d / 1.3));
+    });
+    return Math.max(ring, spokes);
+  }
+
+  var world = new Builder();
+  (function terrain() {
+    var N = 92, S = 104, step = S / N;
+    function P(i, j) { var x = -S / 2 + i * step, z = -S / 2 + j * step; return [x, height(x, z), z]; }
+    function Nn(x, z) {
+      var e = 0.4, hx = height(x + e, z) - height(x - e, z), hz = height(x, z + e) - height(x, z - e);
+      var n = [-hx, 2 * e, -hz], l = Math.hypot(n[0], n[1], n[2]); return [n[0] / l, n[1] / l, n[2] / l];
+    }
+    function col(p) {
+      var a = pathAmount(p[0], p[2]), r = Math.hypot(p[0], p[2]);
+      var g = Math.min(1, Math.max(0, (r - 6) / 30));
+      var base = [C.soil[0] * (1 - g) + C.moss[0] * g, C.soil[1] * (1 - g) + C.moss[1] * g, C.soil[2] * (1 - g) + C.moss[2] * g];
+      return jit([base[0] * (1 - a) + C.path[0] * a, base[1] * (1 - a) + C.path[1] * a, base[2] * (1 - a) + C.path[2] * a], 0.12);
+    }
+    for (var i = 0; i < N; i++) {
+      for (var j = 0; j < N; j++) {
+        var a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1);
+        var cl = col(a);
+        world.tri(a, c, b, Nn(a[0], a[2]), Nn(c[0], c[2]), Nn(b[0], b[2]), cl, M0);
+        world.tri(a, d, c, Nn(a[0], a[2]), Nn(d[0], d[2]), Nn(c[0], c[2]), cl, M0);
+      }
+    }
+  })();
+
+  var solids = [];      // collision circles [x, z, r]
+  var lights = [];      // [x, y, z, radius, r, g, b]
+  var spots = [];       // interactable places
+  function ground(x, z) { return height(x, z); }
+
+  // burrow home: half-buried dome with ash ribs, a dark door and a glowing blue-mud arch
+  function burrow(x, z, r, face, glow) {
+    var y = ground(x, z);
+    world.sphere(x, y - r * 0.35, z, r, r * 0.95, r, 18, C.mud.map(function (v) { return v * 0.55; }), [0.15, 0.04, 0], -0.45, 0.18);
+    [0.05, 0.42].forEach(function (lift) {
+      var above = lift * r + r * 0.35, rr = r * Math.sqrt(Math.max(0, 1 - Math.pow(above / (r * 0.95), 2)));
+      world.ring(x, y + lift * r - 0.08, z, rr + 0.04, 0.2, 26, C.ash, M0);
+    });
+    var dx = Math.cos(face), dz = Math.sin(face);
+    var doorX = x + dx * r * 0.92, doorZ = z + dz * r * 0.92;
+    world.box(doorX, y - 0.05, doorZ, 1.25, 1.65, 0.5, face - Math.PI / 2, C.door, M0);
+    for (var t = 0; t <= 8; t++) {
+      var ang = Math.PI * t / 8, ox = Math.cos(ang) * 0.85;
+      world.box(doorX - dz * ox + dx * 0.25, y + 0.85 + Math.sin(ang) * 0.95, doorZ + dx * ox + dz * 0.25, 0.22, 0.22, 0.22, face - Math.PI / 2, C.mudGlow, [0.3, 1.4, 0.6]);
+    }
+    [-1, 1].forEach(function (s) {
+      var wx = x + Math.cos(face + s * 0.9) * r * 0.86, wz = z + Math.sin(face + s * 0.9) * r * 0.86;
+      world.sphere(wx, y + r * 0.25, wz, 0.32, 0.32, 0.32, 10, C.warm, [0, 1.6, 0]);
+    });
+    solids.push([x, z, r * 0.92]);
+    if (glow) { lights.push([doorX + dx * 1.2, y + 1.2, doorZ + dz * 1.2, 7, 0.45, 0.32, 0.18]); }
+    return { x: doorX + dx * 1.6, z: doorZ + dz * 1.6 };
+  }
+  // ash tree: pale bark, layered silver canopy, a few glowing seed pods
+  function ashTree(x, z, s) {
+    var y = ground(x, z), h = 3.2 * s;
+    world.cyl(x, y - 0.2, z, 0.32 * s, 0.17 * s, h, 8, C.ash, M0, 0.1);
+    world.sphere(x, y + h + 0.5 * s, z, 1.7 * s, 1.15 * s, 1.7 * s, 12, C.leafDeep, M0, undefined, 0.2);
+    world.sphere(x + 0.6 * s, y + h + 1.4 * s, z - 0.3 * s, 1.25 * s, 0.95 * s, 1.25 * s, 10, C.ashLeaf, [0.1, 0, 0], undefined, 0.2);
+    world.sphere(x - 0.7 * s, y + h + 1.1 * s, z + 0.4 * s, 1.1 * s, 0.85 * s, 1.1 * s, 10, C.ashLeaf, [0.1, 0, 0], undefined, 0.2);
+    for (var k = 0; k < 3; k++) {
+      var a = rnd() * 6.28;
+      world.sphere(x + Math.cos(a) * 1.3 * s, y + h - 0.1 * s, z + Math.sin(a) * 1.3 * s, 0.12, 0.2, 0.12, 6, C.teal, [0.4, 1.6, 0]);
+    }
+    solids.push([x, z, 0.55 * s]);
+  }
+  function lantern(x, z, color) {
+    var y = ground(x, z);
+    world.cyl(x, y, z, 0.08, 0.06, 1.8, 6, C.wood, M0);
+    world.sphere(x, y + 1.95, z, 0.24, 0.3, 0.24, 10, color, [0, 2.2, 0]);
+    lights.push([x, y + 2, z, 6.5, color[0] * 0.5, color[1] * 0.5, color[2] * 0.5]);
+    solids.push([x, z, 0.25]);
+  }
+  function mudPool(x, z, r) {
+    var y = ground(x, z) + 0.04;
+    world.disc(x, y, z, r + 0.35, 20, C.soil.map(function (v) { return v * 0.6; }), M0);
+    world.disc(x, y + 0.03, z, r, 24, C.mud, [0.25, 0.55, 1.0]);
+    lights.push([x, y + 0.8, z, r * 3, 0.1, 0.35, 0.7]);
+    pools.push([x, z, r]);
+  }
+
+  // village layout
+  var homeDoors = [], pools = [];
+  [[16, 9, 3.4], [-6, 17, 3.0], [-18, -6, 3.6], [6, -18, 3.2], [20, -6, 2.8], [-14, -16, 3.0], [24, 14, 2.6], [-24, 10, 3.2]].forEach(function (b, i) {
+    var face = Math.atan2(-b[1], -b[0]);
+    homeDoors.push(burrow(b[0], b[1], b[2], face, i < 3));
+  });
+  var grandmaHome = burrow(4, 26, 3.8, Math.atan2(-26, -4), true);
+  lantern(9.6, 2, C.warm); lantern(-9.6, -2, C.warm); lantern(2, -9.6, C.warm);
+  mudPool(-6, -9, 2.4); mudPool(13, 15, 1.8);
+
+  // the Monument at the heart of the village
+  (function monument() {
+    var y = ground(0, 0);
+    world.box(0, y - 0.2, 0, 5.2, 0.7, 5.2, 0.785, C.stone, M0);
+    world.box(0, y + 0.5, 0, 3.8, 0.7, 3.8, 0.785, C.stone.map(function (v) { return v * 1.1; }), M0);
+    world.box(0, y + 1.2, 0, 2.4, 0.6, 2.4, 0.785, C.stone.map(function (v) { return v * 1.2; }), M0);
+    world.box(0, y + 1.8, 0, 1.1, 3.4, 0.5, 0, C.pearl, [1.0, 0.25, 0]);
+    for (var k = 0; k < 5; k++) { world.sphere(0, y + 2.4 + k * 0.55, 0.28, 0.09, 0.09, 0.05, 6, C.gold, [0.6, 0.8, 0]); }
+    solids.push([0, 0, 2.9]);
+    lights.push([0, y + 4, 2, 9, 0.35, 0.3, 0.5]);
+    spots.push({ id: "monument", x: 0, z: 0, r: 4.6, label: "Read the monument", tag: "The Monument", y: y + 5.8 });
+  })();
+
+  // the Egg Shrine
+  var SHRINE = { x: 16, z: -10 };
+  (function shrine() {
+    var x = SHRINE.x, z = SHRINE.z, y = ground(x, z);
+    world.cyl(x, y - 0.3, z, 3.2, 3.0, 0.6, 24, C.stone, M0);
+    world.cyl(x, y + 0.3, z, 2.4, 2.2, 0.5, 24, C.stone.map(function (v) { return v * 1.2; }), M0);
+    world.ring(x, y + 0.85, z, 2.25, 0.16, 28, C.teal, [0.8, 1.2, 0]);
+    for (var k = 0; k < 4; k++) {
+      var a = k / 4 * Math.PI * 2 + 0.4;
+      world.box(x + Math.cos(a) * 2.7, y + 0.3, z + Math.sin(a) * 2.7, 0.5, 2.6, 0.5, a, C.pearl, [0.9, 0.2, 0]);
+      world.sphere(x + Math.cos(a) * 2.7, y + 3.1, z + Math.sin(a) * 2.7, 0.22, 0.22, 0.22, 8, C.teal, [0.3, 2.0, 0]);
+    }
+    solids.push([x, z, 2.9]);
+    lights.push([x, y + 2.5, z, 10, 0.25, 0.75, 0.7]);
+    spots.push({ id: "shrine", x: x, z: z, r: 4.8, label: "Visit the Egg Shrine", tag: "Egg Shrine", y: y + 4.6 });
+  })();
+
+  // the old arcade: dated cabinets under an ash-wood awning
+  var GAMES = [
+    { path: "pop-time-machine", name: "Pop Time Machine", col: hex("#8f7fd1") },
+    { path: "football-trivia", name: "Football Trivia", col: hex("#2e9e5b") },
+    { path: "memory-match", name: "Memory Match", col: hex("#ff7ad9") },
+    { path: "game-002", name: "Click the Green", col: hex("#9fe3c4") },
+    { path: "game-001", name: "Escape the Grid", col: hex("#ffcf8a") }
+  ];
+  var ARC = { x: -15, z: 7 };
+  (function arcade() {
+    var cx = ARC.x, cz = ARC.z, y0 = ground(cx, cz), face = Math.atan2(-cz, -cx);
+    for (var sl = 0; sl < 6; sl++) {
+      var back = -0.2 + sl * 0.95;
+      world.box(cx - Math.cos(face) * back, y0 + 3.5, cz - Math.sin(face) * back, 9.6, 0.16, 0.22, face - Math.PI / 2, C.wood, M0);
+    }
+    [-1, 1].forEach(function (s) {
+      world.box(cx - Math.cos(face) * 2.2 - Math.sin(face) * s * 4.4, y0 + 3.36, cz - Math.sin(face) * 2.2 + Math.cos(face) * s * 4.4, 0.22, 0.16, 5.4, face - Math.PI / 2, C.wood, M0);
+    });
+    [-1, 1].forEach(function (s) {
+      [0, 1].forEach(function (b) {
+        var px = cx - Math.cos(face) * (b ? 4.6 : 0.2) - Math.sin(face) * s * 4.4;
+        var pz = cz - Math.sin(face) * (b ? 4.6 : 0.2) + Math.cos(face) * s * 4.4;
+        world.cyl(px, ground(px, pz) - 0.1, pz, 0.2, 0.18, 3.5, 8, C.ash, M0);
+        solids.push([px, pz, 0.3]);
+      });
+    });
+    for (var k = 0; k < 7; k++) {
+      var lx = cx - Math.cos(face) * 0.2 - Math.sin(face) * (k - 3) * 1.4, lz = cz - Math.sin(face) * 0.2 + Math.cos(face) * (k - 3) * 1.4;
+      world.sphere(lx, y0 + 3.15, lz, 0.13, 0.13, 0.13, 6, k % 2 ? C.pink : C.teal, [0, 2, 0]);
+    }
+    GAMES.forEach(function (g, i) {
+      var off = (i - 2) * 1.75;
+      var gx = cx - Math.cos(face) * 3.2 - Math.sin(face) * off, gz = cz - Math.sin(face) * 3.2 + Math.cos(face) * off;
+      var gy = ground(gx, gz), rot = face - Math.PI / 2;
+      world.box(gx, gy, gz, 1.2, 2.3, 0.95, rot, hex("#1a1626"), M0);
+      var fx = Math.cos(face) * 0.49, fz = Math.sin(face) * 0.49;
+      world.box(gx + fx, gy + 1.25, gz + fz, 0.9, 0.7, 0.04, rot, g.col, [0.2, 1.7, 0]);
+      world.box(gx + fx * 0.9, gy + 2.05, gz + fz * 0.9, 1.1, 0.25, 0.06, rot, g.col, [0.5, 1.2, 0]);
+      world.box(gx + fx * 1.25, gy + 0.8, gz + fz * 1.25, 0.95, 0.12, 0.45, rot, hex("#2b2438"), M0);
+      solids.push([gx, gz, 0.75]);
+      spots.push({ id: "game", game: g, x: gx + Math.cos(face) * 1.1, z: gz + Math.sin(face) * 1.1, r: 1.15, label: "Play " + g.name, tag: g.name, y: gy + 2.8 });
+    });
+    lights.push([cx, y0 + 2.6, cz, 10, 0.55, 0.3, 0.6]);
+  })();
+
+  // villagers
+  var people = [
+    { id: "grandma", name: "Grandma", x: grandmaHome.x, z: grandmaHome.z, robe: hex("#7a4b8f"), shawl: hex("#e6d3a1"),
+      lines: [
+        "There you are, little one. The village is quiet tonight, the way it should be.",
+        "The Egg Shrine woke up when you arrived. Go and see which egg it chose for you.",
+        "Answer questions at the old arcade and your egg will grow. Patience, and it will hatch.",
+        "Keep your eyes open. You were always the kind who notices small things that don't add up."
+      ] },
+    { id: "chief", name: "Village Chief", x: -9.5, z: -10.5, robe: hex("#2f5d6b"), shawl: hex("#46c2b4"),
+      lines: [
+        "The glistening blue mud is for building homes, not for making little bombs. We have had enough sparks this season.",
+        "Half of us live above the ground and half below. It keeps the burrows cool and the nights bright.",
+        "Some travelers say the monument shows a picture. To me it has always been plain stone."
+      ] }
+  ];
+  people.forEach(function (p) {
+    var y = ground(p.x, p.z);
+    world.cyl(p.x, y, p.z, 0.55, 0.22, 1.5, 12, p.robe, M0, 0.1);
+    world.cyl(p.x, y + 1.15, p.z, 0.42, 0.18, 0.4, 12, p.shawl, [0.3, 0.1, 0]);
+    world.sphere(p.x, y + 1.78, p.z, 0.27, 0.3, 0.27, 12, hex("#b98a6a"), M0);
+    world.sphere(p.x, y + 1.95, p.z, 0.3, 0.18, 0.3, 10, hex("#d9d4e8"), M0);
+    solids.push([p.x, p.z, 0.6]);
+    p.step = 0;
+    spots.push({ id: "talk", who: p, x: p.x, z: p.z, r: 2.6, label: "Talk to " + p.name, tag: p.name, y: y + 2.6 });
+  });
+
+  for (var t = 0; t < 46; t++) {
+    var ang = rnd() * Math.PI * 2, rad = 13 + rnd() * 25, tx = Math.cos(ang) * rad, tz = Math.sin(ang) * rad;
+    if (pathAmount(tx, tz) > 0.15) { continue; }
+    var near = solids.some(function (s) { return Math.hypot(s[0] - tx, s[1] - tz) < s[2] + 2.4; }) ||
+      pools.some(function (q) { return Math.hypot(q[0] - tx, q[1] - tz) < q[2] + 2; });
+    if (!near) { ashTree(tx, tz, 0.8 + rnd() * 0.6); }
+  }
+
+  var worldMesh = upload(world);
+
+  // sky: gradient dome and stars
+  var skyB = new Builder();
+  (function sky() {
+    var R = 160, seg = 32, rings = 16;
+    var top = hex("#070814"), mid = hex("#14183a"), hor = hex("#1d4a55");
+    function sc(y) {
+      var t = Math.max(0, y / R);
+      return t < 0.25 ? [hor[0] + (mid[0] - hor[0]) * t * 4, hor[1] + (mid[1] - hor[1]) * t * 4, hor[2] + (mid[2] - hor[2]) * t * 4]
+        : [mid[0] + (top[0] - mid[0]) * (t - 0.25) / 0.75, mid[1] + (top[1] - mid[1]) * (t - 0.25) / 0.75, mid[2] + (top[2] - mid[2]) * (t - 0.25) / 0.75];
+    }
+    for (var i = 0; i < rings; i++) {
+      var a0 = i / rings * Math.PI, a1 = (i + 1) / rings * Math.PI;
+      for (var j = 0; j < seg; j++) {
+        var b0 = j / seg * Math.PI * 2, b1 = (j + 1) / seg * Math.PI * 2;
+        var q = [[a0, b0], [a1, b0], [a1, b1], [a0, b1]].map(function (ab) {
+          return [Math.sin(ab[0]) * Math.cos(ab[1]) * R, Math.cos(ab[0]) * R, Math.sin(ab[0]) * Math.sin(ab[1]) * R];
+        });
+        var n = [0, -1, 0];
+        skyB.v(q[0], n, sc(q[0][1]), [0, 1, 0]); skyB.v(q[1], n, sc(q[1][1]), [0, 1, 0]); skyB.v(q[2], n, sc(q[2][1]), [0, 1, 0]);
+        skyB.v(q[0], n, sc(q[0][1]), [0, 1, 0]); skyB.v(q[2], n, sc(q[2][1]), [0, 1, 0]); skyB.v(q[3], n, sc(q[3][1]), [0, 1, 0]);
+      }
+    }
+    for (var s = 0; s < 420; s++) {
+      var u = rnd() * Math.PI * 2, v = Math.acos(1 - rnd() * 0.95), rr = R * 0.93;
+      var x = Math.sin(v) * Math.cos(u) * rr, y = Math.cos(v) * rr, z = Math.sin(v) * Math.sin(u) * rr, k = 0.25 + rnd() * 0.5;
+      var tint = rnd() < 0.2 ? [0.8, 0.9, 1] : rnd() < 0.3 ? [1, 0.85, 0.95] : [1, 1, 1];
+      skyB.box(x, y, z, k, k, k, u, tint, [0, 2.5, 0]);
+    }
+    // two distant moons
+    skyB.sphere(-70, 70, -110, 9, 9, 9, 20, hex("#d9e6ff"), [0.35, 1.2, 0]);
+    skyB.sphere(-55, 52, -118, 3.5, 3.5, 3.5, 14, hex("#ffd9f0"), [0.5, 1.2, 0]);
+  })();
+  var skyMesh = upload(skyB);
+
+  // ---------- moving things ----------
+  function figureMesh() {
+    var b = new Builder();
+    b.cyl(0, 0, 0, 0.45, 0.2, 1.45, 14, hex("#232a44"), [0.25, 0.05, 0]);
+    b.cyl(0, 1.05, 0, 0.36, 0.2, 0.35, 14, hex("#46c2b4"), [0.6, 0.4, 0]);
+    b.sphere(0, 1.72, 0, 0.27, 0.3, 0.27, 14, hex("#c08f6e"), M0);
+    b.sphere(0, 1.84, -0.03, 0.29, 0.22, 0.31, 12, hex("#151320"), M0);
+    b.box(0, 1.66, 0.22, 0.34, 0.07, 0.08, 0, hex("#9fe3c4"), [0.4, 1.8, 0]);
+    return upload(b);
+  }
+  var playerMesh = figureMesh();
+
+  var eggMesh = (function () {
+    var b = new Builder();
+    b.sphere(0, 0, 0, 0.62, 0.85, 0.62, 22, C.pearl, [1.0, 0.35, 0]);
+    b.ring(0, -0.05, 0, 0.66, 0.06, 20, C.gold, [0.6, 0.8, 0]);
+    return upload(b);
+  })();
+
+  var moteMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.06, 0.06, 0.06, 6, C.mudGlow, [0, 3, 0]); return upload(b); })();
+  var motes = [];
+  for (var mI = 0; mI < 60; mI++) { motes.push({ a: rnd() * 6.28, r: 3 + rnd() * 30, h: 0.5 + rnd() * 4, s: 0.1 + rnd() * 0.3, p: rnd() * 6.28 }); }
+
+  // companion creature built from the player's egg data
+  var pet = null, petMesh = null, petPos = { x: 0, y: 1, z: 0 };
+  function buildPet() {
+    free(petMesh); petMesh = null;
+    pet = window.Creature ? Creature.get() : null;
+    if (!pet) { return; }
+    var pal = Creature.PALETTES[pet.palette].c.map(hex), glow = hex(Creature.TYPES[pet.type].glow), s = pet.stage;
+    var b = new Builder(), skin = pet.skin;
+    if (s === 0) {
+      b.sphere(0, 0, 0, 0.32, 0.44, 0.32, 18, pal[2], [pet.palette === "abalone" ? 1 : 0.7, 0.3, 0]);
+      b.ring(0, -0.05, 0, 0.33, 0.04, 16, pal[3], [0.4, 1.0, 0]);
+    } else {
+      var r = 0.3 + s * 0.1;
+      b.sphere(0, 0, 0, r, r * 0.9, r, 18, skin === "glass" ? pal[2] : pal[1], [skin === "pearl" || skin === "glass" ? 1 : 0.55, skin === "glass" ? 0.9 : 0.15, 0]);
+      [-1, 1].forEach(function (d) {
+        b.sphere(d * r * 0.36, r * 0.25, r * 0.82, r * 0.17, r * 0.17, r * 0.12, 10, hex("#07070c"), M0);
+        b.sphere(d * r * 0.36, r * 0.25, r * 0.92, r * 0.08, r * 0.08, r * 0.06, 8, glow, [0, 2.5, 0]);
+      });
+      var n = 2 + s;
+      for (var k = 0; k < n; k++) {
+        var a = (k / (n - 1) - 0.5) * 1.6;
+        if (skin === "feathers" || skin === "serpent") {
+          b.cyl(Math.sin(a) * r * 0.5, r * 0.75, -0.05, 0.05, 0.0, 0.35 + s * 0.12, 6, k % 2 ? pal[3] : pal[2], [0.8, 0.3, 0]);
+        } else if (skin === "scales") {
+          b.cyl(Math.sin(a) * r * 0.5, r * 0.7, -r * 0.2, 0.09, 0.0, 0.25 + s * 0.08, 6, pal[3], [0.5, 0.2, 0]);
+        } else {
+          b.cyl(Math.sin(a) * r * 0.45, r * 0.75, 0, 0.02, 0.02, 0.3 + s * 0.06, 5, pal[2], M0);
+          b.sphere(Math.sin(a) * r * 0.45, r * 0.75 + 0.33 + s * 0.06, 0, 0.06, 0.06, 0.06, 6, glow, [0, 2.4, 0]);
+        }
+      }
+      if (s >= 2) {
+        [-1, 1].forEach(function (d) { b.sphere(d * (r + 0.12), 0.05, -0.05, 0.08, r * 0.55, r * 0.3, 10, pal[3], [0.9, 0.4, 0]); });
+      }
+      if (s >= 3) { b.ring(0, r + 0.35, 0, 0.28, 0.04, 18, C.pearl, [1, 0.8, 0]); }
+    }
+    petMesh = upload(b);
+    petPos = { x: player.x - 1.2, y: ground(player.x, player.z) + 1.4, z: player.z + 1.2 };
+  }
+
+  // ---------- player, camera, input ----------
+  var player = { x: 0, z: 13, face: Math.PI, y: 0 };
+  var cam = { yaw: 0, pitch: 0.38, dist: 9 };
+  var keys = {}, stick = { x: 0, y: 0 }, active = false;
+  window.addEventListener("keydown", function (e) {
+    keys[e.key.toLowerCase()] = true;
+    if (!active) { return; }
+    if (e.key === "e" || e.key === "E" || e.key === "Enter") { interact(); }
+    if (e.key === "Escape") { closeOverlay(); hideTalk(); }
+  });
+  window.addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+  window.addEventListener("blur", function () { keys = {}; });
+
+  var drag = null;
+  canvas.addEventListener("pointerdown", function (e) { drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { canvas.setPointerCapture(e.pointerId); } catch (x) {} });
+  canvas.addEventListener("pointermove", function (e) {
+    if (!drag || drag.id !== e.pointerId) { return; }
+    cam.yaw -= (e.clientX - drag.x) * 0.006;
+    cam.pitch = Math.max(0.08, Math.min(1.2, cam.pitch + (e.clientY - drag.y) * 0.004));
+    drag.x = e.clientX; drag.y = e.clientY;
+  });
+  function endDrag() { drag = null; }
+  canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("wheel", function (e) { e.preventDefault(); cam.dist = Math.max(4, Math.min(18, cam.dist + e.deltaY * 0.01)); }, { passive: false });
+
+  var stickEl = document.getElementById("stick"), knob = document.getElementById("knob"), stickId = null;
+  if (window.matchMedia && matchMedia("(pointer: coarse)").matches) {
+    stickEl.style.display = "block";
+    document.getElementById("help").style.display = "none";
+  }
+  function moveStick(e) {
+    var r = stickEl.getBoundingClientRect(), dx = e.clientX - (r.left + 60), dy = e.clientY - (r.top + 60), l = Math.hypot(dx, dy);
+    if (l > 45) { dx = dx / l * 45; dy = dy / l * 45; }
+    stick.x = dx / 45; stick.y = dy / 45;
+    knob.style.left = (35 + dx) + "px"; knob.style.top = (35 + dy) + "px";
+  }
+  stickEl.addEventListener("pointerdown", function (e) { stickId = e.pointerId; try { stickEl.setPointerCapture(e.pointerId); } catch (x) {} moveStick(e); });
+  stickEl.addEventListener("pointermove", function (e) { if (e.pointerId === stickId) { moveStick(e); } });
+  function stickUp() { stickId = null; stick.x = 0; stick.y = 0; knob.style.left = "35px"; knob.style.top = "35px"; }
+  stickEl.addEventListener("pointerup", stickUp); stickEl.addEventListener("pointercancel", stickUp);
+
+  // ---------- interaction ----------
+  var promptEl = document.getElementById("prompt"), talkEl = document.getElementById("talk");
+  var overlay = document.getElementById("overlay"), frame = document.getElementById("frame");
+  var near = null;
+  promptEl.addEventListener("click", function () { interact(); });
+  function hideTalk() { talkEl.style.display = "none"; }
+  function say(name, text) { talkEl.innerHTML = "<b>" + name + "</b>" + text; talkEl.style.display = "block"; }
+  function openOverlay(title, src) {
+    hideTalk();
+    document.getElementById("overlay-title").textContent = title;
+    frame.src = src;
+    overlay.style.display = "block";
+    document.body.classList.add("in-game");
+    keys = {};
+  }
+  function closeOverlay() {
+    if (overlay.style.display !== "block") { return; }
+    overlay.style.display = "none";
+    document.body.classList.remove("in-game");
+    frame.src = "about:blank";
+    buildPet();
+    if (window.Creature && Creature.refreshBadge) { Creature.refreshBadge(); }
+    updateQuest();
+  }
+  document.getElementById("overlay-close").addEventListener("click", closeOverlay);
+  function interact() {
+    if (!near || overlay.style.display === "block") { return; }
+    if (near.id === "shrine") { openOverlay("The Egg Shrine", "../egg-finder/"); }
+    else if (near.id === "game") { openOverlay(near.game.name, "../" + near.game.path + "/"); }
+    else if (near.id === "talk") {
+      var p = near.who;
+      say(p.name, p.lines[p.step % p.lines.length]);
+      p.step++;
+    } else if (near.id === "monument") {
+      if (pet) { say("The Monument", "Your egg hums. For a moment the stone shimmers, and a picture of this very village appears inside it, glowing for you alone. Then it fades."); }
+      else { say("The Monument", "The stone looks blank to you. Some say it shimmers for those who carry an egg."); }
+    }
+  }
+  function updateQuest() {
+    var q = document.getElementById("hud-quest");
+    if (!pet) { q.innerHTML = "<b>QUEST</b><br>Find the Egg Shrine. Look for the floating egg and the teal light."; }
+    else if (pet.stage === 0) { q.innerHTML = "<b>QUEST</b><br>Your egg is waiting to hatch. Play at the old arcade, under the pink and teal lights, to help it grow."; }
+    else { q.innerHTML = "<b>QUEST</b><br>" + Creature.esc(pet.name) + " has hatched. Keep playing to help it evolve."; }
+  }
+
+  // floating name tags
+  var tagsEl = document.getElementById("tags"), tagEls = spots.map(function (s) {
+    var el = document.createElement("div"); el.className = "tag"; el.textContent = s.tag; el.style.display = "none"; tagsEl.appendChild(el); return el;
+  });
+  var petTag = document.createElement("div"); petTag.className = "tag"; petTag.style.display = "none"; tagsEl.appendChild(petTag);
+
+  // ---------- frame loop ----------
+  var W = 1, H = 1;
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener("resize", resize); resize();
+  gl.enable(gl.DEPTH_TEST);
+  gl.clearColor(0.03, 0.035, 0.07, 1);
+
+  var lightArr = new Float32Array(48), lightCol = new Float32Array(36);
+  var last = performance.now(), time = 0;
+
+  function project(vp, x, y, z) {
+    var cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12], cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13], cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
+    if (cw <= 0.1) { return null; }
+    return { x: (cx / cw * 0.5 + 0.5) * W, y: (1 - (cy / cw * 0.5 + 0.5)) * H };
+  }
+  function draw(mesh, m) { gl.uniformMatrix4fv(U.uM, false, m); gl.bindVertexArray(mesh.vao); gl.drawArrays(gl.TRIANGLES, 0, mesh.n); }
+
+  function step(dt) {
+    var mx = 0, mz = 0;
+    if (overlay.style.display !== "block") {
+      if (keys.w || keys.arrowup) { mz += 1; }
+      if (keys.s || keys.arrowdown) { mz -= 1; }
+      if (keys.a || keys.arrowleft) { mx -= 1; }
+      if (keys.d || keys.arrowright) { mx += 1; }
+      mx += stick.x; mz -= stick.y;
+    }
+    var len = Math.hypot(mx, mz);
+    if (len > 0.05) {
+      if (len > 1) { mx /= len; mz /= len; }
+      var speed = (keys.shift ? 9 : 5) * dt;
+      var fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+      var vx = (fx * mz + rx * mx), vz = (fz * mz + rz * mx);
+      player.x += vx * speed; player.z += vz * speed;
+      var want = Math.atan2(vx, vz), d = want - player.face;
+      while (d > Math.PI) { d -= Math.PI * 2; } while (d < -Math.PI) { d += Math.PI * 2; }
+      player.face += d * Math.min(1, dt * 10);
+      hideTalk();
+    }
+    solids.forEach(function (s) {
+      var dx = player.x - s[0], dz = player.z - s[1], dist = Math.hypot(dx, dz), min = s[2] + 0.45;
+      if (dist < min && dist > 0.0001) { player.x = s[0] + dx / dist * min; player.z = s[1] + dz / dist * min; }
+    });
+    var pr = Math.hypot(player.x, player.z);
+    if (pr > WORLD_R - 6) { player.x *= (WORLD_R - 6) / pr; player.z *= (WORLD_R - 6) / pr; }
+    player.y = ground(player.x, player.z);
+
+    near = null;
+    var best = 1e9;
+    spots.forEach(function (s) {
+      var dd = Math.hypot(player.x - s.x, player.z - s.z);
+      if (dd < s.r && dd < best) { best = dd; near = s; }
+    });
+    if (near && overlay.style.display !== "block") {
+      promptEl.textContent = near.label + (stickEl.style.display === "block" ? "" : "  (E)");
+      promptEl.style.display = "block";
+    } else { promptEl.style.display = "none"; if (!near) { hideTalk(); } }
+
+    if (pet) {
+      var tx = player.x - Math.sin(player.face) * 1.3 + Math.cos(player.face) * 0.9;
+      var tz = player.z - Math.cos(player.face) * 1.3 - Math.sin(player.face) * 0.9;
+      var k = Math.min(1, dt * 3);
+      petPos.x += (tx - petPos.x) * k; petPos.z += (tz - petPos.z) * k;
+      petPos.y = ground(petPos.x, petPos.z) + 1.1 + Math.sin(time * 2.2) * 0.15;
+    }
+  }
+
+  function render() {
+    var now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+    if (active) { step(dt); }
+    else { cam.yaw += dt * 0.05; player.y = ground(player.x, player.z); }
+
+    var cp = Math.cos(cam.pitch), dist = cam.dist, eye;
+    for (;;) {
+      eye = [player.x + Math.sin(cam.yaw) * dist * cp, player.y + 1.4 + Math.sin(cam.pitch) * dist, player.z + Math.cos(cam.yaw) * dist * cp];
+      var blocked = solids.some(function (s) { return s[2] > 1.5 && Math.hypot(eye[0] - s[0], eye[2] - s[1]) < s[2] + 0.6; });
+      if (!blocked || dist <= 2.5) { break; }
+      dist -= 0.5;
+    }
+    var gy = ground(eye[0], eye[2]) + 0.6; if (eye[1] < gy) { eye[1] = gy; }
+    var vp = mul(perspective(1.0, W / H, 0.1, 400), lookAt(eye, [player.x, player.y + 1.4, player.z], [0, 1, 0]));
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.uniformMatrix4fv(U.uVP, false, vp);
+    gl.uniform3fv(U.uCam, eye);
+    gl.uniform3fv(U.uMoon, [-0.42, 0.62, -0.66]);
+    gl.uniform3fv(U.uMoonCol, [0.34, 0.42, 0.62]);
+    gl.uniform3fv(U.uAmb, [0.2, 0.2, 0.3]);
+    gl.uniform3fv(U.uFog, [0.07, 0.15, 0.2]);
+    gl.uniform1f(U.uFogD, 0.022);
+    gl.uniform1f(U.uTime, time);
+
+    // pick the 12 lights closest to the player
+    var ls = lights.slice().sort(function (a, b) { return Math.hypot(a[0] - player.x, a[2] - player.z) - Math.hypot(b[0] - player.x, b[2] - player.z); }).slice(0, 12);
+    ls.forEach(function (l, i) {
+      var flick = 1 + Math.sin(time * 3 + i * 1.7) * 0.06;
+      lightArr.set([l[0], l[1], l[2], l[3]], i * 4); lightCol.set([l[4] * flick, l[5] * flick, l[6] * flick], i * 3);
+    });
+    gl.uniform4fv(U.uL, lightArr); gl.uniform3fv(U.uLC, lightCol); gl.uniform1i(U.uNL, ls.length);
+
+    gl.uniform1f(U.uNoFog, 1);
+    gl.depthMask(false);
+    draw(skyMesh, model(eye[0], 0, eye[2], 0, 1));
+    gl.depthMask(true);
+    gl.uniform1f(U.uNoFog, 0);
+    draw(worldMesh, model(0, 0, 0, 0, 1));
+    draw(playerMesh, model(player.x, player.y, player.z, player.face, 1));
+    draw(eggMesh, model(SHRINE.x, ground(SHRINE.x, SHRINE.z) + 2.3 + Math.sin(time * 1.3) * 0.2, SHRINE.z, time * 0.6, 1));
+    motes.forEach(function (m) {
+      var a = m.a + time * m.s * 0.2;
+      var x = Math.cos(a) * m.r, z = Math.sin(a) * m.r;
+      draw(moteMesh, model(x, ground(x, z) + m.h + Math.sin(time * m.s * 3 + m.p) * 0.4, z, 0, 1));
+    });
+    if (petMesh) { draw(petMesh, model(petPos.x, petPos.y, petPos.z, player.face + Math.sin(time) * 0.2, 1)); }
+    gl.bindVertexArray(null);
+
+    // name tags
+    spots.forEach(function (s, i) {
+      var el = tagEls[i], dd = Math.hypot(player.x - s.x, player.z - s.z);
+      var p = dd < 20 ? project(vp, s.x, s.y, s.z) : null;
+      if (p && active) { el.style.display = "block"; el.style.left = p.x + "px"; el.style.top = p.y + "px"; el.style.opacity = String(Math.max(0.25, 1 - dd / 20)); }
+      else { el.style.display = "none"; }
+    });
+    if (pet && active) {
+      var pp = project(vp, petPos.x, petPos.y + 0.9, petPos.z);
+      if (pp) { petTag.style.display = "block"; petTag.textContent = pet.name; petTag.style.left = pp.x + "px"; petTag.style.top = pp.y + "px"; }
+    } else { petTag.style.display = "none"; }
+
+    requestAnimationFrame(render);
+  }
+
+  document.getElementById("enter").addEventListener("click", function () {
+    document.getElementById("intro").style.display = "none";
+    active = true;
+    cam.yaw = 0;
+    canvas.focus && canvas.focus();
+  });
+
+  buildPet();
+  updateQuest();
+  window.__world = { player: player, spots: spots, interact: interact, closeOverlay: closeOverlay, nearest: function () { return near; } };
+  requestAnimationFrame(render);
+})();
+</script>
+<script data-goatcounter="https://abimaels-andromeda.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -362,6 +362,6 @@
     TYPES: TYPES, STAGES: STAGES, LINES: LINES, PALETTES: PALETTES, PAL_ORDER: PAL_ORDER, SKINS: SKINS,
     skinFor: skinFor, eggNumber: eggNumber, eggTitle: eggTitle, get: load, newEgg: newEgg, feed: feed,
     startRun: startRun, scoreBoost: scoreBoost, startShields: startShields, trim: trim, note: note,
-    svg: svg, progress: progress, esc: esc
+    svg: svg, progress: progress, esc: esc, refreshBadge: refreshBadge
   };
 })();

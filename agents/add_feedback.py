@@ -28,7 +28,7 @@ root = Path(__file__).resolve().parent.parent
 added = 0
 for page in sorted((root / "games").glob("*/index.html")):
     text = page.read_text()
-    if 'id="fb"' in text or "</body>" not in text:
+    if 'id="fb"' in text or "</body>" not in text or "no-feedback-bar" in text:
         continue
     page.write_text(text.replace("</body>", BAR + "</body>"))
     added += 1
