@@ -1,0 +1,2 @@
+- 2026-11-15 00:48 | guess a secret number from 1 to 100 with higher/lower hints | attempts: 4 | FAILED after all attempts
+- 2026-11-15 00:56 | reaction-time test: click as soon as the screen turns green | attempts: 1 | PASSED, saved as game-002

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the Number Game</title>
+<style>
+  body { background-color: #333; color: #fff; font-family: Arial, sans-serif; }
+  #game { text-align: center; margin-top: 50px; }
+  #guessInput { width: 50px; padding: 10px; font-size: 18px; }
+  #result, #instructions { margin-top: 20px; font-size: 24px; }
+  #canvas { margin-top: 50px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>Guess the Number Game</h1>
+  <p id="instructions">Guess a number between 1 and 100. You have 7 attempts.</p>
+  <input type="number" id="guessInput" min="1" max="100">
+  <button onclick="submitGuess()">Guess</button>
+  <p id="result"></p>
+  <canvas id="canvas" width="400" height="200"></canvas>
+</div>
+
+<script>
+const secretNumber = Math.floor(Math.random() * 100) + 1;
+let attempts = 7;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const guesses = [];
+
+function submitGuess() {
+  const guess = parseInt(document.getElementById('guessInput').value);
+  const result = document.getElementById('result');
+  attempts--;
+
+  if (isNaN(guess) || guess < 1 || guess > 100) {
+    result.textContent = 'Please enter a valid number between 1 and 100.';
+  } else if (guess == secretNumber) {
+    result.textContent = 'Congratulations! You guessed the number!';
+    drawVictory();
+  } else if (attempts > 0) {
+    result.textContent = guess < secretNumber ? 'Higher' : 'Lower';
+    guesses.push(guess);
+    drawGuesses(guesses);
+  } else {
+    result.textContent = `Game Over! The number was ${secretNumber}.`;
+    drawDefeat();
+  }
+}
+
+function drawVictory() {
+  ctx.fillStyle = 'green';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawDefeat() {
+  ctx.fillStyle = 'red';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawGuesses(guesses) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'blue';
+  ctx.font = '36px Arial';
+  guesses.forEach((guess, index) => {
+    ctx.fillText(guess, 50, 50 + index * 50);
+  });
+}
+</script>
+</body>
+</html>

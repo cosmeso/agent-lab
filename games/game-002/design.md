@@ -1,0 +1,5 @@
+- **Goal:** Quickly click the screen as soon as it turns green.
+- **Controls:** Left mouse click to press the screen.
+- **Rules:** The screen will turn green randomly at any time. Click as soon as you see it turn green.
+- **How You Win:** Get a high score by clicking the screen as fast as possible multiple times.
+- **How You Lose:** Miss a click because the screen turned green and you didn't click in time.

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Click the Green</title>
+<style>
+body{margin:0;background:#121212;color:#fff;font-family:sans-serif;text-align:center}
+#hud{padding:16px;font-size:20px}
+#pad{width:400px;height:400px;max-width:90vw;margin:0 auto;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;user-select:none;background:#444}
+#msg{padding:16px;color:#aaa}
+</style>
+</head>
+<body>
+<div id="hud">Last: <span id="last">-</span> ms &nbsp;&nbsp; Best: <span id="best">-</span> ms &nbsp;&nbsp; Score: <span id="score">0</span></div>
+<div id="pad">Click to start</div>
+<div id="msg">Click the pad to start. When it turns green, click as fast as you can. Clicking early loses a point.</div>
+<script>
+const pad = document.getElementById('pad');
+const lastEl = document.getElementById('last');
+const bestEl = document.getElementById('best');
+const scoreEl = document.getElementById('score');
+let state = 'idle';
+let timer = null;
+let startTime = 0;
+let best = null;
+let score = 0;
+
+function setPad(color, text) {
+  pad.style.background = color;
+  pad.textContent = text;
+}
+
+function begin() {
+  state = 'waiting';
+  setPad('#c0392b', 'Wait for green...');
+  timer = setTimeout(function () {
+    state = 'go';
+    startTime = performance.now();
+    setPad('#27ae60', 'CLICK NOW!');
+  }, 1000 + Math.random() * 3000);
+}
+
+pad.addEventListener('click', function () {
+  if (state === 'idle') {
+    begin();
+  } else if (state === 'waiting') {
+    clearTimeout(timer);
+    state = 'idle';
+    score = Math.max(0, score - 1);
+    scoreEl.textContent = score;
+    setPad('#8e44ad', 'Too soon! Click to try again');
+  } else if (state === 'go') {
+    const ms = Math.round(performance.now() - startTime);
+    state = 'idle';
+    score++;
+    scoreEl.textContent = score;
+    lastEl.textContent = ms;
+    if (best === null || ms < best) {
+      best = ms;
+      bestEl.textContent = best;
+    }
+    setPad('#2c3e50', ms + ' ms! Click to play again');
+  }
+});
+</script>
+</body>
+</html>
