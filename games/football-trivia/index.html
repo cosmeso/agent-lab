@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Football Trivia</title>
+<style>
+body{margin:0;background:#0f1a12;color:#eee;font-family:sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 20px 80px}
+h1{text-align:center}
+.card{background:#16261b;border:1px solid #2c4a35;border-radius:12px;padding:16px;margin:12px 0}
+button{background:#2e7d4f;color:#fff;border:0;border-radius:8px;padding:12px 16px;font-size:16px;margin:6px 0;cursor:pointer;width:100%}
+button.opt{background:#1f3a29;text-align:left}
+button.good{background:#2e9e5b}
+button.bad{background:#a33}
+input,select{width:100%;padding:10px;font-size:16px;margin:6px 0;border-radius:8px;border:1px solid #2c4a35;background:#0f1a12;color:#eee;box-sizing:border-box}
+.row{display:flex;align-items:center;gap:10px}
+.row label{flex:1}
+.row input{flex:2}
+.small{color:#9bb;font-size:14px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:6px;text-align:left;border-bottom:1px solid #2c4a35}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+var CATS = ["History", "Records", "Players", "Rules"];
+// [category, team, question, correct answer, wrong, wrong, wrong]
+var QUESTIONS = [
+["History","All","Which team won the first Super Bowl?","Green Bay Packers","Dallas Cowboys","New York Jets","Baltimore Colts"],
+["History","All","Which team went undefeated through the whole 1972 season, playoffs included?","Miami Dolphins","Chicago Bears","Pittsburgh Steelers","Oakland Raiders"],
+["History","All","The Super Bowl trophy is named after which coach?","Vince Lombardi","Tom Landry","Bill Walsh","Don Shula"],
+["History","All","In which year did the NFL and AFL agree to merge?","1966","1959","1972","1980"],
+["Records","All","Who holds the NFL record for career passing yards?","Tom Brady","Drew Brees","Peyton Manning","Brett Favre"],
+["Records","All","Who is the NFL's all-time leading rusher?","Emmitt Smith","Walter Payton","Barry Sanders","Frank Gore"],
+["Records","All","Who holds the career receiving yards record?","Jerry Rice","Randy Moss","Larry Fitzgerald","Terrell Owens"],
+["Records","All","Who set the single-season rushing record of 2,105 yards in 1984?","Eric Dickerson","Adrian Peterson","Barry Sanders","Jamal Lewis"],
+["Players","All","Which quarterback was nicknamed 'Joe Cool'?","Joe Montana","Joe Namath","Joe Flacco","Joe Burrow"],
+["Players","All","Which running back was nicknamed 'Sweetness'?","Walter Payton","Barry Sanders","Marshall Faulk","O.J. Simpson"],
+["Players","All","Peyton Manning won Super Bowls with the Colts and which other team?","Denver Broncos","New England Patriots","Houston Texans","Tennessee Titans"],
+["Players","All","In which round was Tom Brady drafted in 2000?","Sixth","First","Second","Fourth"],
+["Rules","All","How many points is a safety worth?","2","1","3","6"],
+["Rules","All","How many yards must the offense gain to earn a first down?","10","5","8","15"],
+["Rules","All","How many timeouts does each team get per half?","3","2","4","5"],
+["Rules","All","How long is each end zone, in yards?","10","5","15","20"],
+["History","Green Bay Packers","Lambeau Field is named after whom?","Curly Lambeau","Vince Lombardi","Bart Starr","Brett Favre"],
+["Players","Green Bay Packers","How many NFL MVP awards did Aaron Rodgers win?","4","2","3","5"],
+["Players","Green Bay Packers","Which Packers quarterback won Super Bowl XXXI?","Brett Favre","Bart Starr","Aaron Rodgers","Lynn Dickey"],
+["History","Dallas Cowboys","How many Super Bowls have the Cowboys won?","5","3","4","6"],
+["History","Dallas Cowboys","Which coach led the Cowboys from 1960 to 1988?","Tom Landry","Jimmy Johnson","Bill Parcells","Barry Switzer"],
+["Records","Dallas Cowboys","Which Cowboys running back broke the career rushing record in 2002?","Emmitt Smith","Tony Dorsett","Ezekiel Elliott","DeMarco Murray"],
+["Records","New England Patriots","How many Super Bowls did Tom Brady win with the Patriots?","6","4","5","7"],
+["History","New England Patriots","Which coach led the Patriots to six Super Bowl wins?","Bill Belichick","Bill Parcells","Pete Carroll","Mike Vrabel"],
+["History","New England Patriots","Which team did the Patriots beat in Super Bowl LI after trailing 28-3?","Atlanta Falcons","Seattle Seahawks","Carolina Panthers","Philadelphia Eagles"],
+["History","Pittsburgh Steelers","How many Super Bowls did the Steelers win in the 1970s?","4","2","3","5"],
+["History","Pittsburgh Steelers","What was Pittsburgh's famous 1970s defense called?","Steel Curtain","Purple People Eaters","Monsters of the Midway","Orange Crush"],
+["Players","Pittsburgh Steelers","Which Steelers quarterback won four Super Bowls in the 1970s?","Terry Bradshaw","Ben Roethlisberger","Kordell Stewart","Neil O'Donnell"],
+["History","San Francisco 49ers","How many Super Bowls did the 49ers win between 1982 and 1995?","5","4","6","7"],
+["History","San Francisco 49ers","Which coach built the 49ers' 1980s dynasty with the West Coast offense?","Bill Walsh","George Seifert","Mike Shanahan","Steve Mariucci"],
+["History","San Francisco 49ers","Which team did the 49ers beat in Super Bowl XXIX?","San Diego Chargers","Miami Dolphins","Cincinnati Bengals","Denver Broncos"],
+["History","Chicago Bears","Complete the nickname: 'Monsters of the ___'","Midway","Mississippi","Midwest","Meadowlands"],
+["History","Chicago Bears","Which Bears team won Super Bowl XX?","1985","1963","1977","1991"],
+["Players","Chicago Bears","Which linebacker starred on the 1985 Bears defense?","Mike Singletary","Dick Butkus","Brian Urlacher","Lawrence Taylor"],
+["History","Carolina Panthers","In which year did the Panthers play their first NFL season?","1995","1990","1993","1999"],
+["Players","Carolina Panthers","Which Panthers quarterback won the 2015 NFL MVP award?","Cam Newton","Jake Delhomme","Steve Beuerlein","Kerry Collins"],
+["History","Carolina Panthers","Which team beat the Panthers in Super Bowl 50?","Denver Broncos","New England Patriots","Seattle Seahawks","Arizona Cardinals"],
+["Players","Denver Broncos","Which quarterback led Denver to back-to-back Super Bowl wins after the 1997 and 1998 seasons?","John Elway","Peyton Manning","Craig Morton","Jake Plummer"],
+["History","Denver Broncos","What was Denver's 1970s-80s defense nicknamed?","Orange Crush","Steel Curtain","Doomsday Defense","Purple People Eaters"],
+["History","Denver Broncos","Which team did the Broncos beat in Super Bowl 50?","Carolina Panthers","San Francisco 49ers","Green Bay Packers","New England Patriots"]
+];
+
+var TEAMS = [];
+QUESTIONS.forEach(function (q) {
+  if (q[1] !== "All" && TEAMS.indexOf(q[1]) < 0) { TEAMS.push(q[1]); }
+});
+
+var app = document.getElementById("app");
+var ratings = {}, teamChoice = "All", quiz = [], idx = 0, score = 0, results = {}, playerName = "Player";
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+function shuffle(a) {
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function loadBoard() {
+  try { return JSON.parse(localStorage.getItem("fb_board") || "[]"); } catch (e) { return []; }
+}
+
+function saveScore() {
+  var board = loadBoard();
+  board.push({ name: playerName, team: teamChoice, score: score, total: quiz.length });
+  board.sort(function (a, b) { return b.score - a.score; });
+  try { localStorage.setItem("fb_board", JSON.stringify(board.slice(0, 50))); } catch (e) {}
+}
+
+function home() {
+  var html = '<h1>Football Trivia</h1><div class="card"><p><b>Step 1:</b> Rate how much you know, from 1 (rookie) to 10 (expert).</p>';
+  CATS.forEach(function (c, i) {
+    html += '<div class="row"><label>' + c + ': <b id="v' + i + '">5</b></label>' +
+            '<input type="range" min="1" max="10" value="5" id="r' + i + '"></div>';
+  });
+  html += '</div><div class="card"><p><b>Step 2:</b> Pick your questions and enter your name.</p>' +
+          '<select id="team"><option value="All">All teams</option>';
+  TEAMS.forEach(function (t) { html += '<option value="' + t + '">' + t + ' only</option>'; });
+  html += '</select><input id="name" placeholder="Your name" maxlength="20"></div>' +
+          '<button id="start">Start the quiz</button><button id="board">See the leaderboard</button>' +
+          '<p class="small">Unofficial fan trivia. Not affiliated with the NFL or any team.</p>';
+  app.innerHTML = html;
+  CATS.forEach(function (c, i) {
+    document.getElementById("r" + i).addEventListener("input", function () {
+      document.getElementById("v" + i).textContent = this.value;
+    });
+  });
+  document.getElementById("start").addEventListener("click", startQuiz);
+  document.getElementById("board").addEventListener("click", showBoard);
+}
+
+function startQuiz() {
+  ratings = {};
+  CATS.forEach(function (c, i) { ratings[c] = Number(document.getElementById("r" + i).value); });
+  teamChoice = document.getElementById("team").value;
+  playerName = document.getElementById("name").value.trim() || "Player";
+  var pool;
+  if (teamChoice === "All") {
+    pool = shuffle(QUESTIONS);
+  } else {
+    var mine = shuffle(QUESTIONS.filter(function (q) { return q[1] === teamChoice; }));
+    var general = shuffle(QUESTIONS.filter(function (q) { return q[1] === "All"; }));
+    pool = mine.concat(general);
+  }
+  quiz = pool.slice(0, 10);
+  idx = 0; score = 0; results = {};
+  CATS.forEach(function (c) { results[c] = { right: 0, total: 0 }; });
+  showQuestion();
+}
+
+function showQuestion() {
+  if (idx >= quiz.length) { finish(); return; }
+  var q = quiz[idx];
+  var options = shuffle(q.slice(3));
+  var html = '<h1>Question ' + (idx + 1) + ' of ' + quiz.length + '</h1><div class="card">' +
+             '<p class="small">' + q[0] + (q[1] !== "All" ? " - " + q[1] : "") + '</p><p><b>' + q[2] + '</b></p>';
+  options.forEach(function (o, i) { html += '<button class="opt" data-i="' + i + '">' + o + '</button>'; });
+  html += '</div><p class="small">Score so far: ' + score + '</p>';
+  app.innerHTML = html;
+  var buttons = app.querySelectorAll("button.opt");
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var right = options[Number(b.dataset.i)] === q[3];
+      results[q[0]].total++;
+      if (right) { score++; results[q[0]].right++; }
+      buttons.forEach(function (x) {
+        x.disabled = true;
+        if (options[Number(x.dataset.i)] === q[3]) { x.className = "opt good"; }
+      });
+      if (!right) { b.className = "opt bad"; }
+      var next = document.createElement("button");
+      next.textContent = idx + 1 < quiz.length ? "Next question" : "See my results";
+      next.addEventListener("click", function () { idx++; showQuestion(); });
+      app.appendChild(next);
+    });
+  });
+}
+
+function finish() {
+  saveScore();
+  var html = '<h1>Results</h1><div class="card"><p><b>' + esc(playerName) + '</b> scored <b>' +
+             score + ' / ' + quiz.length + '</b></p>' +
+             '<table><tr><th>Topic</th><th>You rated</th><th>Actual</th><th>Verdict</th></tr>';
+  CATS.forEach(function (c) {
+    var r = results[c];
+    if (!r.total) { return; }
+    var pct = Math.round(100 * r.right / r.total);
+    var self = ratings[c] * 10;
+    var verdict = "Spot on";
+    if (self - pct >= 30) { verdict = "Overconfident"; }
+    else if (pct - self >= 30) { verdict = "Underrated yourself"; }
+    html += '<tr><td>' + c + '</td><td>' + ratings[c] + '/10</td><td>' + r.right + '/' + r.total +
+            '</td><td>' + verdict + '</td></tr>';
+  });
+  html += '</table></div><button id="lb">See the leaderboard</button><button id="again">Play again</button>';
+  app.innerHTML = html;
+  document.getElementById("lb").addEventListener("click", showBoard);
+  document.getElementById("again").addEventListener("click", home);
+}
+
+function showBoard() {
+  var board = loadBoard().slice(0, 10);
+  var html = '<h1>Leaderboard</h1><div class="card">';
+  if (!board.length) {
+    html += '<p>No scores yet. Be the first!</p>';
+  } else {
+    html += '<table><tr><th>#</th><th>Player</th><th>Mode</th><th>Score</th></tr>';
+    board.forEach(function (e, i) {
+      html += '<tr><td>' + (i + 1) + '</td><td>' + esc(e.name) + '</td><td>' + esc(e.team) +
+              '</td><td>' + e.score + '/' + e.total + '</td></tr>';
+    });
+    html += '</table>';
+  }
+  html += '<p class="small">Scores are saved on this device. Pass it to friends to compete.</p></div>' +
+          '<button id="back">Back</button>';
+  app.innerHTML = html;
+  document.getElementById("back").addEventListener("click", home);
+}
+
+home();
+</script>
+<script data-goatcounter="https://abimaels-andromeda.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<div id="fb" style="position:fixed;bottom:0;left:0;right:0;padding:6px;background:rgba(0,0,0,.8);color:#fff;font-family:sans-serif;font-size:14px;text-align:center;z-index:99999">
+Enjoying this game?
+<button onclick="vote('up')" style="font-size:18px">&#128077;</button>
+<button onclick="vote('down')" style="font-size:18px">&#128078;</button>
+<span id="fbmsg"></span>
+</div>
+<script>
+function vote(kind) {
+  var key = 'voted:' + location.pathname;
+  try {
+    if (localStorage.getItem(key)) {
+      document.getElementById('fbmsg').textContent = 'You already voted';
+      return;
+    }
+  } catch (e) {}
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({path: 'thumbs-' + kind + location.pathname, title: 'Thumbs ' + kind, event: true});
+  }
+  try { localStorage.setItem(key, '1'); } catch (e) {}
+  document.getElementById('fbmsg').textContent = 'Thanks!';
+}
+</script>
+</body>
+</html>
