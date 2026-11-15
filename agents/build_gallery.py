@@ -10,7 +10,7 @@ TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agent Lab</title>
+<title>Abimael's Andromeda</title>
 <style>
 body{margin:0;background:#0f1115;color:#eee;font-family:sans-serif}
 header{padding:40px 20px 10px;text-align:center}
@@ -27,7 +27,7 @@ footer{text-align:center;color:#667;padding:30px}
 </head>
 <body>
 <header>
-<h1>Agent Lab</h1>
+<h1>Abimael's Andromeda</h1>
 <p>A lab of AI agents that design, build, and test small games. Play one and see what they made.</p>
 </header>
 <main>
