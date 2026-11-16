@@ -81,6 +81,23 @@ body.in-game #creature-badge, body.in-game #fb, body.creating #creature-badge { 
 #toast small { display: block; font: 14px Inter, system-ui, sans-serif; letter-spacing: 0; color: #e6d3a1; margin-top: 4px; }
 #guide { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 5; display: none; pointer-events: none;
   padding: 6px 14px; border-radius: 20px; background: rgba(8,10,16,.75); border: 1px solid rgba(70,194,180,.5); color: #ebe7f2; font: 13px Inter, system-ui, sans-serif; white-space: nowrap; }
+#clock { position: fixed; right: 12px; bottom: 34px; z-index: 4; display: none; pointer-events: none; color: #e6d3a1; font: 600 13px Inter, system-ui, sans-serif; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+body.coarse #clock { bottom: 200px; }
+#fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 99990; transition: opacity .45s; }
+#hud-btns { position: fixed; left: 12px; bottom: 56px; z-index: 5; display: none; gap: 6px; }
+#hud-btns button { width: auto; margin: 0 6px 0 0; padding: 8px 12px; border-radius: 12px; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
+body.coarse #hud-btns { left: auto; right: 12px; bottom: 192px; }
+#journal { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 94vw); max-height: 82vh; overflow-y: auto; display: none; z-index: 100000;
+  background: rgba(8,10,16,.95); border: 1px solid rgba(230,211,161,.5); border-radius: 16px; padding: 18px 20px; color: #ebe7f2; font: 14px/1.5 Inter, system-ui, sans-serif; box-sizing: border-box; }
+#journal h2 { margin: 0 0 6px; font: 700 22px Cinzel, Georgia, serif; letter-spacing: .06em; }
+#journal h3 { margin: 16px 0 6px; color: #e6d3a1; font: 700 14px Cinzel, Georgia, serif; letter-spacing: .1em; }
+#journal .q { padding: 10px 12px; margin: 6px 0; border-radius: 10px; background: rgba(239,234,224,.05); border: 1px solid rgba(239,234,224,.1); }
+#journal .q.done { opacity: .55; }
+#journal .q b { font-family: Cinzel, Georgia, serif; }
+#journal .st { color: #a6a2b8; font-size: 13px; margin-left: 4px; }
+#journal .st.cur { color: #ebe7f2; }
+#journal .ws { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+#journal button { width: auto; margin: 0; padding: 6px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; }
 #guide span { display: inline-block; margin-right: 6px; color: #46c2b4; }
 #me-btn { position: fixed; left: 12px; bottom: 14px; z-index: 5; display: none; width: auto; margin: 0; padding: 8px 14px; border-radius: 12px; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
 #me-card { position: fixed; left: 12px; bottom: 60px; z-index: 8; display: none; width: min(330px, 90vw); padding: 14px 16px; border-radius: 14px;
@@ -116,6 +133,10 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   <div class="keys">Computer: WASD or arrows to walk, Shift to run, drag to look, E to interact.<br>Phone: left circle to walk, drag the screen to look, tap the button that appears.</div>
 </div></div>
 <div id="toast"></div>
+<div id="fade"></div>
+<div id="journal"></div>
+<div id="hud-btns"><button id="j-btn">Journal (J)</button><button id="b-btn" style="display:none">Board (B)</button></div>
+<div id="clock"></div>
 <div id="guide"></div>
 <button id="me-btn"></button>
 <div id="me-card"></div>
@@ -205,15 +226,21 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   // ---------- shaders ----------
   var VS = "#version 300 es\n" +
     "in vec3 aPos; in vec3 aNor; in vec3 aCol; in vec3 aMat;\n" +
-    "uniform mat4 uVP; uniform mat4 uM;\n" +
+    "uniform mat4 uVP; uniform mat4 uM; uniform float uTime;\n" +
     "out vec3 vP; out vec3 vN; out vec3 vC; out vec3 vMat;\n" +
-    "void main(){ vec4 w = uM * vec4(aPos,1.0); vP = w.xyz; vN = normalize(mat3(uM) * aNor); vC = aCol; vMat = aMat; gl_Position = uVP * w; }";
+    "void main(){ vec4 w = uM * vec4(aPos,1.0);\n" +
+    "  if (aMat.z < 0.0) { float k = -aMat.z; w.x += sin(uTime*1.7 + w.x*0.6 + w.z*0.4)*0.13*k; w.z += cos(uTime*1.3 + w.z*0.5 + w.x*0.3)*0.09*k; }\n" +
+    "  vP = w.xyz; vN = normalize(mat3(uM) * aNor); vC = aCol; vMat = vec3(aMat.xy, max(aMat.z, 0.0)); gl_Position = uVP * w; }";
   var FS = "#version 300 es\nprecision highp float;\n" +
     "in vec3 vP; in vec3 vN; in vec3 vC; in vec3 vMat; out vec4 frag;\n" +
     "uniform vec3 uCam; uniform vec3 uMoon; uniform vec3 uMoonCol; uniform vec3 uAmb; uniform vec3 uFog; uniform float uFogD;\n" +
     "uniform float uTime; uniform float uNoFog; uniform float uAlpha; uniform vec4 uL[12]; uniform vec3 uLC[12]; uniform int uNL;\n" +
+    "uniform int uSky; uniform vec3 uSkyTop; uniform vec3 uSkyHor; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uPointK;\n" +
     "float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }\n" +
     "void main(){\n" +
+    "  if (uSky == 1) { vec3 dir = normalize(vP - uCam); float t = clamp(dir.y, 0.0, 1.0);\n" +
+    "    vec3 c = mix(uSkyHor, uSkyTop, pow(t, 0.55)); float sd = max(dot(dir, uSunDir), 0.0);\n" +
+    "    c += uSunCol*(pow(sd, 40.0)*0.7 + pow(sd, 5.0)*0.18); frag = vec4(c, 1.0); return; }\n" +
     "  vec3 N = normalize(vN); vec3 V = normalize(uCam - vP); float f = clamp(dot(N,V),0.0,1.0);\n" +
     "  vec3 base = vC;\n" +
     "  vec3 iri = 0.5 + 0.5*cos(6.2831*(f*1.4 + vP.y*0.06 + uTime*0.04 + vec3(0.0,0.33,0.67)));\n" +
@@ -221,7 +248,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     "  vec3 lit = uAmb*(0.55+0.45*N.y) + uMoonCol*max(dot(N,uMoon),0.0);\n" +
     "  for(int i=0;i<12;i++){ if(i>=uNL) break; vec3 d = uL[i].xyz - vP; float dist = length(d);\n" +
     "    float att = clamp(1.0 - dist/uL[i].w, 0.0, 1.0); att *= att;\n" +
-    "    lit += uLC[i]*att*(0.35 + 0.65*max(dot(N, d/dist),0.0)); }\n" +
+    "    lit += uLC[i]*uPointK*att*(0.35 + 0.65*max(dot(N, d/dist),0.0)); }\n" +
     "  vec3 col = base*lit + base*vMat.y;\n" +
     "  col += iri*pow(1.0-f,3.0)*0.55*vMat.x;\n" +
     "  if(vMat.z > 0.0){ float s = hash(floor(vP.xz*7.0) + floor(uTime*2.5));\n" +
@@ -245,7 +272,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { throw new Error(gl.getProgramInfoLog(prog)); }
   gl.useProgram(prog);
   var U = {};
-  ["uVP", "uM", "uCam", "uMoon", "uMoonCol", "uAmb", "uFog", "uFogD", "uTime", "uNoFog", "uAlpha", "uL", "uLC", "uNL"].forEach(function (n) {
+  ["uVP", "uM", "uCam", "uMoon", "uMoonCol", "uAmb", "uFog", "uFogD", "uTime", "uNoFog", "uAlpha", "uL", "uLC", "uNL", "uSky", "uSkyTop", "uSkyHor", "uSunDir", "uSunCol", "uPointK"].forEach(function (n) {
     U[n] = gl.getUniformLocation(prog, n);
   });
 
@@ -383,7 +410,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   var solids = [];      // collision circles [x, z, r]
   var lights = [];      // [x, y, z, radius, r, g, b]
   var spots = [];       // interactable places
-  function ground(x, z) { return height(x, z); }
+  var ALIO = { x: 500, z: 0 }, rects = [], ROOF = { x0: 491.5, x1: 508.5, z0: -54.5, z1: -37.5, y: 70.4 };
+  function inAlio(x) { return x > 300; }
+  function onRoofRect(x, z) { return x > ROOF.x0 && x < ROOF.x1 && z > ROOF.z0 && z < ROOF.z1; }
+  function ground(x, z) {
+    if (x > 300) { return (typeof player !== "undefined" && player && player.roof && onRoofRect(x, z)) ? ROOF.y : 0; }
+    return height(x, z);
+  }
 
   // burrow home: half-buried dome with ash ribs, a dark door and a glowing blue-mud arch
   function burrow(x, z, r, face, glow) {
@@ -434,10 +467,11 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     world.disc(x, y + 0.03, z, r, 24, C.mud, [0.25, 0.55, 1.0]);
     lights.push([x, y + 0.8, z, r * 3, 0.1, 0.35, 0.7]);
     pools.push([x, z, r]);
+    mudList.push([x, z, r]);
   }
 
   // village layout
-  var homeDoors = [], pools = [];
+  var homeDoors = [], pools = [], mudList = [];
   [[16, 9, 3.4], [-6, 17, 3.0], [-18, -6, 3.6], [6, -18, 3.2], [20, -6, 2.8], [-14, -16, 3.0], [24, 14, 2.6], [-24, 10, 3.2]].forEach(function (b, i) {
     var face = Math.atan2(-b[1], -b[0]);
     homeDoors.push(burrow(b[0], b[1], b[2], face, i < 3));
@@ -636,31 +670,236 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     lights.push([cx, y0 + 2.6, cz, 10, 0.55, 0.3, 0.6]);
   })();
 
-  // villagers
-  var people = [
-    { id: "grandma", name: "Grandma", x: grandmaHome.x, z: grandmaHome.z, robe: hex("#7a4b8f"), shawl: hex("#e6d3a1"),
+  // ---------- the Skyrail station at the village edge ----------
+  var STATION_V = { x: 31, z: -12 };
+  (function villageStation() {
+    var x = STATION_V.x, z = STATION_V.z, y = ground(x, z);
+    world.box(x, y - 0.3, z, 7, 0.7, 12, 0.35, C.stone, M0);
+    world.box(x, y + 0.4, z, 6.6, 0.08, 11.6, 0.35, hex("#2a2438"), [0.4, 0.3, 0]);
+    for (var k = 0; k < 4; k++) {
+      var o = -4.5 + k * 3;
+      world.cyl(x + Math.sin(0.35) * o + 2.6, y, z + Math.cos(0.35) * o - 1.0, 0.12, 0.1, 3.6, 6, C.pearl, [0.8, 0.3, 0]);
+    }
+    for (var sl = 0; sl < 7; sl++) { var so = -5.1 + sl * 1.7; world.box(x + Math.sin(0.35) * so, y + 3.6, z + Math.cos(0.35) * so, 6.8, 0.16, 0.24, 0.35, C.wood, M0); }
+    world.box(x + 1.4, y + 0.5, z, 1.6, 1.5, 9, 0.35, hex("#1d2333"), [0.7, 0.2, 0]);
+    world.box(x + 1.4, y + 1.2, z, 1.65, 0.35, 8.6, 0.35, C.teal, [0.4, 1.6, 0]);
+    for (var r = 0; r < 9; r++) {
+      var rx = x + 4 + r * 4, rz = z + 6 + r * 1.2;
+      var ry = ground(rx, rz);
+      world.cyl(rx, ry - 0.2, rz, 0.25, 0.2, Math.max(0.5, 2.5 + r * 0.9 - (ry - y)), 6, C.pearl, [0.6, 0.2, 0]);
+      world.box(rx, y + 2.4 + r * 0.9, rz, 0.6, 0.25, 4.3, -0.3, C.teal, [0.5, 1.0, 0]);
+    }
+    rects.push([x + 1.4, z, 1.0, 4.6]);
+    lights.push([x, y + 3, z, 10, 0.3, 0.6, 0.6]);
+    spots.push({ id: "skyrail", dest: "alio", x: x - 2.2, z: z - 0.6, r: 3.4, label: "Ride the Skyrail to Alio", tag: "Skyrail Station", y: y + 4.6 });
+  })();
+
+  // ---------- Alio, capital of Esmer ----------
+  var NEON = [hex("#46c2b4"), hex("#ff7ad9"), hex("#8f7fd1"), hex("#9fe3c4"), hex("#ffcf8a"), hex("#47b6ff")];
+  function neon(i) { return NEON[((i % NEON.length) + NEON.length) % NEON.length]; }
+  var ALIO_STATION = { x: 500, z: 48 }, ATELIER = { x: 480.5, z: 22 }, DOCK = { x: 519.5, z: 22 }, LIFT = { x: 500, z: -35.4 }, LIFT_TOP = { x: 500, z: -40.5 };
+  function mayaSign(x, y, z, n, col, face) {
+    // a neon Maya numeral on a facade; face = +1 faces +x, -1 faces -x
+    var dots = n % 5, bars = Math.floor(n / 5), yy = y;
+    for (var b = 0; b < bars; b++) { world.box(x, yy, z, 0.18, 0.4, 2.6, 0, col, [0.2, 2.4, 0]); yy += 0.7; }
+    for (var d = 0; d < dots; d++) { world.box(x, yy + 0.05, z - (dots - 1) * 0.35 + d * 0.7, 0.18, 0.4, 0.4, 0, col, [0.2, 2.4, 0]); }
+    world.box(x - face * 0.05, y - 0.5, z, 0.08, (bars * 0.7 + (dots ? 0.6 : 0)) + 1.0, 3.4, 0, hex("#0a0b12"), [0.4, 0.1, 0]);
+  }
+  function tower(x, z, w, d, h, ci, faceX) {
+    world.box(x, 0, z, w, h, d, 0, hex("#11131d"), [0.3, 0.06, 0]);
+    for (var y = 3; y < h - 1; y += 3.2) {
+      var lit = ((y * 7 + x) % 5) > 1.2;
+      world.box(x, y, z, w + 0.1, 0.14, d + 0.1, 0, lit ? neon(ci + Math.floor(y / 10)) : hex("#2a2d3c"), lit ? [0.2, 1.3, 0] : M0);
+    }
+    world.box(x - w / 2, 0, z - d / 2, 0.2, h, 0.2, 0, neon(ci + 1), [0.3, 1.8, 0]);
+    world.box(x + w / 2, 0, z + d / 2, 0.2, h, 0.2, 0, neon(ci + 2), [0.3, 1.8, 0]);
+    world.box(x, h, z, w * 0.6, 1.4, d * 0.6, 0, hex("#1a1c28"), M0);
+    var ant = 3 + (Math.floor(h) % 5);
+    world.cyl(x + w * 0.15, h + 1.4, z, 0.09, 0.04, ant, 5, C.pearl, [0.6, 0.2, 0]);
+    world.sphere(x + w * 0.15, h + 1.4 + ant, z, 0.3, 0.3, 0.3, 6, hex("#ff4d6d"), [0, 3, 0]);
+    if (faceX) { mayaSign(x + faceX * (w / 2 + 0.12), 6 + (ci % 3) * 4, z, 3 + (ci * 7) % 17, neon(ci + 3), faceX); }
+    rects.push([x, z, w / 2, d / 2]);
+  }
+  function technoPlant(x, z, s, ci) {
+    world.cyl(x, 0, z, 0.55 * s, 0.6 * s, 0.55 * s, 10, hex("#1a1c28"), [0.3, 0.1, 0]);
+    world.ring(x, 0.56 * s, z, 0.58 * s, 0.06, 14, neon(ci), [0.3, 1.6, 0]);
+    world.cyl(x, 0.5 * s, z, 0.05 * s, 0.03 * s, 1.5 * s, 5, C.pearl, [0.9, 0.3, 0]);
+    for (var k = 0; k < 7; k++) {
+      var a = k / 7 * Math.PI * 2, h = (0.9 + (k % 3) * 0.3) * s;
+      world.sphere(x + Math.cos(a) * 0.32 * s, 0.5 * s + h, z + Math.sin(a) * 0.32 * s, 0.22 * s, 0.04 * s, 0.22 * s, 7, neon(ci + k), [0.9, 0.7, 0]);
+      world.cyl(x + Math.cos(a) * 0.15 * s, 0.5 * s, z + Math.sin(a) * 0.15 * s, 0.012, 0.012, h + 0.5 * s, 3, neon(ci + k + 1), [0.2, 1.4, 0]);
+      world.sphere(x + Math.cos(a) * 0.15 * s, s + h, z + Math.sin(a) * 0.15 * s, 0.05, 0.05, 0.05, 5, C.pearl, [0.3, 2.6, 0]);
+    }
+    solids.push([x, z, 0.6 * s]);
+  }
+  (function alio() {
+    var X0 = ALIO.x - 62, Z0 = -62;
+    for (var gx = X0; gx < ALIO.x + 62; gx += 8) {
+      for (var gz = Z0; gz < 62; gz += 8) {
+        var cxm = gx + 4, czm = gz + 4;
+        var road = Math.abs(cxm - ALIO.x) < 8 || (Math.abs(czm) < 6 && Math.hypot(cxm - ALIO.x, czm) > 16);
+        var col = road ? hex("#0d0e16") : jit(hex("#1d1f2b"), 0.08);
+        world.flat([gx, 0, gz], [gx, 0, gz + 8], [gx + 8, 0, gz + 8], col, [0.15, 0, 0]);
+        world.flat([gx, 0, gz], [gx + 8, 0, gz + 8], [gx + 8, 0, gz], col, [0.15, 0, 0]);
+      }
+    }
+    for (var lz = -34; lz < 44; lz += 4) { if (Math.abs(lz) > 15) { world.box(ALIO.x, 0.01, lz, 0.2, 0.02, 2, 0, C.teal, [0, 1.4, 0]); } }
+    [-8.1, 8.1].forEach(function (o) { world.box(ALIO.x + o, 0, 4, 0.12, 0.06, 116, 0, hex("#ff7ad9"), [0, 1.6, 0]); });
+    // plaza
+    world.cyl(ALIO.x, 0, ALIO.z, 15, 15, 0.08, 40, hex("#24263a"), [0.5, 0.1, 0]);
+    world.ring(ALIO.x, 0.09, ALIO.z, 15, 0.12, 60, C.teal, [0.2, 1.6, 0]);
+    world.ring(ALIO.x, 0.09, ALIO.z, 6, 0.12, 40, hex("#ff7ad9"), [0.2, 1.6, 0]);
+    world.cyl(ALIO.x, 0, ALIO.z, 3.2, 3.6, 0.9, 24, hex("#1a1c28"), [0.4, 0.2, 0]);
+    solids.push([ALIO.x, ALIO.z, 3.7]);
+    for (var pk = 0; pk < 8; pk++) {
+      var pa = pk / 8 * Math.PI * 2 + 0.4;
+      technoPlant(ALIO.x + Math.cos(pa) * 10.5, ALIO.z + Math.sin(pa) * 10.5, 1 + (pk % 2) * 0.3, pk);
+    }
+    // towers
+    var lots = [[470, -44], [452, -44], [470, -22], [452, -22], [470, 22], [452, 22], [470, 44], [452, 44],
+      [530, -44], [548, -44], [530, -22], [548, -22], [530, 22], [548, 22], [530, 44], [548, 44], [452, 2], [548, 2]];
+    lots.forEach(function (l, i) {
+      var w = 11 + (i * 37 % 4), d = 11 + (i * 53 % 4), h = 22 + (i * 47 % 48);
+      if ((l[0] === 470 || l[0] === 530) && l[1] === 22) { h = 30 + i; }
+      tower(l[0], l[1], w, d, h, i, l[0] === 470 ? 1 : l[0] === 530 ? -1 : 0);
+    });
+    // the Esmer Spire
+    world.box(ALIO.x, 0, -46, 17, 70, 17, 0, hex("#0f1119"), [0.55, 0.08, 0]);
+    for (var sy = 4; sy < 70; sy += 4) { world.box(ALIO.x, sy, -46, 17.15, 0.18, 17.15, 0, neon(Math.floor(sy / 4)), [0.4, 1.5, 0]); }
+    world.box(ALIO.x, 70, -46, 17.4, 0.4, 17.4, 0, hex("#24263a"), [0.5, 0.1, 0]);
+    world.ring(ALIO.x, 70.45, -46, 8.4, 0.12, 48, C.teal, [0.3, 1.8, 0]);
+    world.cyl(ALIO.x - 5, 70.4, -51, 0.6, 0.0, 18, 10, C.pearl, [1, 0.5, 0]);
+    world.sphere(ALIO.x - 5, 89, -51, 0.6, 0.6, 0.6, 8, hex("#ff4d6d"), [0, 3, 0]);
+    world.box(ALIO.x, 0, -37.35, 3.2, 4.2, 0.4, 0, hex("#1d2333"), [0.6, 0.6, 0]);
+    world.box(ALIO.x, 4.2, -37.3, 3.6, 0.3, 0.5, 0, C.teal, [0.3, 1.8, 0]);
+    world.box(ALIO.x, 66.5, -37.6, 3.2, 3.9, 0.4, 0, hex("#1d2333"), [0.6, 0.6, 0]);
+    rects.push([ALIO.x, -46, 8.5, 8.5]);
+    lights.push([ALIO.x, 3, -34, 9, 0.3, 0.6, 0.65]);
+    lights.push([ALIO.x, 72, -46, 14, 0.4, 0.4, 0.6]);
+    // skin atelier and board dock storefronts
+    world.box(ATELIER.x - 2.6, 0, ATELIER.z, 0.4, 4.6, 6, 0, hex("#ff7ad9"), [0.5, 1.4, 0]);
+    world.box(ATELIER.x - 2.4, 4.6, ATELIER.z, 0.6, 0.5, 7, 0, hex("#e8a3cf"), [0.4, 2.0, 0]);
+    world.box(DOCK.x + 2.6, 0, DOCK.z, 0.4, 4.6, 6, 0, hex("#46c2b4"), [0.5, 1.4, 0]);
+    world.box(DOCK.x + 2.4, 4.6, DOCK.z, 0.6, 0.5, 7, 0, hex("#9fe3c4"), [0.4, 2.0, 0]);
+    for (var bk = 0; bk < 5; bk++) {
+      world.sphere(DOCK.x + 1.6, 0.6 + bk * 0.55, DOCK.z - 2 + bk, 0.42, 0.06, 1.0, 12, C.pearl, [1, 0.5, 0]);
+    }
+    lights.push([ATELIER.x, 3, ATELIER.z, 8, 0.6, 0.3, 0.5]);
+    lights.push([DOCK.x, 3, DOCK.z, 8, 0.25, 0.6, 0.55]);
+    // the Alio Skyrail station
+    world.box(ALIO_STATION.x, 0, ALIO_STATION.z + 4, 16, 0.6, 7, 0, hex("#24263a"), [0.4, 0.1, 0]);
+    world.box(ALIO_STATION.x, 4.2, ALIO_STATION.z + 4, 16.5, 0.25, 7.5, 0, C.teal, [0.3, 1.2, 0]);
+    world.box(ALIO_STATION.x + 4.5, 0.6, ALIO_STATION.z + 5.5, 12, 1.6, 1.8, 0, hex("#1d2333"), [0.7, 0.2, 0]);
+    world.box(ALIO_STATION.x + 4.5, 1.4, ALIO_STATION.z + 5.5, 11.6, 0.35, 1.85, 0, hex("#9fe3c4"), [0.4, 1.6, 0]);
+    for (var sp = 0; sp < 6; sp++) { world.cyl(ALIO_STATION.x - 7 + sp * 2.8, 0.6, ALIO_STATION.z + 7.2, 0.12, 0.12, 3.6, 6, C.pearl, [0.8, 0.3, 0]); }
+    rects.push([ALIO_STATION.x + 4.5, ALIO_STATION.z + 5.5, 6.2, 1.2]);
+    lights.push([ALIO_STATION.x, 3, ALIO_STATION.z + 3, 10, 0.3, 0.55, 0.6]);
+    spots.push({ id: "skyrail", dest: "village", x: ALIO_STATION.x, z: ALIO_STATION.z + 1.5, r: 3.4, label: "Ride the Skyrail home to the village", tag: "Alio Skyrail Station", y: 5.2 });
+    spots.push({ id: "atelier", x: ATELIER.x, z: ATELIER.z, r: 2.6, label: "Enter the Skin Atelier", tag: "Skin Atelier", y: 5.6 });
+    spots.push({ id: "dock", x: DOCK.x, z: DOCK.z, r: 2.6, label: "Rent a flying board", tag: "Board Dock", y: 5.6 });
+    spots.push({ id: "lift", up: true, x: LIFT.x, z: LIFT.z, r: 2.2, label: "Ride the Sky Lift up the Esmer Spire", tag: "Sky Lift", y: 5.2 });
+    spots.push({ id: "lift", up: false, x: LIFT_TOP.x, z: LIFT_TOP.z, r: 2.2, label: "Ride the Sky Lift down", tag: "Sky Lift", y: ROOF.y + 4.6, roof: true });
+    // distant skyline beyond the streets
+    for (var dk = 0; dk < 46; dk++) {
+      var da = dk / 46 * Math.PI * 2, dr = 82 + (dk * 13 % 30), dw = 9 + (dk % 4) * 3, dh = 30 + (dk * 29 % 70);
+      var dx = ALIO.x + Math.cos(da) * dr, dz = Math.sin(da) * dr;
+      world.box(dx, 0, dz, dw, dh, dw, da, hex("#0e1018"), [0.2, 0.05, 0]);
+      for (var dy = 6; dy < dh; dy += 9) { world.box(dx, dy, dz, dw + 0.1, 0.25, dw + 0.1, da, neon(dk + dy), [0, 1.2, 0]); }
+    }
+  })();
+
+  // ---------- waystones: checkpoints you can travel between ----------
+  var WAYSTONES = [
+    { key: "heart", name: "Village Heart", x: 3.4, z: 10.6 },
+    { key: "grove", name: "Shimmer Grove", x: SPAWNS[1].x + 2.6, z: SPAWNS[1].z + 2.2 },
+    { key: "flats", name: "Blue Mud Flats", x: SPAWNS[2].x - 2.4, z: SPAWNS[2].z - 2.6 },
+    { key: "ridge", name: "Ash Ridge", x: SPAWNS[3].x - 2.6, z: SPAWNS[3].z + 2.2 },
+    { key: "meadow", name: "Petal Meadow", x: SPAWNS[4].x + 2.4, z: SPAWNS[4].z - 2.6 },
+    { key: "alioStation", name: "Alio Skyrail Station", x: ALIO_STATION.x + 6, z: ALIO_STATION.z - 3 },
+    { key: "alioPlaza", name: "Alio Plaza", x: ALIO.x + 7, z: ALIO.z + 7 }
+  ];
+  WAYSTONES.forEach(function (w) {
+    var y = ground(w.x, w.z);
+    world.cyl(w.x, y - 0.1, w.z, 0.55, 0.45, 0.35, 8, C.stone, M0);
+    world.box(w.x, y + 0.2, w.z, 0.5, 1.5, 0.5, 0.6, C.stone.map(function (v) { return v * 1.25; }), [0.3, 0.05, 0]);
+    solids.push([w.x, w.z, 0.55]);
+    w.y = y;
+    w.spot = { id: "waystone", stone: w, x: w.x, z: w.z, r: 2.2, label: "Touch the Waystone", tag: w.name, y: y + 3 };
+    spots.push(w.spot);
+  });
+
+  // ---------- villagers from the story ----------
+  // The village is slightly nocturnal: most people are out during the dark hours and sleep in their burrows through the bright ones.
+  var RING = []; for (var ri = 0; ri < 10; ri++) { var ra = ri / 10 * Math.PI * 2; RING.push([Math.cos(ra) * 9, Math.sin(ra) * 9]); }
+  var PLACES = { arcade: [-12, 5.6], pool: [-3.2, -8.2], pool2: [-8.6, -7.4], monument: [0, 4.6], shrine: [12.6, -7.2], lantern: [8.4, 3.4], grandma: [grandmaHome.x - 1.2, grandmaHome.z - 1.2] };
+  function look(o) { return { race: 0, skin: o.skin, hair: o.hair, hairColor: o.hc, eyes: o.eyes || "#2b1a10", cloth: o.cloth, height: o.h, build: o.b || 1 }; }
+  var npcs = [
+    { name: "Grandma", home: grandmaHome, always: true, roam: 1.4, look: look({ skin: "#9a6440", hair: "Bun", hc: "#e8e4dc", cloth: "#5a3a6e", h: 0.9 }),
       lines: [
         "There you are, little one. The village is quiet tonight, the way it should be.",
         "The Egg Shrine woke up when you arrived. Go and see which egg it chose for you.",
-        "Answer questions at the old arcade and your egg will grow. Patience, and it will hatch.",
-        "Keep your eyes open. You were always the kind who notices small things that don't add up."
+        "We keep the highest standards of learning in this village, even without help from outside. Never forget that.",
+        "Healing is body, mind, and spirit together. When you feel lost, go to the water and just be still.",
+        "A day here is thirty-seven hours long. Don't waste the dark ones. That's when the village is awake."
       ] },
-    { id: "chief", name: "Village Chief", x: -9.5, z: -10.5, robe: hex("#2f5d6b"), shawl: hex("#46c2b4"),
+    { name: "Eldest Aunt", home: null, homeIdx: 1, pts: ["monument", "lantern", "arcade", "ring"], look: look({ skin: "#7a4a2e", hair: "Long flow", hc: "#141018", cloth: "#2c3e50", h: 1.0 }),
+      lines: [
+        "If you see the little genius, tell her I want my good scissors back. The last time she took them, she turned them into weapons.",
+        "That girl was talking by nine months. The whole village says it's just nature. I'm not so sure.",
+        "Keep an eye on the cousins. They're more like brothers and sisters to her than cousins."
+      ] },
+    { name: "Youngest Aunt", home: null, homeIdx: 0, pts: ["pool", "ring", "shrine", "monument"], look: look({ skin: "#9a6440", hair: "Braids", hc: "#3a2418", cloth: "#4a2c1e", h: 0.97 }),
+      lines: [
+        "The cousins are by the blue mud again. If anything explodes, I saw nothing.",
+        "She cracked her head falling between the trees once. The village rituals healed her. She went right back up the next day.",
+        "You should see her swim. She's one with the water, that one."
+      ] },
+    { name: "Uncle", home: null, homeIdx: 3, pts: ["arcade", "arcade", "lantern", "ring"], look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#1f3b33", h: 1.06, b: 1.15 }),
+      lines: [
+        "Those old arcade machines have been paying out to the little genius all season. She thinks she's just good at games.",
+        "Don't bet against her at the arcade. I learned that the expensive way.",
+        "Nights are long and bright here. Sleep through the day, like a proper burrow-dweller."
+      ] },
+    { name: "Cousin", home: null, homeIdx: 1, pts: ["pool", "pool2", "pool", "ring"], kid: true, look: look({ skin: "#9a6440", hair: "Curls", hc: "#141018", cloth: "#b03a3a", h: 0.64 }),
+      lines: ["Race you to the blue mud!", "She's our cousin, but she's basically our sister. Don't tell her I said that.", "The chiefs are watching the mud pits now. Ever since the sparks."] },
+    { name: "Cousin", home: null, homeIdx: 1, pts: ["pool2", "pool", "monument"], kid: true, look: look({ skin: "#7a4a2e", hair: "Short crop", hc: "#3a2418", cloth: "#2e9e5b", h: 0.6 }),
+      lines: ["We're not making bombs. We're making very loud building material.", "Grandma says we have to study before we play. Every single night."] },
+    { name: "Cousin", home: null, homeIdx: 0, pts: ["pool", "ring", "pool2"], kid: true, look: look({ skin: "#b98a6a", hair: "Braids", hc: "#141018", cloth: "#8f7fd1", h: 0.66 }),
+      lines: ["Have you ridden the big beasts outside the village? She rides them like it's nothing.", "Shh. I'm hiding from my mom."] },
+    { name: "Madison", home: null, homeIdx: 1, always: true, wide: true, pts: ["arcade", "monument", "pool", "shrine", "ring", "arcade"], kid: true,
+      look: look({ skin: "#7a4a2e", hair: "Curls", hc: "#141018", cloth: "#1d7a74", h: 0.55, eyes: "#3a6fb0" }),
+      lines: [
+        "Did you look at the monument? It's not just stone. Something about it doesn't add up.",
+        "I don't win at the arcade because I'm lucky. I just already know what comes next.",
+        "The chiefs said no more blue mud bombs. They didn't say anything about bigger ones.",
+        "My crew follows me because I know what to do. It's not complicated.",
+        "Grandma says I notice small things. Like how you just showed up from a petal sac and nobody here is surprised."
+      ] },
+    { name: "Madison's crew", home: null, homeIdx: 4, follow: "Madison", slot: 0, kid: true, look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#4a2c1e", h: 0.74 }),
+      lines: ["We're ten and eleven. She's tiny. She's still the boss.", "If she says run, we run."] },
+    { name: "Madison's crew", home: null, homeIdx: 4, follow: "Madison", slot: 1, kid: true, look: look({ skin: "#9a6440", hair: "Long flow", hc: "#3a2418", cloth: "#2c3e50", h: 0.72 }),
+      lines: ["She figured out the arcade machines before any of us could even reach the buttons.", "Don't tell the chiefs where we're going."] },
+    { name: "Madison's crew", home: null, homeIdx: 6, follow: "Madison", slot: 2, kid: true, look: look({ skin: "#b98a6a", hair: "Locs", hc: "#141018", cloth: "#5a1f2e", h: 0.76 }),
+      lines: ["Following her is the most fun anybody in this village has ever had."] },
+    { name: "Elder Chief", home: null, homeIdx: 2, pts: ["pool", "monument", "ring", "pool2"], look: look({ skin: "#7a4a2e", hair: "Shaved", hc: "#141018", cloth: "#2f5d6b", h: 1.02 }),
       lines: [
         "The glistening blue mud is for building homes, not for making little bombs. We have had enough sparks this season.",
         "Half of us live above the ground and half below. It keeps the burrows cool and the nights bright.",
         "Some travelers say the monument shows a picture. To me it has always been plain stone."
+      ] },
+    { name: "Second Chief", home: null, homeIdx: 5, pts: ["shrine", "ring", "lantern"], look: look({ skin: "#9a6440", hair: "Locs", hc: "#e8e4dc", cloth: "#46566e", h: 0.98 }),
+      lines: [
+        "The Egg Shrine woke the night you came. Shrines don't wake for nobody.",
+        "We sleep through the bright hours. When the light goes, the village wakes.",
+        "We turned down help from outside a long time ago. We do fine on our own."
       ] }
   ];
-  people.forEach(function (p) {
-    var y = ground(p.x, p.z);
-    world.cyl(p.x, y, p.z, 0.55, 0.22, 1.5, 12, p.robe, M0, 0.1);
-    world.cyl(p.x, y + 1.15, p.z, 0.42, 0.18, 0.4, 12, p.shawl, [0.3, 0.1, 0]);
-    world.sphere(p.x, y + 1.78, p.z, 0.27, 0.3, 0.27, 12, hex("#b98a6a"), M0);
-    world.sphere(p.x, y + 1.95, p.z, 0.3, 0.18, 0.3, 10, hex("#d9d4e8"), M0);
-    solids.push([p.x, p.z, 0.6]);
-    p.step = 0;
-    spots.push({ id: "talk", who: p, x: p.x, z: p.z, r: 2.6, label: "Talk to " + p.name, tag: p.name, y: y + 2.6 });
+  npcs.forEach(function (n, i) {
+    n.home = n.home || homeDoors[n.homeIdx];
+    n.x = n.home.x + (rnd() - 0.5); n.z = n.home.z + (rnd() - 0.5); n.face = 0; n.wait = rnd() * 3; n.tx = n.x; n.tz = n.z;
+    n.hidden = false; n.step = 0; n.id = i;
+    n.spot = { id: "talk", who: n, x: n.x, z: n.z, r: 2.4, label: "Talk to " + n.name, tag: n.name, y: 2.6, npc: true };
+    spots.push(n.spot);
   });
 
   for (var t = 0; t < 70; t++) {
@@ -671,18 +910,57 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     if (!near) { if (rnd() < 0.18) { shimmerTree(tx, tz, 0.8 + rnd() * 0.4, false); } else { ashTree(tx, tz, 0.8 + rnd() * 0.6); } }
   }
 
+  // ---------- grasses and night flowers ----------
+  (function meadowsAndGrass() {
+    function blocked(x, z, pad) {
+      if (pathAmount(x, z) > 0.35) { return true; }
+      for (var i = 0; i < solids.length; i++) { var s = solids[i]; if (Math.hypot(x - s[0], z - s[1]) < s[2] + pad) { return true; } }
+      for (var j = 0; j < mudList.length; j++) { var m = mudList[j]; if (Math.hypot(x - m[0], z - m[1]) < m[2] + 0.4) { return true; } }
+      return false;
+    }
+    function tintAt(x, z) {
+      if (Math.hypot(x - SPAWNS[1].x, z - SPAWNS[1].z) < 12) { return [hex("#2a2346"), hex("#8f7fd1")]; }
+      if (Math.hypot(x - SPAWNS[4].x, z - SPAWNS[4].z) < 12) { return [hex("#2b2a2e"), hex("#e8a3cf")]; }
+      if (Math.hypot(x - SPAWNS[2].x, z - SPAWNS[2].z) < 12) { return [hex("#14303a"), hex("#46c2b4")]; }
+      return [hex("#18301f"), hex("#6f9f6a")];
+    }
+    var up = [0, 1, 0], placed = 0, tries = 0;
+    while (placed < 7500 && tries < 30000) {
+      tries++;
+      var a = rnd() * Math.PI * 2, r = 3 + Math.sqrt(rnd()) * 33, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (blocked(x, z, 0.15)) { continue; }
+      var y = ground(x, z) - 0.03, ang = rnd() * Math.PI, w = 0.05 + rnd() * 0.05, h = 0.25 + rnd() * 0.5, lean = (rnd() - 0.5) * 0.25;
+      var tc = tintAt(x, z), baseC = jit(tc[0], 0.3), tipC = jit(tc[1], 0.35);
+      var bl = [x - Math.cos(ang) * w, y, z - Math.sin(ang) * w], br = [x + Math.cos(ang) * w, y, z + Math.sin(ang) * w];
+      var tip = [x + lean, y + h, z + lean * 0.6];
+      world.v(bl, up, baseC, [0, 0, 0]); world.v(br, up, baseC, [0, 0, 0]); world.v(tip, up, tipC, [0, 0.12, -h * 1.6]);
+      placed++;
+    }
+    var FLOWER = [hex("#e8a3cf"), hex("#8f7fd1"), hex("#efeae0"), hex("#e6d3a1"), hex("#9fe3c4"), hex("#ff9a57")];
+    placed = 0; tries = 0;
+    while (placed < 520 && tries < 6000) {
+      tries++;
+      var fa = rnd() * Math.PI * 2, fr = 4 + Math.sqrt(rnd()) * 31, fx = Math.cos(fa) * fr, fz = Math.sin(fa) * fr;
+      if (blocked(fx, fz, 0.3)) { continue; }
+      var fy = ground(fx, fz), fh = 0.25 + rnd() * 0.35, fc = FLOWER[Math.floor(rnd() * FLOWER.length)];
+      world.v([fx - 0.015, fy, fz], up, hex("#2a4a30"), [0, 0, 0]); world.v([fx + 0.015, fy, fz], up, hex("#2a4a30"), [0, 0, 0]);
+      world.v([fx, fy + fh, fz], up, hex("#3f6a45"), [0, 0, -fh]);
+      for (var k = 0; k < 5; k++) {
+        var p0 = k / 5 * Math.PI * 2, p1 = (k + 0.5) / 5 * Math.PI * 2, rr = 0.07 + rnd() * 0.03;
+        world.v([fx, fy + fh, fz], up, fc, [0.3, 0.9, -fh]);
+        world.v([fx + Math.cos(p0) * rr, fy + fh + 0.02, fz + Math.sin(p0) * rr], up, fc, [0.3, 0.9, -fh]);
+        world.v([fx + Math.cos(p1) * rr * 1.3, fy + fh + 0.04, fz + Math.sin(p1) * rr * 1.3], up, fc, [0.3, 0.9, -fh]);
+      }
+      placed++;
+    }
+  })();
+
   var worldMesh = upload(world);
 
-  // sky: gradient dome and stars
+  // sky: a dome shaded by the time of day, plus stars, the sun, two moons, and clouds
   var skyB = new Builder();
-  (function sky() {
-    var R = 160, seg = 32, rings = 16;
-    var top = hex("#070814"), mid = hex("#14183a"), hor = hex("#1d4a55");
-    function sc(y) {
-      var t = Math.max(0, y / R);
-      return t < 0.25 ? [hor[0] + (mid[0] - hor[0]) * t * 4, hor[1] + (mid[1] - hor[1]) * t * 4, hor[2] + (mid[2] - hor[2]) * t * 4]
-        : [mid[0] + (top[0] - mid[0]) * (t - 0.25) / 0.75, mid[1] + (top[1] - mid[1]) * (t - 0.25) / 0.75, mid[2] + (top[2] - mid[2]) * (t - 0.25) / 0.75];
-    }
+  (function dome() {
+    var R = 160, seg = 28, rings = 14, n = [0, -1, 0];
     for (var i = 0; i < rings; i++) {
       var a0 = i / rings * Math.PI, a1 = (i + 1) / rings * Math.PI;
       for (var j = 0; j < seg; j++) {
@@ -690,22 +968,63 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
         var q = [[a0, b0], [a1, b0], [a1, b1], [a0, b1]].map(function (ab) {
           return [Math.sin(ab[0]) * Math.cos(ab[1]) * R, Math.cos(ab[0]) * R, Math.sin(ab[0]) * Math.sin(ab[1]) * R];
         });
-        var n = [0, -1, 0];
-        skyB.v(q[0], n, sc(q[0][1]), [0, 1, 0]); skyB.v(q[1], n, sc(q[1][1]), [0, 1, 0]); skyB.v(q[2], n, sc(q[2][1]), [0, 1, 0]);
-        skyB.v(q[0], n, sc(q[0][1]), [0, 1, 0]); skyB.v(q[2], n, sc(q[2][1]), [0, 1, 0]); skyB.v(q[3], n, sc(q[3][1]), [0, 1, 0]);
+        skyB.tri(q[0], q[1], q[2], n, n, n, [1, 1, 1], M0); skyB.tri(q[0], q[2], q[3], n, n, n, [1, 1, 1], M0);
       }
     }
-    for (var s = 0; s < 420; s++) {
-      var u = rnd() * Math.PI * 2, v = Math.acos(1 - rnd() * 0.95), rr = R * 0.93;
-      var x = Math.sin(v) * Math.cos(u) * rr, y = Math.cos(v) * rr, z = Math.sin(v) * Math.sin(u) * rr, k = 0.25 + rnd() * 0.5;
-      var tint = rnd() < 0.2 ? [0.8, 0.9, 1] : rnd() < 0.3 ? [1, 0.85, 0.95] : [1, 1, 1];
-      skyB.box(x, y, z, k, k, k, u, tint, [0, 2.5, 0]);
-    }
-    // two distant moons
-    skyB.sphere(-70, 70, -110, 9, 9, 9, 20, hex("#d9e6ff"), [0.35, 1.2, 0]);
-    skyB.sphere(-55, 52, -118, 3.5, 3.5, 3.5, 14, hex("#ffd9f0"), [0.5, 1.2, 0]);
   })();
   var skyMesh = upload(skyB);
+  var starMesh = (function () {
+    var b = new Builder(), R = 148;
+    for (var s = 0; s < 520; s++) {
+      var u = rnd() * Math.PI * 2, v = Math.acos(1 - rnd() * 0.95);
+      var x = Math.sin(v) * Math.cos(u) * R, y = Math.cos(v) * R, z = Math.sin(v) * Math.sin(u) * R, k = 0.25 + rnd() * 0.55;
+      var tint = rnd() < 0.2 ? [0.8, 0.9, 1] : rnd() < 0.3 ? [1, 0.85, 0.95] : [1, 1, 1];
+      b.box(x, y, z, k, k, k, u, tint, [0, 2.5, 0]);
+    }
+    return upload(b);
+  })();
+  var sunMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 7, 7, 7, 20, hex("#fff2d0"), [0, 3, 0]); return upload(b); })();
+  var moonA = (function () { var b = new Builder(); b.sphere(0, 0, 0, 7.5, 7.5, 7.5, 20, hex("#d9e6ff"), [0.35, 1.3, 0]); return upload(b); })();
+  var moonB = (function () { var b = new Builder(); b.sphere(0, 0, 0, 3, 3, 3, 14, hex("#ffd9f0"), [0.5, 1.3, 0]); return upload(b); })();
+  var cloudMeshes = [0, 1, 2].map(function (v) {
+    var b = new Builder();
+    for (var k = 0; k < 6 + v * 2; k++) {
+      var ox = (rnd() - 0.5) * (9 + v * 4), oz = (rnd() - 0.5) * 5, r = 2.4 + rnd() * 2.2;
+      b.sphere(ox, (rnd() - 0.3) * 1.2, oz, r * 1.3, r * 0.7, r, 9, [0.92, 0.9, 0.97], [0.15, 0.12, 0], undefined, 0.06);
+    }
+    return upload(b);
+  });
+  var clouds = [];
+  for (var cI = 0; cI < 11; cI++) { clouds.push({ m: cI % 3, x: -90 + rnd() * 180, z: -80 + rnd() * 160, y: 36 + rnd() * 14, s: 0.6 + rnd() * 0.9 }); }
+
+  // ---------- the 37-hour day ----------
+  // Everyone shares the same world clock: one world hour passes every real minute, so a full day lasts 37 minutes.
+  var DAY_HOURS = 37, MS_PER_HOUR = 60000, timeOffset = 0;
+  function worldHour() { return (((Date.now() + timeOffset) / MS_PER_HOUR) % DAY_HOURS + DAY_HOURS) % DAY_HOURS; }
+  function lerp3(a, b, k) { return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; }
+  function sstep(a, b, x) { var k = Math.max(0, Math.min(1, (x - a) / (b - a))); return k * k * (3 - 2 * k); }
+  var SKY = {
+    nightTop: hex("#060714"), nightHor: hex("#16304a"), dayTop: hex("#4f86b8"), dayHor: hex("#d9e7ee"),
+    duskTop: hex("#2a2556"), duskHor: hex("#f2a07a")
+  };
+  var env = {};
+  function computeEnv() {
+    var h = worldHour(), a = h / DAY_HOURS * Math.PI * 2;
+    var sun = [Math.sin(a) * 0.82, -Math.cos(a), -0.42], l = Math.hypot(sun[0], sun[1], sun[2]);
+    sun = [sun[0] / l, sun[1] / l, sun[2] / l];
+    var day = sstep(-0.12, 0.28, sun[1]), dusk = Math.max(0, 1 - Math.abs(sun[1]) / 0.3) * (1 - day * 0.4);
+    var top = lerp3(SKY.nightTop, SKY.dayTop, day), hor = lerp3(SKY.nightHor, SKY.dayHor, day);
+    top = lerp3(top, SKY.duskTop, dusk * 0.5); hor = lerp3(hor, SKY.duskHor, dusk * 0.75);
+    var moon = [-sun[0], Math.max(0.25, -sun[1]), -sun[2] * 0.3]; l = Math.hypot(moon[0], moon[1], moon[2]);
+    moon = [moon[0] / l, moon[1] / l, moon[2] / l];
+    var lightDir = day > 0.15 ? sun : moon;
+    var lightCol = day > 0.15 ? lerp3([1.0, 0.62, 0.42], [1.05, 0.98, 0.9], day) : [0.34, 0.42, 0.62];
+    env = { hour: h, sun: sun, moon: moon, day: day, dusk: dusk, top: top, hor: hor, lightDir: lightDir,
+      lightCol: lightCol.map(function (v) { return v * (day > 0.15 ? 0.95 * day + 0.2 : 1); }),
+      amb: lerp3([0.2, 0.2, 0.3], [0.5, 0.52, 0.58], day), fog: lerp3([0.07, 0.15, 0.2], hor.map(function (v) { return v * 0.78; }), day * 0.9 + 0.1),
+      pointK: 1 - day * 0.7, night: 1 - day };
+  }
+  function isAwakeHours() { return env.day < 0.55; }   // the village is slightly nocturnal
 
   // ---------- moving things ----------
   // ---------- the player's body, built from their choices ----------
@@ -794,6 +1113,154 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     return upload(b);
   })();
   var sac = null; // { x, z, open: 0..1 }
+
+  // ---------- living things ----------
+  var npcMeshes = npcs.map(function (n) { return buildFigure(n.look); });
+  var byName = {}; npcs.forEach(function (n) { if (!byName[n.name]) { byName[n.name] = n; } });
+  function placeOf(key, n) {
+    if (key === "ring") { var q = RING[Math.floor(Math.random() * RING.length)]; return [q[0], q[1]]; }
+    var pl = PLACES[key]; return [pl[0], pl[1]];
+  }
+  function updateNpcs(dt) {
+    var awakeHours = isAwakeHours();
+    npcs.forEach(function (n) {
+      var awake = n.always || awakeHours, speed = n.kid ? 2.0 : 1.35;
+      if (n.hidden && awake) { n.hidden = false; n.x = n.home.x; n.z = n.home.z; n.wait = 1 + Math.random() * 3; n.tx = n.x; n.tz = n.z; }
+      if (n.hidden) { return; }
+      if (!awake) { n.tx = n.home.x; n.tz = n.home.z; n.wait = 0; }
+      else if (n.follow) {
+        var L = byName[n.follow], off = [[-0.9, -1.1], [0.9, -1.2], [0, -1.9]][n.slot];
+        var c = Math.cos(L.face), s = Math.sin(L.face);
+        n.tx = L.x + off[0] * c + off[1] * s; n.tz = L.z - off[0] * s + off[1] * c; speed = 2.4;
+        if (L.hidden) { n.tx = n.home.x; n.tz = n.home.z; }
+      } else if (n.talking > 0) {
+        n.talking -= dt; n.face = Math.atan2(player.x - n.x, player.z - n.z); n.tx = n.x; n.tz = n.z;
+      } else if (Math.hypot(n.tx - n.x, n.tz - n.z) < 0.3) {
+        if (n.wait > 0) { n.wait -= dt; }
+        else if (n.roam) { n.tx = n.home.x + (Math.random() - 0.5) * n.roam * 2; n.tz = n.home.z + (Math.random() - 0.5) * n.roam * 2; n.wait = 3 + Math.random() * 6; }
+        else { var g = placeOf(n.pts[Math.floor(Math.random() * n.pts.length)], n); n.tx = g[0] + (Math.random() - 0.5) * 2; n.tz = g[1] + (Math.random() - 0.5) * 2; n.wait = 2 + Math.random() * 7; }
+      }
+      var dx = n.tx - n.x, dz = n.tz - n.z, d = Math.hypot(dx, dz);
+      if (d > 0.05) {
+        var stepLen = Math.min(d, speed * dt); n.x += dx / d * stepLen; n.z += dz / d * stepLen;
+        var want = Math.atan2(dx, dz), df = want - n.face;
+        while (df > Math.PI) { df -= Math.PI * 2; } while (df < -Math.PI) { df += Math.PI * 2; }
+        n.face += df * Math.min(1, dt * 8); n.moving = true;
+      } else { n.moving = false; }
+      if (!awake && d < 0.4) { n.hidden = true; }
+      n.spot.x = n.x; n.spot.z = n.z; n.spot.y = ground(n.x, n.z) + 2.4 * n.look.height; n.spot.hidden = n.hidden;
+    });
+  }
+
+  // lizards: small, quick, shy
+  var lizardMeshes = [hex("#47b6ff"), hex("#46c2b4"), hex("#a49a8c")].map(function (col) {
+    var b = new Builder();
+    b.sphere(0, 0.07, 0, 0.065, 0.045, 0.17, 10, col, [0.4, 0.15, 0]);
+    b.sphere(0, 0.08, 0.2, 0.05, 0.04, 0.07, 8, col, [0.4, 0.15, 0]);
+    for (var k = 0; k < 5; k++) { var r = 0.035 - k * 0.006; b.sphere(0, 0.06, -0.17 - k * 0.07, r, r * 0.8, r * 1.3, 6, col, [0.3, 0.1, 0]); }
+    [[-1, 0.09], [1, 0.09], [-1, -0.08], [1, -0.08]].forEach(function (l) { b.box(l[0] * 0.08, 0, l[1], 0.08, 0.03, 0.03, 0, col.map(function (v) { return v * 0.7; }), M0); });
+    [-1, 1].forEach(function (s) { b.sphere(s * 0.03, 0.105, 0.25, 0.012, 0.012, 0.012, 4, hex("#fff27a"), [0, 2, 0]); });
+    return upload(b);
+  });
+  var lizards = [];
+  for (var lzI = 0; lzI < 14; lzI++) {
+    var la = rnd() * Math.PI * 2, lr = 6 + rnd() * 26;
+    lizards.push({ m: lzI % 3, x: Math.cos(la) * lr, z: Math.sin(la) * lr, hx: Math.cos(la) * lr, hz: Math.sin(la) * lr, face: rnd() * 6, tx: 0, tz: 0, wait: rnd() * 3 });
+  }
+  function updateLizards(dt) {
+    lizards.forEach(function (lz) {
+      var pd = Math.hypot(player.x - lz.x, player.z - lz.z), speed = 2.2;
+      if (mode === "play" && pd < 3) { var ax = lz.x - player.x, az = lz.z - player.z; lz.tx = lz.x + ax / pd * 4; lz.tz = lz.z + az / pd * 4; lz.wait = 0; speed = 5.5; }
+      else if (Math.hypot(lz.tx - lz.x, lz.tz - lz.z) < 0.2) {
+        if (lz.wait > 0) { lz.wait -= dt; return; }
+        lz.tx = lz.hx + (Math.random() - 0.5) * 8; lz.tz = lz.hz + (Math.random() - 0.5) * 8; lz.wait = 0.5 + Math.random() * 4;
+      }
+      var dx = lz.tx - lz.x, dz = lz.tz - lz.z, d = Math.hypot(dx, dz);
+      if (d > 0.01) { var st = Math.min(d, speed * dt); lz.x += dx / d * st; lz.z += dz / d * st; lz.face = Math.atan2(dx, dz); lz.moving = true; } else { lz.moving = false; }
+      var r = Math.hypot(lz.x, lz.z); if (r > 38) { lz.x *= 38 / r; lz.z *= 38 / r; }
+    });
+  }
+
+  // inverted fish: they swim through the night air above the blue mud, upside down, bellies glowing toward the sky
+  var fishMesh = (function () {
+    var b = new Builder();
+    b.sphere(0, 0, 0, 0.11, 0.15, 0.36, 14, hex("#bff3ea"), [1, 0.35, 0]);
+    b.sphere(0, 0.1, 0.02, 0.07, 0.04, 0.26, 10, hex("#9fe3c4"), [0.3, 1.8, 0]);
+    b.sphere(0, -0.18, -0.02, 0.02, 0.12, 0.13, 8, hex("#e8a3cf"), [0.9, 0.5, 0]);
+    b.sphere(0, 0, -0.42, 0.02, 0.16, 0.12, 8, hex("#8f7fd1"), [0.9, 0.5, 0]);
+    [-1, 1].forEach(function (s) { b.sphere(s * 0.07, -0.03, 0.24, 0.025, 0.025, 0.02, 6, hex("#fff27a"), [0, 2.2, 0]); });
+    return upload(b);
+  })();
+  var fish = [];
+  mudList.forEach(function (m, i) {
+    for (var k = 0; k < 2; k++) { fish.push({ cx: m[0], cz: m[1], r: m[2] + 0.8 + k * 0.9, h: 1.8 + k * 1.1 + rnd(), a: rnd() * 6.28, s: (0.35 + rnd() * 0.3) * (k % 2 ? -1 : 1) }); }
+  });
+  var cloudScroll = 0;
+
+  // ---------- Alio in motion: flying cars, hover bikes, citizens, the plaza hologram ----------
+  function vehicleMesh(kind, col) {
+    var b = new Builder(), dark = hex("#14161f");
+    if (kind === "car") {
+      b.box(0, 0, 0, 1.9, 0.55, 4.2, 0, dark, [0.7, 0.1, 0]);
+      b.box(0, 0.55, -0.2, 1.4, 0.45, 2.1, 0, hex("#2b3550"), [0.5, 0.5, 0]);
+      b.box(0, -0.06, 0, 1.6, 0.06, 3.7, 0, col, [0, 2.4, 0]);
+      [-0.6, 0.6].forEach(function (s) {
+        b.sphere(s, 0.28, 2.12, 0.16, 0.1, 0.05, 6, hex("#fff2d0"), [0, 3, 0]);
+        b.sphere(s, 0.28, -2.12, 0.18, 0.08, 0.05, 6, hex("#ff4d6d"), [0, 3, 0]);
+      });
+    } else {
+      b.box(0, 0, 0, 0.5, 0.42, 1.9, 0, dark, [0.7, 0.1, 0]);
+      b.box(0, 0.42, -0.3, 0.38, 0.2, 0.9, 0, col, [0.5, 1.2, 0]);
+      b.box(0, -0.05, 0, 0.4, 0.05, 1.7, 0, col, [0, 2.6, 0]);
+      b.sphere(0, 0.25, 0.97, 0.1, 0.08, 0.05, 6, hex("#fff2d0"), [0, 3, 0]);
+    }
+    return upload(b);
+  }
+  var carMeshes = [0, 1, 2, 5].map(function (i) { return vehicleMesh("car", NEON[i]); });
+  var bikeMeshes = [1, 3].map(function (i) { return vehicleMesh("bike", NEON[i]); });
+  var traffic = [];
+  [[-3, 14], [3, 14], [-3, 23], [3, 23], [-2, 32], [2, 32]].forEach(function (ln, i) {
+    for (var k = 0; k < 3; k++) { traffic.push({ axis: "z", off: ln[0], y: ln[1], dir: ln[0] < 0 ? 1 : -1, speed: 16 + (i * 3 % 9), pos: -60 + k * 40 + i * 7, m: carMeshes[(i + k) % 4], min: -66, max: 66 }); }
+  });
+  [[-3, 18], [3, 26]].forEach(function (ln, i) {
+    for (var k = 0; k < 3; k++) { traffic.push({ axis: "x", off: ln[0], y: ln[1], dir: ln[0] < 0 ? 1 : -1, speed: 20, pos: -60 + k * 40, m: carMeshes[(i + k + 1) % 4], min: -70, max: 70 }); }
+  });
+  [[-2.6, 1], [2.6, -1], [-5.4, 1], [5.4, -1]].forEach(function (ln, i) {
+    for (var k = 0; k < 2; k++) { traffic.push({ axis: "z", off: ln[0], y: 0.75, dir: ln[1], speed: 9 + i * 1.5, pos: -30 + k * 35 + i * 9, m: bikeMeshes[i % 2], min: -34, max: 44, bike: true }); }
+  });
+  function trafficPos(v) {
+    var span = v.max - v.min, s = ((v.pos - v.min) % span + span) % span + v.min;
+    return v.axis === "z" ? { x: ALIO.x + v.off, z: s, rot: v.dir > 0 ? 0 : Math.PI } : { x: ALIO.x + s, z: v.off, rot: v.dir > 0 ? Math.PI / 2 : -Math.PI / 2 };
+  }
+  var citizens = [];
+  for (var ci = 0; ci < 18; ci++) {
+    var cl = Character.random(rnd), lane = ci % 4, side = [-10.6, 10.6, -12.5, 12.5][lane];
+    var north = ci % 2 === 0, z0 = north ? 18 : -32, z1 = north ? 44 : -18;
+    citizens.push({ mesh: buildFigure(cl), h: cl.height, x: ALIO.x + side, z: z0 + rnd() * (z1 - z0), z0: z0, z1: z1, dir: rnd() < 0.5 ? 1 : -1, speed: 1.1 + rnd() * 0.6, wait: 0 });
+  }
+  var holoMesh = (function () {
+    var b = new Builder();
+    b.sphere(0, 0, 0, 1.7, 2.3, 1.7, 22, C.pearl, [1, 0.9, 0]);
+    b.ring(0, 0, 0, 2.6, 0.12, 40, C.teal, [0.6, 2, 0]);
+    return upload(b);
+  })();
+  var holoRing = (function () { var b = new Builder(); b.ring(0, 0, 0, 3.4, 0.1, 44, hex("#ff7ad9"), [0.5, 2.2, 0]); return upload(b); })();
+  var stoneOn = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.32, 0.55, 0.32, 6, hex("#9fe3c4"), [1, 2.4, 0]); return upload(b); })();
+  var stoneOff = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.28, 0.48, 0.28, 6, hex("#5a5870"), [0.4, 0.1, 0]); return upload(b); })();
+  var boardMesh = (function () {
+    var b = new Builder();
+    b.sphere(0, 0, 0, 0.42, 0.07, 1.05, 14, C.pearl, [1, 0.5, 0]);
+    b.box(0, -0.09, 0, 0.5, 0.04, 1.5, 0, hex("#46c2b4"), [0, 2.6, 0]);
+    return upload(b);
+  })();
+  function updateCity(dt) {
+    traffic.forEach(function (v) { v.pos += v.dir * v.speed * dt; });
+    citizens.forEach(function (c) {
+      if (c.wait > 0) { c.wait -= dt; return; }
+      c.z += c.dir * c.speed * dt;
+      if (c.z > c.z1 || c.z < c.z0) { c.z = Math.max(c.z0, Math.min(c.z1, c.z)); c.dir *= -1; c.wait = 1 + Math.random() * 4; }
+    });
+  }
 
   var eggMesh = (function () {
     var b = new Builder();
@@ -918,18 +1385,178 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     else if (near.id === "game") { openOverlay(near.game.name, "../" + near.game.path + "/"); }
     else if (near.id === "talk") {
       var p = near.who;
-      say(p.name, p.lines[p.step % p.lines.length]);
-      p.step++;
+      p.talking = 6;
+      if (!prog.talked[p.name]) { prog.talked[p.name] = 1; saveProg(); }
+      var mq = currentMain();
+      if (p.name === "Grandma" && mq && mq.id === "egg" && questState(mq) === 1) {
+        say(p.name, "You want to see beyond the village? Our capital, Alio, is a short ride on the Skyrail from the station at the village edge. Towers taller than any ash tree. Be careful there. People in Alio change their bodies like clothes.");
+        setFlag("grandmaBeyond");
+      } else {
+        say(p.name, p.lines[p.step % p.lines.length]);
+        p.step++;
+      }
+      checkQuests();
+    } else if (near.id === "skyrail") {
+      if (near.dest === "alio") { travelTo(ALIO_STATION.x - 3, ALIO_STATION.z - 2, false, "Alio", "Capital of Esmer"); }
+      else { travelTo(STATION_V.x - 4, STATION_V.z - 2, false, "Home to the village", ""); }
+    } else if (near.id === "atelier") { openSkin(); }
+    else if (near.id === "dock") {
+      if (!prog.flags.board) { setFlag("board"); refreshButtons(); setBoard(true); say("Board Dock", "A flying board is yours. Press B, or tap the Board button, to hop on or off anywhere in the world."); }
+      else { setBoard(!riding); }
+    } else if (near.id === "lift") {
+      if (near.up) { travelTo(LIFT_TOP.x, LIFT_TOP.z + 2, true, "Top of the Esmer Spire", "All of Alio below you."); setFlag("spire"); }
+      else { travelTo(LIFT.x, LIFT.z + 2.5, false, "Alio", ""); }
+    } else if (near.id === "waystone") {
+      var w = near.stone;
+      if (!prog.stones[w.key]) { prog.stones[w.key] = Date.now(); saveProg(); toast("Waystone remembered", w.name); checkQuests(); }
+      else { renderJournal(); journal.style.display = "block"; }
+      near.label = "Rest at the Waystone (travel)";
     } else if (near.id === "monument") {
       if (pet) { say("The Monument", "Your egg hums. For a moment the stone shimmers, and a picture of this very village appears inside it, glowing for you alone. Then it fades."); }
       else { say("The Monument", "The stone looks blank to you. Some say it shimmers for those who carry an egg."); }
     }
   }
+
+  // ---------- quests, waystones, journal ----------
+  var PROG_KEY = "andromeda_progress_v1";
+  function loadProg() { try { var p = JSON.parse(localStorage.getItem(PROG_KEY) || "null"); if (p) { return p; } } catch (e) {} return { flags: {}, talked: {}, stones: {}, pools: {}, done: {} }; }
+  var prog = loadProg();
+  ["flags", "talked", "stones", "pools", "done"].forEach(function (k) { prog[k] = prog[k] || {}; });
+  function saveProg() { try { localStorage.setItem(PROG_KEY, JSON.stringify(prog)); } catch (e) {} }
+  function setFlag(k) { if (!prog.flags[k]) { prog.flags[k] = Date.now(); saveProg(); checkQuests(); } }
+  function count(o) { return Object.keys(o).length; }
+  function npcTarget(name) { var n = byName[name]; return { x: n.x, z: n.z, name: name }; }
+  function stoneTarget(key) { var w = WAYSTONES.filter(function (s) { return s.key === key; })[0]; return { x: w.x, z: w.z, name: w.name + " Waystone" }; }
+  var VILLAGE_STONES = ["heart", "grove", "flats", "ridge", "meadow"];
+  var QUESTS = [
+    { id: "egg", main: true, title: "The Egg and the Village", steps: [
+      { text: "Find the Egg Shrine and take your egg", done: function () { return !!pet; }, target: function () { return { x: SHRINE.x, z: SHRINE.z, name: "Egg Shrine" }; } },
+      { text: "Ask Grandma about the world beyond the village", done: function () { return !!prog.flags.grandmaBeyond; }, target: function () { return npcTarget("Grandma"); } },
+      { text: "Help your egg grow at the old arcade", done: function () { return !!pet && (pet.growth >= 5 || pet.stage > 0); }, target: function () { return { x: ARC.x, z: ARC.z, name: "The old arcade" }; } }
+    ] },
+    { id: "road", main: true, title: "The Road to Alio", steps: [
+      { text: "Find the Skyrail Station at the edge of the village", done: function () { return !!prog.flags.stationSeen; }, target: function () { return { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" }; } },
+      { text: "Ride the Skyrail to Alio, capital of Esmer", done: function () { return !!prog.flags.reachedAlio; }, target: function () { return { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" }; } },
+      { text: "Touch the Waystone in Alio Plaza", done: function () { return !!prog.stones.alioPlaza; }, target: function () { return stoneTarget("alioPlaza"); } }
+    ] },
+    { id: "skins", main: true, title: "City of Skins", steps: [
+      { text: "Try on a new body at the Skin Atelier", done: function () { return !!prog.flags.atelier; }, target: function () { return { x: ATELIER.x, z: ATELIER.z, name: "Skin Atelier" }; } },
+      { text: "Rent a flying board at the Board Dock", done: function () { return !!prog.flags.board; }, target: function () { return { x: DOCK.x, z: DOCK.z, name: "Board Dock" }; } },
+      { text: "Ride the Sky Lift to the top of the Esmer Spire", done: function () { return !!prog.flags.spire; }, target: function () { return { x: LIFT.x, z: LIFT.z, name: "Sky Lift" }; } }
+    ] },
+    { id: "stones", title: "Lights of the Village", steps: [
+      { text: "Touch all five village Waystones", need: 5, have: function () { return VILLAGE_STONES.filter(function (k) { return prog.stones[k]; }).length; } }
+    ] },
+    { id: "voices", title: "Every Voice", steps: [
+      { text: "Talk with everyone in the village", need: 9, have: function () { return count(prog.talked); } }
+    ] },
+    { id: "fish", title: "Fish That Swim the Sky", steps: [
+      { text: "Find the inverted fish over three different pools", need: 3, have: function () { return count(prog.pools); } }
+    ] }
+  ];
+  function stepDone(s) { return s.need ? s.have() >= s.need : s.done(); }
+  function questState(q) {
+    for (var i = 0; i < q.steps.length; i++) { if (!stepDone(q.steps[i])) { return i; } }
+    return q.steps.length;
+  }
+  function currentMain() {
+    for (var i = 0; i < QUESTS.length; i++) { var q = QUESTS[i]; if (q.main && questState(q) < q.steps.length) { return q; } }
+    return null;
+  }
+  function checkQuests() {
+    if (mode !== "play") { return; }
+    QUESTS.forEach(function (q) {
+      if (!prog.done[q.id] && questState(q) >= q.steps.length) { prog.done[q.id] = Date.now(); saveProg(); toast("Quest complete", q.title); }
+    });
+    updateQuest();
+  }
   function updateQuest() {
-    var q = document.getElementById("hud-quest");
-    if (!pet) { q.innerHTML = "<b>QUEST</b><br>Find the Egg Shrine in the village. Follow the arrow at the top of the screen."; }
-    else if (pet.stage === 0) { q.innerHTML = "<b>QUEST</b><br>Your egg is waiting to hatch. Play at the old arcade, under the pink and teal lights, to help it grow."; }
-    else { q.innerHTML = "<b>QUEST</b><br>" + Creature.esc(pet.name) + " has hatched. Keep playing to help it evolve."; }
+    var q = document.getElementById("hud-quest"), m = currentMain();
+    if (!m) { q.innerHTML = "<b>QUEST</b><br>More of Esmer awaits. New quests are coming soon."; return; }
+    var s = m.steps[questState(m)];
+    var side = QUESTS.filter(function (x) { return !x.main && !prog.done[x.id]; }).length;
+    q.innerHTML = "<b>" + Creature.esc(m.title.toUpperCase()) + "</b><br>" + s.text +
+      (side ? '<br><span style="color:#a6a2b8;font-size:12px">' + side + " side quests in your journal</span>" : "");
+  }
+  function questTarget() {
+    var m = currentMain(); if (!m) { return null; }
+    var s = m.steps[questState(m)]; if (!s || !s.target) { return null; }
+    var tg = s.target();
+    if (inAlio(tg.x) !== inAlio(player.x)) { return inAlio(player.x) ? { x: ALIO_STATION.x, z: ALIO_STATION.z, name: "Skyrail home" } : { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" }; }
+    if (player.roof && tg.name !== "Sky Lift") { return { x: LIFT_TOP.x, z: LIFT_TOP.z, name: "Sky Lift down" }; }
+    return tg;
+  }
+  var journal = document.getElementById("journal"), jBtn = document.getElementById("j-btn"), bBtn = document.getElementById("b-btn");
+  function renderJournal() {
+    var h = "<h2>Journal</h2>";
+    function block(q) {
+      var at = questState(q), done = at >= q.steps.length;
+      var out = '<div class="q' + (done ? " done" : "") + '"><b>' + (done ? "&#10003; " : "") + Creature.esc(q.title) + "</b>";
+      q.steps.forEach(function (s, i) {
+        var mark = stepDone(s) ? "&#10003;" : i === at ? "&#9670;" : "&middot;";
+        out += '<div class="st' + (i === at ? " cur" : "") + '">' + mark + " " + s.text + (s.need ? " (" + Math.min(s.have(), s.need) + "/" + s.need + ")" : "") + "</div>";
+      });
+      return out + "</div>";
+    }
+    var mainsShown = false;
+    h += "<h3>MAIN QUESTS</h3>";
+    QUESTS.forEach(function (q) {
+      if (!q.main) { return; }
+      var prevOpen = QUESTS.some(function (o) { return o.main && QUESTS.indexOf(o) < QUESTS.indexOf(q) && questState(o) < o.steps.length; });
+      if (!prevOpen || prog.done[q.id]) { h += block(q); mainsShown = true; }
+    });
+    h += "<h3>SIDE QUESTS</h3>";
+    QUESTS.forEach(function (q) { if (!q.main) { h += block(q); } });
+    h += "<h3>WAYSTONES</h3>";
+    WAYSTONES.forEach(function (w) {
+      h += '<div class="ws"><span>' + (prog.stones[w.key] ? Creature.esc(w.name) : '<span style="color:#6c6880">Not yet found</span>') + "</span>" +
+        (prog.stones[w.key] ? '<button data-travel="' + w.key + '">Travel</button>' : "") + "</div>";
+    });
+    h += '<p style="color:#a6a2b8;font-size:12px">Touch a Waystone to remember it. You can travel between the ones you have found.</p><button id="j-close">Close</button>';
+    journal.innerHTML = h;
+    $("j-close").addEventListener("click", function () { journal.style.display = "none"; });
+    journal.querySelectorAll("[data-travel]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var w = WAYSTONES.filter(function (s) { return s.key === b.dataset.travel; })[0];
+        journal.style.display = "none";
+        travelTo(w.x + 1.6, w.z + 1.6, false, w.name);
+      });
+    });
+  }
+  function toggleJournal() {
+    if (journal.style.display === "block") { journal.style.display = "none"; return; }
+    renderJournal(); journal.style.display = "block";
+  }
+  jBtn.addEventListener("click", toggleJournal);
+  var fadeEl = document.getElementById("fade"), traveling = false;
+  function travelTo(x, z, roof, title, line) {
+    if (traveling) { return; }
+    traveling = true; fadeEl.style.opacity = "1"; keys = {}; hideTalk();
+    setTimeout(function () {
+      player.roof = !!roof; player.x = x; player.z = z; player.y = ground(x, z);
+      petPos = { x: x - 1, y: player.y + 1.2, z: z + 1 }; trail = [];
+      areaName = areaAt(x, z);
+      if (inAlio(x)) { setFlag("reachedAlio"); }
+      fadeEl.style.opacity = "0"; traveling = false;
+      toast(title || areaName, line || "");
+    }, 650);
+  }
+  var riding = false;
+  function setBoard(on) { riding = !!on && !!prog.flags.board; bBtn.textContent = riding ? "Step off board (B)" : "Board (B)"; }
+  bBtn.addEventListener("click", function () { setBoard(!riding); });
+  function refreshButtons() { bBtn.style.display = prog.flags.board ? "inline-block" : "none"; }
+  window.addEventListener("keydown", function (e) {
+    if (mode !== "play" || e.target.tagName === "INPUT") { return; }
+    if (e.key === "j" || e.key === "J") { toggleJournal(); }
+    if ((e.key === "b" || e.key === "B") && prog.flags.board) { setBoard(!riding); }
+    if (e.key === "Escape") { journal.style.display = "none"; }
+  });
+  var questT = 0;
+  function questTick(dt) {
+    questT += dt; if (questT < 0.5) { return; } questT = 0;
+    if (Math.hypot(player.x - STATION_V.x, player.z - STATION_V.z) < 7) { setFlag("stationSeen"); }
+    mudList.forEach(function (m, i) { if (!prog.pools[i] && Math.hypot(player.x - m[0], player.z - m[1]) < m[2] + 3.5) { prog.pools[i] = 1; saveProg(); toast("Inverted fish", "They swim the air above this pool. (" + count(prog.pools) + " of 3 found)"); } });
+    checkQuests();
   }
 
   // floating name tags
@@ -972,7 +1599,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     var len = Math.hypot(mx, mz);
     if (len > 0.05) {
       if (len > 1) { mx /= len; mz /= len; }
-      var speed = (keys.shift ? 9 : 5) * dt;
+      var speed = (riding ? (keys.shift ? 17 : 12) : (keys.shift ? 9 : 5)) * dt;
       var fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
       var vx = (fx * mz + rx * mx), vz = (fz * mz + rz * mx);
       player.x += vx * speed; player.z += vz * speed;
@@ -985,15 +1612,34 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       var dx = player.x - s[0], dz = player.z - s[1], dist = Math.hypot(dx, dz), min = s[2] + 0.45;
       if (dist < min && dist > 0.0001) { player.x = s[0] + dx / dist * min; player.z = s[1] + dz / dist * min; }
     });
-    var pr = Math.hypot(player.x, player.z);
-    if (pr > WORLD_R - 6) { player.x *= (WORLD_R - 6) / pr; player.z *= (WORLD_R - 6) / pr; }
-    player.y = ground(player.x, player.z);
+    npcs.forEach(function (n) {
+      if (n.hidden) { return; }
+      var dx = player.x - n.x, dz = player.z - n.z, dist = Math.hypot(dx, dz), min = 0.75;
+      if (dist < min && dist > 0.0001) { player.x = n.x + dx / dist * min; player.z = n.z + dz / dist * min; }
+    });
+    if (!player.roof) {
+      rects.forEach(function (r) {
+        var dx = player.x - r[0], dz = player.z - r[1], px = r[2] + 0.45 - Math.abs(dx), pz = r[3] + 0.45 - Math.abs(dz);
+        if (px > 0 && pz > 0) { if (px < pz) { player.x += (dx < 0 ? -px : px); } else { player.z += (dz < 0 ? -pz : pz); } }
+      });
+    }
+    if (inAlio(player.x)) {
+      if (player.roof) { player.x = Math.max(ROOF.x0 + 0.6, Math.min(ROOF.x1 - 0.6, player.x)); player.z = Math.max(ROOF.z0 + 0.6, Math.min(ROOF.z1 - 0.6, player.z)); }
+      else { player.x = Math.max(ALIO.x - 58, Math.min(ALIO.x + 58, player.x)); player.z = Math.max(-58, Math.min(57, player.z)); }
+    } else {
+      var pr = Math.hypot(player.x, player.z);
+      if (pr > WORLD_R - 6) { player.x *= (WORLD_R - 6) / pr; player.z *= (WORLD_R - 6) / pr; }
+    }
+    player.y = ground(player.x, player.z) + (riding ? 0.45 + Math.sin(time * 3) * 0.04 : 0);
+    questTick(dt);
 
     near = null;
     var best = 1e9;
     spots.forEach(function (s) {
       var dd = Math.hypot(player.x - s.x, player.z - s.z);
-      if (dd < s.r && dd < best) { best = dd; near = s; }
+      if (s.roof && !player.roof) { return; } if (s.id === "lift" && s.up && player.roof) { return; }
+      if (s.id === "waystone") { s.label = prog.stones[s.stone.key] ? "Rest at the Waystone (travel)" : "Touch the Waystone"; }
+      if (!s.hidden && dd < s.r && dd < best) { best = dd; near = s; }
     });
     if (near && overlay.style.display !== "block") {
       promptEl.textContent = near.label + (stickEl.dataset.on ? "" : "  (E)");
@@ -1022,7 +1668,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     else {
       player.y = ground(player.x, player.z);
       if (mode === "title") { cam.yaw += dt * 0.05; }
-      if (mode === "create") {
+      if (mode === "create" || mode === "skin") {
         if (!drag) { cam.yaw += dt * 0.22; }
         var narrow = W < 700;
         targetY = narrow ? 0.35 : 1.05; camDist = narrow ? 5.4 : 4.3; pitch = 0.16;
@@ -1039,7 +1685,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     var cp = Math.cos(pitch), dist = camDist, eye;
     for (;;) {
       eye = [player.x + Math.sin(cam.yaw) * dist * cp, player.y + targetY + Math.sin(pitch) * dist, player.z + Math.cos(cam.yaw) * dist * cp];
-      var blocked = solids.some(function (s) { return s[2] > 1.5 && Math.hypot(eye[0] - s[0], eye[2] - s[1]) < s[2] + 0.6; });
+      var blocked = solids.some(function (s) { return s[2] > 1.5 && Math.hypot(eye[0] - s[0], eye[2] - s[1]) < s[2] + 0.6; }) ||
+        (!player.roof && eye[1] < 75 && rects.some(function (r) { return Math.abs(eye[0] - r[0]) < r[2] + 0.4 && Math.abs(eye[2] - r[1]) < r[3] + 0.4; }));
       if (!blocked || dist <= 2.5) { break; }
       dist -= 0.5;
     }
@@ -1049,15 +1696,22 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniformMatrix4fv(U.uVP, false, vp);
     gl.uniform3fv(U.uCam, eye);
-    gl.uniform3fv(U.uMoon, [-0.42, 0.62, -0.66]);
-    gl.uniform3fv(U.uMoonCol, [0.34, 0.42, 0.62]);
-    gl.uniform3fv(U.uAmb, [0.2, 0.2, 0.3]);
-    gl.uniform3fv(U.uFog, [0.07, 0.15, 0.2]);
-    gl.uniform1f(U.uFogD, 0.022);
+    computeEnv();
+    gl.uniform3fv(U.uMoon, env.lightDir);
+    gl.uniform3fv(U.uMoonCol, env.lightCol);
+    gl.uniform3fv(U.uAmb, env.amb);
+    gl.uniform3fv(U.uFog, env.fog);
+    gl.uniform1f(U.uFogD, 0.022 - env.day * 0.008);
     gl.uniform1f(U.uTime, time);
+    gl.uniform1f(U.uPointK, env.pointK);
+    gl.uniform3fv(U.uSkyTop, env.top); gl.uniform3fv(U.uSkyHor, env.hor);
+    gl.uniform3fv(U.uSunDir, env.sun);
+    gl.uniform3fv(U.uSunCol, lerp3([1.0, 0.55, 0.35], [1.0, 0.95, 0.8], env.day).map(function (v) { return v * Math.max(0, Math.min(1, env.sun[1] * 4 + 0.6)); }));
+    updateNpcs(dt); updateLizards(dt); updateCity(dt); cloudScroll += dt * 0.8;
+    clockEl.textContent = "Hour " + (Math.floor(env.hour) + 1) + " of 37 \u00b7 " + (env.day > 0.6 ? "Day" : env.day > 0.15 ? (env.sun[0] > 0 ? "Dawn" : "Dusk") : "Night");
 
     // pick the 12 lights closest to the player
-    var all = sac ? lights.concat([[sac.x, ground(sac.x, sac.z) + 1.5, sac.z, 6 + sac.open * 2, 0.55, 0.45, 0.65]]) : lights;
+    var all = sac && Math.hypot(player.x - sac.x, player.z - sac.z) < 80 ? lights.concat([[sac.x, ground(sac.x, sac.z) + 1.5, sac.z, 6 + sac.open * 2, 0.55, 0.45, 0.65]]) : lights;
     var ls = all.slice().sort(function (a, b) { return Math.hypot(a[0] - player.x, a[2] - player.z) - Math.hypot(b[0] - player.x, b[2] - player.z); }).slice(0, 12);
     ls.forEach(function (l, i) {
       var flick = 1 + Math.sin(time * 3 + i * 1.7) * 0.06;
@@ -1068,7 +1722,17 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     gl.uniform1f(U.uAlpha, 1);
     gl.uniform1f(U.uNoFog, 1);
     gl.depthMask(false);
-    draw(skyMesh, model(eye[0], 0, eye[2], 0, 1));
+    gl.uniform1i(U.uSky, 1);
+    draw(skyMesh, model(eye[0], eye[1], eye[2], 0, 1));
+    gl.uniform1i(U.uSky, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    if (env.night > 0.05) { gl.uniform1f(U.uAlpha, env.night); draw(starMesh, model(eye[0], eye[1], eye[2], time * 0.002, 1)); }
+    if (env.sun[1] > -0.2) { gl.uniform1f(U.uAlpha, Math.min(1, (env.sun[1] + 0.2) * 4)); draw(sunMesh, model(eye[0] + env.sun[0] * 140, eye[1] + env.sun[1] * 140, eye[2] + env.sun[2] * 140, 0, 1)); }
+    var ma = Math.min(1, Math.max(0.15, env.night));
+    gl.uniform1f(U.uAlpha, ma);
+    draw(moonA, model(eye[0] + env.moon[0] * 140, eye[1] + env.moon[1] * 140, eye[2] + env.moon[2] * 140, 0, 1));
+    draw(moonB, model(eye[0] + env.moon[0] * 140 + 16, eye[1] + env.moon[1] * 140 - 14, eye[2] + env.moon[2] * 140 - 8, 0, 1));
+    gl.disable(gl.BLEND); gl.uniform1f(U.uAlpha, 1);
     gl.depthMask(true);
     gl.uniform1f(U.uNoFog, 0);
     draw(worldMesh, model(0, 0, 0, 0, 1));
@@ -1076,6 +1740,36 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     if (scentMesh && (mode === "play" || mode === "emerge")) {
       trail.forEach(function (m, i) { draw(scentMesh, model(m.x, m.y + Math.sin(time * 2 + i) * 0.08, m.z, 0, 1 - i * 0.1)); });
     }
+    var here = !inAlio(player.x);
+    npcs.forEach(function (n, i) {
+      if (n.hidden || !here) { return; }
+      var bob = n.moving ? Math.abs(Math.sin(time * 9 + i)) * 0.04 : 0;
+      draw(npcMeshes[i], model(n.x, ground(n.x, n.z) + bob, n.z, n.face, n.look.height));
+    });
+    if (here) lizards.forEach(function (lz) {
+      var wig = lz.moving ? Math.sin(time * 22) * 0.25 : 0;
+      draw(lizardMeshes[lz.m], model(lz.x, ground(lz.x, lz.z), lz.z, lz.face + wig, 1.4));
+    });
+    if (here) fish.forEach(function (f) {
+      var a = f.a + time * f.s, x = f.cx + Math.cos(a) * f.r, z = f.cz + Math.sin(a) * f.r;
+      var heading = Math.atan2(-Math.sin(a) * f.s, Math.cos(a) * f.s);
+      draw(fishMesh, model2(x, ground(f.cx, f.cz) + f.h + Math.sin(time * 1.3 + f.r) * 0.3, z, heading, Math.sin(time * 3 + f.h) * 0.12, 1));
+    });
+    if (!here) {
+      traffic.forEach(function (v) { var tp = trafficPos(v); draw(v.m, model(tp.x, v.y + (v.bike ? Math.sin(time * 4 + v.pos) * 0.05 : Math.sin(time + v.pos) * 0.3), tp.z, tp.rot, 1)); });
+      citizens.forEach(function (c, i) { draw(c.mesh, model(c.x, c.wait > 0 ? 0 : Math.abs(Math.sin(time * 8 + i)) * 0.04, c.z, c.dir > 0 ? 0 : Math.PI, c.h)); });
+    }
+    WAYSTONES.forEach(function (w) {
+      if (Math.hypot(player.x - w.x, player.z - w.z) > 70) { return; }
+      draw(prog.stones[w.key] ? stoneOn : stoneOff, model(w.x, w.y + 2.15 + Math.sin(time * 1.4 + w.x) * 0.1, w.z, time * 0.5, 1));
+    });
+    if (riding && mode === "play") { draw(boardMesh, model2(player.x, player.y - 0.06, player.z, player.face, Math.sin(time * 2) * 0.04, ch ? ch.height : 1)); }
+    gl.uniform1f(U.uNoFog, 0.75);
+    clouds.forEach(function (c) {
+      var x = ((c.x + cloudScroll * c.s + 90) % 180 + 180) % 180 - 90 + (inAlio(player.x) ? ALIO.x : 0);
+      draw(cloudMeshes[c.m], model(x, c.y + (inAlio(player.x) ? 50 : 0), c.z, 0, 1));
+    });
+    gl.uniform1f(U.uNoFog, 0);
     draw(eggMesh, model(SHRINE.x, ground(SHRINE.x, SHRINE.z) + 2.3 + Math.sin(time * 1.3) * 0.2, SHRINE.z, time * 0.6, 1));
     motes.forEach(function (m) {
       var a = m.a + time * m.s * 0.2;
@@ -1083,7 +1777,14 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       draw(moteMesh, model(x, ground(x, z) + m.h + Math.sin(time * m.s * 3 + m.p) * 0.4, z, 0, 1));
     });
     if (petMesh && mode === "play") { draw(petMesh, model(petPos.x, petPos.y, petPos.z, player.face + Math.sin(time) * 0.2, 1)); }
-    if (sac) {
+    if (!here) {
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+      gl.uniform1f(U.uAlpha, 0.5);
+      draw(holoMesh, model(ALIO.x, 4.4 + Math.sin(time) * 0.3, ALIO.z, time * 0.4, 1));
+      draw(holoRing, model2(ALIO.x, 4.4, ALIO.z, time * -0.7, 0.5, 1));
+      gl.depthMask(true); gl.disable(gl.BLEND); gl.uniform1f(U.uAlpha, 1);
+    }
+    if (sac && Math.hypot(player.x - sac.x, player.z - sac.z) < 80) {
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
       gl.uniform1f(U.uAlpha, mode === "create" ? 0.26 : 0.5 - sac.open * 0.12);
       var sy = ground(sac.x, sac.z) - 0.05, breathe = sac.open < 0.01 ? Math.sin(time * 1.5) * 0.02 : 0;
@@ -1098,7 +1799,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     // name tags
     spots.forEach(function (s, i) {
       var el = tagEls[i], dd = Math.hypot(player.x - s.x, player.z - s.z);
-      var p = dd < 20 ? project(vp, s.x, s.y, s.z) : null;
+      var gated = (s.roof && !player.roof) || (s.id === "lift" && s.up && player.roof);
+      var p = dd < 20 && !s.hidden && !gated ? project(vp, s.x, s.y, s.z) : null;
       if (p && active) { el.style.display = "block"; el.style.left = p.x + "px"; el.style.top = p.y + "px"; el.style.opacity = String(Math.max(0.25, 1 - dd / 20)); }
       else { el.style.display = "none"; }
     });
@@ -1119,14 +1821,19 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     toastTimer = setTimeout(function () { toastEl.style.opacity = "0"; }, 3200);
   }
   function areaAt(x, z) {
+    if (inAlio(x)) {
+      if (player.roof) { return "Top of the Esmer Spire"; }
+      if (Math.hypot(x - ALIO.x, z - ALIO.z) < 16) { return "Alio Plaza"; }
+      if (z > 40) { return "Alio Skyrail Station"; }
+      return "Alio, Capital of Esmer";
+    }
+    if (Math.hypot(x - STATION_V.x, z - STATION_V.z) < 8) { return "Skyrail Station"; }
     for (var i = 1; i < SPAWNS.length; i++) { if (Math.hypot(x - SPAWNS[i].x, z - SPAWNS[i].z) < 11) { return SPAWNS[i].name; } }
     return Math.hypot(x, z) < 29 ? "The Village" : "The Wilds";
   }
-  var guideEl = document.getElementById("guide");
+  var guideEl = document.getElementById("guide"), clockEl = document.getElementById("clock");
   function updateGuide() {
-    var target = null;
-    if (!pet) { target = { x: SHRINE.x, z: SHRINE.z, name: "Egg Shrine" }; }
-    else if (pet.stage === 0) { target = { x: ARC.x, z: ARC.z, name: "The old arcade" }; }
+    var target = questTarget();
     if (!target) { guideEl.style.display = "none"; return; }
     var dx = target.x - player.x, dz = target.z - player.z, d = Math.hypot(dx, dz);
     if (d < 7) { guideEl.style.display = "none"; return; }
@@ -1151,8 +1858,10 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   var creator = document.getElementById("creator");
   function $(id) { return document.getElementById(id); }
   function showHud(on) {
-    ["hud-quest", "help"].forEach(function (id) { $(id).style.display = on ? "block" : "none"; });
+    ["hud-quest", "help", "clock"].forEach(function (id) { $(id).style.display = on ? "block" : "none"; });
     meBtn.style.display = on ? "block" : "none";
+    $("hud-btns").style.display = on ? "flex" : "none";
+    if (!on) { journal.style.display = "none"; }
     stickEl.style.display = on && stickEl.dataset.on ? "block" : "none";
     if (!on) { guideEl.style.display = "none"; promptEl.style.display = "none"; meCard.style.display = "none"; }
   }
@@ -1256,6 +1965,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       renderCreator(); changed();
     });
     $("c-emerge").addEventListener("click", function () {
+      if (mode === "skin") { finishSkin(); return; }
       var nm = (ch.name || "").trim(), err = $("c-err");
       if (nm.length < 2) { err.textContent = "Give yourself a name of at least 2 letters first."; err.style.display = "block"; return; }
       err.style.display = "none";
@@ -1281,11 +1991,34 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     creator.style.display = "flex";
     renderCreator(); rebuildPlayer();
   }
+  function openSkin() {
+    mode = "skin"; active = false; showHud(false); setBoard(false);
+    document.body.classList.add("creating");
+    creator.querySelector("h2").textContent = "Skin Atelier";
+    creator.querySelector(".lead").textContent = "Step into any body you like. Your name and identity stay yours.";
+    $("c-emerge").textContent = "Wear this skin";
+    creator.style.display = "flex";
+    renderCreator();
+    creator.querySelector('.tabs button[data-tab="people"]').click();
+    cam.yaw = player.face;
+  }
+  function finishSkin() {
+    Character.save(ch);
+    creator.style.display = "none";
+    document.body.classList.remove("creating");
+    creator.querySelector("h2").textContent = "Shape your form";
+    creator.querySelector(".lead").textContent = "You are sealed in your petal sac. Choose who you are, then emerge.";
+    $("c-emerge").textContent = "Emerge";
+    creator.querySelector('.tabs button[data-tab="who"]').click();
+    mode = "play"; active = true; keys = {};
+    showHud(true); refreshMe(); setFlag("atelier");
+    toast("A new skin", "You wear it well.");
+  }
   function finishEmerge() {
     mode = "play"; active = true;
     var sp = SPAWNS[ch.spawn || 0];
     areaName = areaAt(player.x, player.z);
-    showHud(true); updateQuest(); buildPet(); refreshMe();
+    showHud(true); buildPet(); refreshMe(); refreshButtons(); checkQuests();
     toast("You emerged in " + sp.name, sp.line);
   }
   function continueLife(saved) {
@@ -1298,7 +2031,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     rebuildPlayer();
     mode = "play"; active = true; trail = [];
     areaName = areaAt(player.x, player.z);
-    showHud(true); updateQuest(); buildPet(); refreshMe();
+    player.roof = false;
+    showHud(true); buildPet(); refreshMe(); refreshButtons(); checkQuests();
     toast("Welcome back, " + ch.name, areaName);
   }
   function refreshMe() {
@@ -1336,7 +2070,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   buildPet();
   updateQuest();
   window.__world = { player: player, spots: spots, interact: interact, closeOverlay: closeOverlay, nearest: function () { return near; },
-    mode: function () { return mode; }, ch: function () { return ch; }, spawns: SPAWNS, sac: function () { return sac; } };
+    mode: function () { return mode; }, prog: function () { return prog; }, travelTo: function (x, z, r) { travelTo(x, z, r); }, ch: function () { return ch; }, spawns: SPAWNS, sac: function () { return sac; },
+    setHour: function (h) { timeOffset = 0; timeOffset = (h - worldHour()) * MS_PER_HOUR; }, npcs: npcs, env: function () { return env; } };
   requestAnimationFrame(render);
 })();
 </script>
