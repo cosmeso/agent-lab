@@ -1,1 +1,1 @@
-Begin as a new life inside a petal sac, choose who you are, and emerge somewhere in the 3D world of the Utopian Galaxies.
+Begin as a new life inside a petal sac, choose who you are, and emerge somewhere in the 3D world of the Utopian Galaxies. Live among Madison's family in the half-buried village, take the Skyrail to Alio (capital of Esmer), and walk the Golden Road into a forest of gold where sorrow birds sing and foxrids hunt. Carve a Liev, forge an abalone sword, learn powers from the people who love you, and help each villager with what they want most.

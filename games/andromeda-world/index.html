@@ -35,7 +35,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #05060b; }
   background: rgba(239, 234, 224, 0.12); border: 2px solid rgba(239, 234, 224, 0.35); touch-action: none;
 }
 #knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(239, 234, 224, 0.55); }
-#help { position: fixed; right: 12px; bottom: 12px; color: #a6a2b8; font: 12px Inter, system-ui, sans-serif; z-index: 4; pointer-events: none; }
+#help { position: fixed; left: 50%; top: 46px; transform: translateX(-50%); color: #a6a2b8; font: 12px Inter, system-ui, sans-serif; z-index: 4; pointer-events: none; white-space: nowrap; text-shadow: 0 1px 4px #000; transition: opacity 1.5s; }
+@media (max-width: 900px) { #help { display: none !important; } }
 #overlay { position: fixed; inset: 0; display: none; z-index: 100001; background: rgba(4, 5, 9, 0.85); }
 #overlay iframe { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); border: 0; background: #06070a; }
 #overlay-bar { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box; }
@@ -107,6 +108,54 @@ body.coarse #hud-btns { left: auto; right: 12px; bottom: 192px; }
 #intro .choices button { display: block; width: 260px; margin: 10px auto 0; padding: 13px 20px; border-radius: 12px; border: 0; font: 700 16px Inter, system-ui, sans-serif; cursor: pointer; }
 #intro .choices .main { background: #efeae0 !important; color: #15151d !important; }
 body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
+/* ---- combat HUD: health, essence, actions ---- */
+#bars { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(320px, 60vw); z-index: 5; display: none; pointer-events: none; }
+.bar { position: relative; height: 13px; margin-top: 4px; border-radius: 7px; background: rgba(8,10,16,.8); border: 1px solid rgba(239,234,224,.25); overflow: hidden; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width .15s; }
+.bar.hp i { background: linear-gradient(90deg, #b03a5a, #e8a3cf); }
+.bar.ess i { background: linear-gradient(90deg, #1d7a74, #9fe3c4); }
+.bar span { position: absolute; inset: 0; font: 600 10px/13px Inter, system-ui, sans-serif; color: #fff; text-align: center; text-shadow: 0 1px 3px #000; }
+#actions { position: fixed; left: 50%; bottom: 50px; transform: translateX(-50%); z-index: 5; display: none; gap: 6px; }
+#actions button { position: relative; width: 62px; height: 50px; margin: 0; padding: 4px 2px 2px; border-radius: 12px; cursor: pointer;
+  background: rgba(8,10,16,.85) !important; color: #ebe7f2 !important; border: 1px solid rgba(143,127,209,.6) !important; font: 600 11px/1.15 Inter, system-ui, sans-serif; }
+#actions button small { display: block; color: #e6d3a1; font-size: 10px; font-weight: 400; margin-top: 2px; }
+#actions button.off { opacity: .4; }
+#actions button.live { border-color: #9fe3c4 !important; box-shadow: 0 0 12px rgba(159,227,196,.6); }
+#actions button .cd { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(239,234,224,.18); border-radius: 0 0 12px 12px; }
+#prompt { bottom: 112px; }
+#talk { bottom: 166px; }
+#talk .who { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+#talk .hearts { color: #e8a3cf; font-size: 13px; letter-spacing: 1px; white-space: nowrap; }
+#talk .doing { color: #a6a2b8; font-size: 12px; margin: -2px 0 6px; }
+#talk .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+#talk .opts button { width: auto; margin: 0; padding: 7px 11px; border-radius: 10px; cursor: pointer; font: 600 13px Inter, system-ui, sans-serif; }
+#talk .opts button.gold { background: #e6d3a1 !important; color: #15151d !important; }
+.bubble { position: fixed; transform: translate(-50%, -100%); max-width: 220px; padding: 6px 10px; border-radius: 12px; background: rgba(239,234,224,.94); color: #15151d;
+  font: 12px/1.35 Inter, system-ui, sans-serif; pointer-events: none; z-index: 4; display: none; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.fx-num { position: fixed; transform: translate(-50%, -50%); font: 800 17px Inter, system-ui, sans-serif; pointer-events: none; z-index: 6; text-shadow: 0 2px 6px #000; white-space: nowrap; }
+#hurt { position: fixed; inset: 0; pointer-events: none; z-index: 3; opacity: 0; transition: opacity .35s; box-shadow: inset 0 0 160px rgba(176,58,90,.85); }
+#satchel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, 94vw); max-height: 82vh; overflow-y: auto; display: none; z-index: 100000;
+  background: rgba(8,10,16,.95); border: 1px solid rgba(70,194,180,.55); border-radius: 16px; padding: 18px 20px; color: #ebe7f2; font: 14px/1.5 Inter, system-ui, sans-serif; box-sizing: border-box; }
+#satchel h2 { margin: 0 0 6px; font: 700 22px Cinzel, Georgia, serif; letter-spacing: .06em; }
+#satchel h3 { margin: 14px 0 6px; color: #e6d3a1; font: 700 14px Cinzel, Georgia, serif; letter-spacing: .1em; }
+#satchel .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+#satchel .row span { color: #a6a2b8; font-size: 12px; display: block; }
+#satchel button { width: auto; margin: 0; padding: 6px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+#satchel button.on { background: #9fe3c4 !important; color: #15151d !important; }
+#journal .bond { padding: 10px 12px; margin: 6px 0; border-radius: 10px; background: rgba(232,163,207,.06); border: 1px solid rgba(232,163,207,.18); }
+#journal .bond .hearts { color: #e8a3cf; float: right; }
+#journal .bond small { display: block; color: #a6a2b8; }
+body.coarse #actions { left: auto; right: 10px; bottom: 10px; transform: none; display: none; grid-template-columns: repeat(3, 56px); }
+body.coarse #actions button { width: 56px; height: 48px; }
+body.coarse #bars { left: 14px; right: 14px; bottom: 150px; transform: none; width: auto; }
+body.coarse #prompt { bottom: 196px; max-width: 80vw; }
+body.coarse #talk { bottom: 250px; max-height: 46vh; overflow-y: auto; }
+body.coarse #clock { top: 72px; bottom: auto; right: 12px; }
+body.coarse #hud-btns { top: 96px; bottom: auto; right: 10px; left: auto; flex-direction: column; align-items: flex-end; gap: 6px; }
+body.coarse #hud-btns button { margin: 0; padding: 6px 10px; font-size: 12px; }
+body.coarse #me-btn { top: 248px; bottom: auto; right: 10px; left: auto; padding: 6px 10px; font-size: 12px; }
+body.coarse #me-card { top: 284px; bottom: auto; left: auto; right: 10px; }
+body.coarse #guide { top: auto; bottom: 250px; }
 @media (max-width: 700px) {
   #creator { top: auto; left: 8px; right: 8px; width: auto; height: 56vh; bottom: 8px; }
   #hud-quest { max-width: 60vw; font-size: 12px; }
@@ -122,7 +171,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
 <button id="prompt"></button>
 <div id="talk"></div>
 <div id="stick"><div id="knob"></div></div>
-<div id="help">WASD or arrows to walk &middot; Shift to run &middot; drag to look &middot; E to interact</div>
+<div id="help">WASD to walk &middot; Shift run &middot; drag to look &middot; E interact &middot; F strike &middot; 1-4 powers &middot; Q glass fruit</div>
 <div id="overlay"><div id="overlay-bar"><span id="overlay-title"></span><button id="overlay-close">Back to the village</button></div><iframe id="frame" title="Game"></iframe></div>
 <div id="intro"><div class="box">
   <h1>Abimael's Andromeda</h1>
@@ -135,7 +184,12 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
 <div id="toast"></div>
 <div id="fade"></div>
 <div id="journal"></div>
-<div id="hud-btns"><button id="j-btn">Journal (J)</button><button id="b-btn" style="display:none">Board (B)</button></div>
+<div id="hud-btns"><button id="j-btn">Journal (J)</button><button id="i-btn">Satchel (I)</button><button id="b-btn" style="display:none">Board (B)</button><button id="snd-btn">Sound on</button></div>
+<div id="bars"><div class="bar hp"><i id="hp-fill"></i><span id="hp-txt"></span></div><div class="bar ess"><i id="ess-fill"></i><span id="ess-txt"></span></div></div>
+<div id="actions"></div>
+<div id="satchel"></div>
+<div id="hurt"></div>
+<div id="fx"></div>
 <div id="clock"></div>
 <div id="guide"></div>
 <button id="me-btn"></button>
@@ -408,13 +462,25 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   })();
 
   var solids = [];      // collision circles [x, z, r]
+  var canopies = [];    // tree crowns the camera should not sink into [x, y, z, r]
   var lights = [];      // [x, y, z, radius, r, g, b]
   var spots = [];       // interactable places
   var ALIO = { x: 500, z: 0 }, rects = [], ROOF = { x0: 491.5, x1: 508.5, z0: -54.5, z1: -37.5, y: 70.4 };
   function inAlio(x) { return x > 300; }
+  // The Golden Wood: a forest of gold west of the village, reached by the Golden Road.
+  var GOLD = { x: -500, z: 0 }, GOLD_R = 54;
+  function inGold(x) { return x < -300; }
+  function region(x) { return x > 300 ? "alio" : x < -300 ? "gold" : "village"; }
+  function goldHeight(x, z) {
+    var lx = x - GOLD.x, lz = z - GOLD.z, r = Math.hypot(lx, lz);
+    var h = 0.9 * Math.sin(lx * 0.11) * Math.cos(lz * 0.09) + 0.6 * Math.sin((lx - lz) * 0.07) + 0.25 * Math.sin(lx * 0.31 + lz * 0.23);
+    if (r > GOLD_R - 4) { h += Math.pow((r - GOLD_R + 4) / 8, 2) * 6; }
+    return h;
+  }
   function onRoofRect(x, z) { return x > ROOF.x0 && x < ROOF.x1 && z > ROOF.z0 && z < ROOF.z1; }
   function ground(x, z) {
     if (x > 300) { return (typeof player !== "undefined" && player && player.roof && onRoofRect(x, z)) ? ROOF.y : 0; }
+    if (x < -300) { return goldHeight(x, z); }
     return height(x, z);
   }
 
@@ -446,6 +512,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     var y = ground(x, z), h = 3.2 * s;
     world.cyl(x, y - 0.2, z, 0.32 * s, 0.17 * s, h, 8, C.ash, M0, 0.1);
     world.sphere(x, y + h + 0.5 * s, z, 1.7 * s, 1.15 * s, 1.7 * s, 12, C.leafDeep, M0, undefined, 0.2);
+    canopies.push([x, y + h + 0.9 * s, z, 2.0 * s]);
     world.sphere(x + 0.6 * s, y + h + 1.4 * s, z - 0.3 * s, 1.25 * s, 0.95 * s, 1.25 * s, 10, C.ashLeaf, [0.1, 0, 0], undefined, 0.2);
     world.sphere(x - 0.7 * s, y + h + 1.1 * s, z + 0.4 * s, 1.1 * s, 0.85 * s, 1.1 * s, 10, C.ashLeaf, [0.1, 0, 0], undefined, 0.2);
     for (var k = 0; k < 3; k++) {
@@ -489,6 +556,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     world.cyl(x + 0.16 * s, y + 1.45 * s, z + 0.1 * s, 0.21 * s, 0.14 * s, 1.5 * s, 7, C.pearl, [1, 0.25, 0]);
     world.cyl(x - 0.05 * s, y + 2.85 * s, z + 0.22 * s, 0.15 * s, 0.07 * s, 1.3 * s, 7, C.pearl, [1, 0.3, 0]);
     var top = y + 4.1 * s;
+    canopies.push([x, top + 0.3 * s, z, 1.9 * s]);
     for (var k = 0; k < 6; k++) {
       var a = k / 6 * Math.PI * 2 + rnd(), rr = k === 0 ? 0 : 1.1 * s;
       var cx = x + Math.cos(a) * rr, cz = z + Math.sin(a) * rr, cy = top + (k === 0 ? 0.6 * s : rnd() * 0.6 * s);
@@ -816,7 +884,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     { key: "ridge", name: "Ash Ridge", x: SPAWNS[3].x - 2.6, z: SPAWNS[3].z + 2.2 },
     { key: "meadow", name: "Petal Meadow", x: SPAWNS[4].x + 2.4, z: SPAWNS[4].z - 2.6 },
     { key: "alioStation", name: "Alio Skyrail Station", x: ALIO_STATION.x + 6, z: ALIO_STATION.z - 3 },
-    { key: "alioPlaza", name: "Alio Plaza", x: ALIO.x + 7, z: ALIO.z + 7 }
+    { key: "alioPlaza", name: "Alio Plaza", x: ALIO.x + 7, z: ALIO.z + 7 },
+    { key: "goldwood", name: "The Golden Wood", x: GOLD.x + 39, z: GOLD.z + 6 }
   ];
   WAYSTONES.forEach(function (w) {
     var y = ground(w.x, w.z);
@@ -828,10 +897,43 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     spots.push(w.spot);
   });
 
+  // ---------- the Golden Road gate (village west edge) and Uncle's Mud Forge ----------
+  var GOLD_GATE = { x: -37.2, z: -3 }, GOLD_EXIT = { x: GOLD.x + 47, z: GOLD.z }, FORGE = { x: -21, z: -1 };
+  var GOLDC = { leaf: hex("#e8b84a"), leaf2: hex("#f2cf6b"), leaf3: hex("#c9932e"), bark: hex("#e9dcc0"), amber: hex("#ffb347"), glass: hex("#d8f4ff") };
+  function goldArch(cx, cz, along) {   // two golden posts and a leaf arch; "along" is the angle the arch spans
+    var ax = Math.cos(along), az = Math.sin(along), y = ground(cx, cz);
+    [-1, 1].forEach(function (s) {
+      var px = cx + ax * 2.3 * s, pz = cz + az * 2.3 * s, py = ground(px, pz);
+      world.cyl(px, py - 0.2, pz, 0.28, 0.2, 4.4, 8, GOLDC.bark, [0.35, 0.15, 0]);
+      world.sphere(px, py + 4.4, pz, 0.45, 0.45, 0.45, 8, GOLDC.leaf2, [0.4, 1.0, 0.6]);
+      solids.push([px, pz, 0.35]);
+    });
+    for (var k = 0; k <= 10; k++) {
+      var a = Math.PI * k / 10, o = Math.cos(a) * 2.3;
+      world.sphere(cx + ax * o, y + 4.1 + Math.sin(a) * 1.3, cz + az * o, 0.42, 0.32, 0.42, 7, k % 2 ? GOLDC.leaf : GOLDC.leaf3, [0.3, 0.7, -0.4]);
+    }
+    lights.push([cx, y + 3.4, cz, 9, 0.6, 0.45, 0.15]);
+  }
+  goldArch(GOLD_GATE.x, GOLD_GATE.z, Math.PI / 2);
+  spots.push({ id: "goldroad", x: GOLD_GATE.x + 1.2, z: GOLD_GATE.z, r: 3.2, label: "Walk the Golden Road into the forest", tag: "The Golden Road", y: ground(GOLD_GATE.x, GOLD_GATE.z) + 5.6 });
+  (function mudForge() {
+    var x = FORGE.x, z = FORGE.z, y = ground(x, z);
+    world.cyl(x, y - 0.1, z, 1.15, 1.0, 0.7, 14, C.stone.map(function (v) { return v * 1.2; }), M0);
+    world.disc(x, y + 0.62, z, 0.9, 18, C.mudGlow, [0.3, 2.0, 0.8]);
+    world.box(x + 1.8, y + 0.35, z + 0.4, 0.9, 0.7, 0.55, 0.3, hex("#2a2834"), [0.2, 0.05, 0]);   // anvil
+    world.box(x + 1.8, y + 0.78, z + 0.4, 1.2, 0.16, 0.5, 0.3, hex("#3a3846"), [0.5, 0.1, 0]);
+    [-1, 1].forEach(function (s) { world.cyl(x + s * 1.0, y, z - 1.0, 0.1, 0.08, 2.6, 6, C.ash, M0); });
+    world.box(x, y + 2.6, z - 1.0, 2.4, 0.14, 0.3, 0, C.ash, M0);
+    for (var k = 0; k < 5; k++) { world.sphere(x - 0.8 + k * 0.4, y + 2.45, z - 1.0, 0.06, 0.12, 0.06, 6, C.mudGlow, [0.3, 2.2, 0]); }
+    solids.push([x, z, 1.15]); solids.push([x + 1.8, z + 0.4, 0.6]);
+    lights.push([x, y + 1.6, z, 8, 0.2, 0.5, 0.9]);
+    spots.push({ id: "forge", x: x + 0.6, z: z + 1.6, r: 3, label: "Mud Forge", tag: "Uncle's Mud Forge", y: y + 3.2 });
+  })();
+
   // ---------- villagers from the story ----------
   // The village is slightly nocturnal: most people are out during the dark hours and sleep in their burrows through the bright ones.
   var RING = []; for (var ri = 0; ri < 10; ri++) { var ra = ri / 10 * Math.PI * 2; RING.push([Math.cos(ra) * 9, Math.sin(ra) * 9]); }
-  var PLACES = { arcade: [-12, 5.6], pool: [-3.2, -8.2], pool2: [-8.6, -7.4], monument: [0, 4.6], shrine: [12.6, -7.2], lantern: [8.4, 3.4], grandma: [grandmaHome.x - 1.2, grandmaHome.z - 1.2] };
+  var PLACES = { arcade: [-12, 5.6], pool: [-3.2, -8.2], pool2: [-8.6, -7.4], monument: [0, 4.6], shrine: [12.6, -7.2], lantern: [8.4, 3.4], grandma: [grandmaHome.x - 1.2, grandmaHome.z - 1.2], forge: [FORGE.x + 0.6, FORGE.z + 2.4] };
   function look(o) { return { race: 0, skin: o.skin, hair: o.hair, hairColor: o.hc, eyes: o.eyes || "#2b1a10", cloth: o.cloth, height: o.h, build: o.b || 1 }; }
   var npcs = [
     { name: "Grandma", home: grandmaHome, always: true, roam: 1.4, look: look({ skin: "#9a6440", hair: "Bun", hc: "#e8e4dc", cloth: "#5a3a6e", h: 0.9 }),
@@ -854,7 +956,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
         "She cracked her head falling between the trees once. The village rituals healed her. She went right back up the next day.",
         "You should see her swim. She's one with the water, that one."
       ] },
-    { name: "Uncle", home: null, homeIdx: 3, pts: ["arcade", "arcade", "lantern", "ring"], look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#1f3b33", h: 1.06, b: 1.15 }),
+    { name: "Uncle", home: null, homeIdx: 3, pts: ["arcade", "forge", "forge", "lantern", "ring"], look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#1f3b33", h: 1.06, b: 1.15 }),
       lines: [
         "Those old arcade machines have been paying out to the little genius all season. She thinks she's just good at games.",
         "Don't bet against her at the arcade. I learned that the expensive way.",
@@ -955,7 +1057,140 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     }
   })();
 
-  var worldMesh = upload(world);
+  // ---------- THE GOLDEN WOOD: golden trees, weeping trees of glass fruit, elder ashes, abalone stones, foxrid dens ----------
+  var ELDERS = [], OUTCROPS = [], WEEPERS = [], PERCHES = [], DENS = [];
+  var goldB = new Builder(), villageB = world;
+  world = goldB;   // the Golden Wood gets its own mesh, drawn only while you are there
+  (function goldenWood() {
+    var G = GOLD;
+    function L(lx, lz) { return [G.x + lx, G.z + lz]; }
+    // terrain
+    var N = 96, S = 128, st = S / N;
+    function P(i, j) { var x = G.x - S / 2 + i * st, z = G.z - S / 2 + j * st; return [x, goldHeight(x, z), z]; }
+    function Nn(x, z) { var e = 0.4, hx = goldHeight(x + e, z) - goldHeight(x - e, z), hz = goldHeight(x, z + e) - goldHeight(x, z - e); var n = [-hx, 2 * e, -hz], l = Math.hypot(n[0], n[1], n[2]); return [n[0] / l, n[1] / l, n[2] / l]; }
+    function roadAmt(x, z) { var lx = x - G.x, lz = z - G.z; if (lx < 8) { return 0; } return Math.max(0, 1 - Math.abs(lz - Math.sin(lx * 0.15) * 2) / 1.6); }
+    function col(p) {
+      var lx = p[0] - G.x, lz = p[2] - G.z, r = Math.hypot(lx, lz), a = roadAmt(p[0], p[2]);
+      var base = r > GOLD_R - 4 ? hex("#3a2c14") : lerp3(hex("#4a3a16"), hex("#7a5f24"), 0.5 + 0.5 * Math.sin(lx * 0.21 + lz * 0.17));
+      return jit(lerp3(base, hex("#8a7356"), a * 0.8), 0.12);
+    }
+    for (var i = 0; i < N; i++) {
+      for (var j = 0; j < N; j++) {
+        var a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1), cl = col(a);
+        world.tri(a, c, b, Nn(a[0], a[2]), Nn(c[0], c[2]), Nn(b[0], b[2]), cl, M0);
+        world.tri(a, d, c, Nn(a[0], a[2]), Nn(d[0], d[2]), Nn(c[0], c[2]), cl, M0);
+      }
+    }
+    goldArch(GOLD_EXIT.x - 1.5, GOLD_EXIT.z, Math.PI / 2);
+    spots.push({ id: "goldexit", x: GOLD_EXIT.x - 2.5, z: GOLD_EXIT.z, r: 3.2, label: "Walk the Golden Road home", tag: "Road to the village", y: ground(GOLD_EXIT.x, GOLD_EXIT.z) + 5.6 });
+
+    // elder ashes: the only trees whose heartwood can be carved into a Liev
+    [[24, -12], [6, 26], [-30, -24], [-10, -6]].forEach(function (q) {
+      var p = L(q[0], q[1]), x = p[0], z = p[1], y = ground(x, z), face = Math.atan2(GOLD_EXIT.x - x, GOLD_EXIT.z - z);
+      world.cyl(x, y - 0.3, z, 0.75, 0.42, 6.4, 10, GOLDC.bark, [0.2, 0.1, 0], 0.08);
+      [[0, 7.2, 0, 2.6], [1.4, 8.1, -0.6, 1.9], [-1.5, 7.8, 0.7, 1.8], [0.3, 9.2, 0.4, 1.6]].forEach(function (c, k) {
+        world.sphere(x + c[0], y + c[1], z + c[2], c[3], c[3] * 0.72, c[3], 11, k % 2 ? C.ashLeaf : GOLDC.leaf2, [0.25, 0.3, -0.25], undefined, 0.15);
+      });
+      var nx = x + Math.sin(face) * 0.7, nz = z + Math.cos(face) * 0.7;
+      world.box(nx, y + 1.5, nz, 0.42, 1.0, 0.12, face, GOLDC.amber, [0.3, 2.4, 0.8]);   // the glowing heartwood notch
+      solids.push([x, z, 0.85]); canopies.push([x, y + 7.9, z, 3.0]);
+      lights.push([nx, y + 1.8, nz, 6, 0.55, 0.38, 0.1]);
+      var sp = { id: "elder", x: nx + Math.sin(face) * 0.9, z: nz + Math.cos(face) * 0.9, r: 2.6, label: "Carve a Liev from the elder ash", tag: "Elder Ash", y: y + 3.4 };
+      ELDERS.push({ x: x, z: z, spot: sp }); spots.push(sp);
+    });
+
+    // abalone stones: iridescent outcrops; a fresh crystal regrows on each after you gather it
+    [[31, 14], [17, 24], [13, -22], [-14, 8], [-26, -12], [-3, -40], [35, -25]].forEach(function (q) {
+      var p = L(q[0], q[1]), x = p[0], z = p[1], y = ground(x, z);
+      for (var k = 0; k < 4; k++) {
+        var a = k / 4 * 6.28 + rnd(), rr = k === 0 ? 0 : 0.8, s = k === 0 ? 1.0 : 0.55 + rnd() * 0.25;
+        world.sphere(x + Math.cos(a) * rr, y + s * 0.3, z + Math.sin(a) * rr, s, s * 0.8, s * 0.9, 6, hex("#3c4a5a"), [1, 0.18, 0.5], undefined, 0.2);
+      }
+      solids.push([x, z, 1.2]);
+      var sp = { id: "outcrop", x: x, z: z, r: 2.6, label: "Gather an abalone stone", tag: "Abalone stones", y: y + 2.6 };
+      var o = { x: x, z: z, y: y, ready: true, t: 0, spot: sp }; sp.o = o; OUTCROPS.push(o); spots.push(sp);
+    });
+
+    // weeping trees: drooping golden strands that cry fruit made of glass
+    [[26, 27], [19, 3], [-4, 17], [-18, -14], [3, -25], [-36, 18], [-24, 36]].forEach(function (q) {
+      var p = L(q[0], q[1]), x = p[0], z = p[1], y = ground(x, z), top = y + 4.2;
+      world.cyl(x, y - 0.2, z, 0.5, 0.3, 4.4, 9, hex("#6b4a26"), [0.2, 0.05, 0], 0.1);
+      world.sphere(x, top + 0.3, z, 2.7, 1.0, 2.7, 14, GOLDC.leaf3, [0.06, 0.4, -0.2], undefined, 0.1);
+      world.sphere(x, top + 0.9, z, 1.6, 0.8, 1.6, 12, GOLDC.leaf2, [0.06, 0.55, -0.2]);
+      var fr = [];
+      for (var k = 0; k < 22; k++) {
+        var a = k / 22 * Math.PI * 2 + rnd() * 0.2, rr = 2.2 + rnd() * 0.5, len = 2.0 + rnd() * 1.4;
+        var sx = x + Math.cos(a) * rr, sz = z + Math.sin(a) * rr, fruitHere = k % 5 === 0 && fr.length < 4;
+        world.cyl(sx, top - len, sz, 0.03, 0.03, len, 4, GOLDC.leaf2, [0.2, 0.9, fruitHere ? 0 : -0.7]);
+        if (fruitHere) { fr.push({ x: sx, y: top - len - 0.18, z: sz, ok: true, t: 0 }); }
+      }
+      solids.push([x, z, 0.6]); canopies.push([x, top + 0.4, z, 2.9]);
+      lights.push([x, y + 1.5, z, 7, 0.35, 0.45, 0.6]);
+      var sp = { id: "weeper", x: x, z: z, r: 3.4, label: "Pick a glass fruit", tag: "Weeping Tree", y: top + 1.6 };
+      var w = { x: x, z: z, fruits: fr, spot: sp }; sp.w = w; WEEPERS.push(w); spots.push(sp);
+    });
+
+    // foxrid dens
+    [[-22, 22], [-9, -31], [-39, -3]].forEach(function (q) {
+      var p = L(q[0], q[1]), x = p[0], z = p[1], y = ground(x, z);
+      world.sphere(x, y - 0.6, z, 2.4, 1.5, 2.2, 8, hex("#3a2f22"), M0, undefined, 0.25);
+      world.box(x + 1.6, y + 0.1, z, 1.2, 0.9, 0.3, Math.PI / 2, C.door, M0);
+      for (var k = 0; k < 6; k++) { var a = rnd() * 6.28, rr = 2.8 + rnd() * 1.5; world.sphere(x + Math.cos(a) * rr, y + 0.05, z + Math.sin(a) * rr, 0.05, 0.03, 0.28, 5, [ROSE, VIOLET, MINT][k % 3], [0.8, 0.9, 1]); }
+      solids.push([x, z, 2.0]);
+      DENS.push({ x: x + 3, z: z });
+    });
+
+    function free(x, z, pad) {
+      var lx = x - G.x, lz = z - G.z;
+      if (Math.hypot(lx, lz) > GOLD_R - 6) { return false; }
+      if (roadAmt(x, z) > 0.05 || Math.hypot(lx - 40, lz - 2) < 8) { return false; }
+      for (var i = 0; i < solids.length; i++) { var s = solids[i]; if (s[0] < -300 && Math.hypot(x - s[0], z - s[1]) < s[2] + pad) { return false; } }
+      return true;
+    }
+    // golden trees
+    var made = 0, tries = 0;
+    while (made < 80 && tries < 2000) {
+      tries++;
+      var ang = rnd() * Math.PI * 2, rad = 5 + Math.sqrt(rnd()) * 42, x = G.x + Math.cos(ang) * rad, z = G.z + Math.sin(ang) * rad;
+      if (!free(x, z, 2.6)) { continue; }
+      var s = 0.8 + rnd() * 0.6, y = ground(x, z), h = 3.4 * s;
+      world.cyl(x, y - 0.2, z, 0.26 * s, 0.14 * s, h, 7, GOLDC.bark, [0.15, 0.05, 0], 0.1);
+      var tops = [[0, 0.6, 0, 1.6], [0.7, 1.4, -0.3, 1.15], [-0.7, 1.15, 0.4, 1.05]];
+      tops.forEach(function (t, k) {
+        world.sphere(x + t[0] * s, y + h + t[1] * s, z + t[2] * s, t[3] * s, t[3] * 0.8 * s, t[3] * s, 9, [GOLDC.leaf, GOLDC.leaf2, GOLDC.leaf3][(k + made) % 3], [0.12, 0.35, -0.3], undefined, 0.18);
+      });
+      if (made % 7 === 0) { PERCHES.push([x, y + h + 2.0 * s, z]); }
+      canopies.push([x, y + h + 0.9 * s, z, 1.9 * s]);
+      solids.push([x, z, 0.4 * s]);
+      made++;
+    }
+    // golden grass and pale flowers
+    var up = [0, 1, 0], placed = 0; tries = 0;
+    while (placed < 4800 && tries < 20000) {
+      tries++;
+      var ga = rnd() * Math.PI * 2, gr = Math.sqrt(rnd()) * 47, gx = G.x + Math.cos(ga) * gr, gz = G.z + Math.sin(ga) * gr;
+      if (roadAmt(gx, gz) > 0.3) { continue; }
+      var blockedHere = false;
+      for (var si = 0; si < solids.length; si++) { var so = solids[si]; if (so[0] < -300 && Math.hypot(gx - so[0], gz - so[1]) < so[2] + 0.1) { blockedHere = true; break; } }
+      if (blockedHere) { continue; }
+      var gy = ground(gx, gz) - 0.03, gang = rnd() * Math.PI, w = 0.05 + rnd() * 0.05, h2 = 0.3 + rnd() * 0.6, lean = (rnd() - 0.5) * 0.3;
+      var bc = jit(hex("#5a4416"), 0.3), tc = jit(rnd() < 0.15 ? hex("#ffe7a8") : hex("#d9a63c"), 0.3);
+      world.v([gx - Math.cos(gang) * w, gy, gz - Math.sin(gang) * w], up, bc, [0, 0, 0]); world.v([gx + Math.cos(gang) * w, gy, gz + Math.sin(gang) * w], up, bc, [0, 0, 0]);
+      world.v([gx + lean, gy + h2, gz + lean * 0.6], up, tc, [0, 0.3, -h2 * 1.6]);
+      placed++;
+    }
+    for (var fl = 0; fl < 260; fl++) {
+      var fa = rnd() * Math.PI * 2, fr2 = 4 + Math.sqrt(rnd()) * 42, fx = G.x + Math.cos(fa) * fr2, fz = G.z + Math.sin(fa) * fr2;
+      if (!free(fx, fz, 0.3)) { continue; }
+      mushroomGold(fx, fz);
+    }
+    function mushroomGold(x, z) { var y = ground(x, z), h = 0.25 + rnd() * 0.3; world.cyl(x, y - 0.05, z, 0.03, 0.03, h, 4, hex("#e9dcc0"), M0); world.sphere(x, y + h, z, 0.09, 0.07, 0.09, 6, rnd() < 0.5 ? hex("#fff3c4") : GOLDC.amber, [0.2, 1.6, 0]); }
+    // floating amber light motes give the wood its glow
+    for (var lm = 0; lm < 10; lm++) { var la = lm / 10 * 6.28, lr = 14 + (lm % 3) * 10; lights.push([G.x + Math.cos(la) * lr, ground(G.x + Math.cos(la) * lr, Math.sin(la) * lr) + 3, G.z + Math.sin(la) * lr, 10, 0.5, 0.36, 0.12]); }
+  })();
+
+  world = villageB;
+  var worldMesh = upload(world), goldMesh = upload(goldB);
 
   // sky: a dome shaded by the time of day, plus stars, the sun, two moons, and clouds
   var skyB = new Builder();
@@ -1125,10 +1360,11 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     var awakeHours = isAwakeHours();
     npcs.forEach(function (n) {
       var awake = n.always || awakeHours, speed = n.kid ? 2.0 : 1.35;
-      if (n.hidden && awake) { n.hidden = false; n.x = n.home.x; n.z = n.home.z; n.wait = 1 + Math.random() * 3; n.tx = n.x; n.tz = n.z; }
-      if (n.hidden) { return; }
-      if (!awake) { n.tx = n.home.x; n.tz = n.home.z; n.wait = 0; }
+      if (n.hidden && awake) { n.hidden = false; n.place = "home"; n.x = n.home.x; n.z = n.home.z; n.wait = 1 + Math.random() * 3; n.tx = n.x; n.tz = n.z; }
+      if (n.hidden) { n.place = "sleep"; return; }
+      if (!awake) { n.tx = n.home.x; n.tz = n.home.z; n.wait = 0; n.place = "homeward"; }
       else if (n.follow) {
+        n.place = "follow";
         var L = byName[n.follow], off = [[-0.9, -1.1], [0.9, -1.2], [0, -1.9]][n.slot];
         var c = Math.cos(L.face), s = Math.sin(L.face);
         n.tx = L.x + off[0] * c + off[1] * s; n.tz = L.z - off[0] * s + off[1] * c; speed = 2.4;
@@ -1137,9 +1373,11 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
         n.talking -= dt; n.face = Math.atan2(player.x - n.x, player.z - n.z); n.tx = n.x; n.tz = n.z;
       } else if (Math.hypot(n.tx - n.x, n.tz - n.z) < 0.3) {
         if (n.wait > 0) { n.wait -= dt; }
-        else if (n.roam) { n.tx = n.home.x + (Math.random() - 0.5) * n.roam * 2; n.tz = n.home.z + (Math.random() - 0.5) * n.roam * 2; n.wait = 3 + Math.random() * 6; }
-        else { var g = placeOf(n.pts[Math.floor(Math.random() * n.pts.length)], n); n.tx = g[0] + (Math.random() - 0.5) * 2; n.tz = g[1] + (Math.random() - 0.5) * 2; n.wait = 2 + Math.random() * 7; }
+        else if (n.roam) { n.tx = n.home.x + (Math.random() - 0.5) * n.roam * 2; n.tz = n.home.z + (Math.random() - 0.5) * n.roam * 2; n.wait = 3 + Math.random() * 6; n.place = "home"; }
+        else { var pk = n.pts[Math.floor(Math.random() * n.pts.length)], g = placeOf(pk, n); n.place = pk; n.tx = g[0] + (Math.random() - 0.5) * 2; n.tz = g[1] + (Math.random() - 0.5) * 2; n.wait = 2 + Math.random() * 7; }
       }
+      if (!n.place) { n.place = n.roam ? "home" : "ring"; }
+      npcLife(n, dt);
       var dx = n.tx - n.x, dz = n.tz - n.z, d = Math.hypot(dx, dz);
       if (d > 0.05) {
         var stepLen = Math.min(d, speed * dt); n.x += dx / d * stepLen; n.z += dz / d * stepLen;
@@ -1196,6 +1434,80 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     for (var k = 0; k < 2; k++) { fish.push({ cx: m[0], cz: m[1], r: m[2] + 0.8 + k * 0.9, h: 1.8 + k * 1.1 + rnd(), a: rnd() * 6.28, s: (0.35 + rnd() * 0.3) * (k % 2 ? -1 : 1) }); }
   });
   var cloudScroll = 0;
+
+  // ---------- creatures of the Golden Wood, weapons, and power effects (meshes) ----------
+  var foxMesh = (function () {
+    var b = new Builder(), LIQ = hex("#2b5a72"), liq = [0.6, 0.35, -0.35], dark = hex("#1b2c3c");
+    b.sphere(0, 0.62, -0.05, 0.25, 0.25, 0.52, 14, LIQ, liq);
+    b.sphere(0, 0.68, 0.33, 0.23, 0.26, 0.24, 12, LIQ, liq);
+    b.sphere(0, 0.92, 0.6, 0.17, 0.15, 0.19, 12, LIQ, liq);
+    b.sphere(0, 0.86, 0.8, 0.075, 0.07, 0.16, 10, LIQ, liq);
+    b.sphere(0, 0.88, 0.95, 0.035, 0.03, 0.03, 6, hex("#0b0b12"), M0);
+    [-1, 1].forEach(function (s) {
+      b.cyl(s * 0.09, 1.0, 0.56, 0.06, 0, 0.24, 6, LIQ, [1, 0.4, 0]);
+      b.sphere(s * 0.075, 0.95, 0.74, 0.032, 0.024, 0.02, 6, hex("#ffb347"), [0, 3, 0]);
+      [0.3, -0.33].forEach(function (lz) { b.cyl(s * 0.13, 0, lz, 0.05, 0.045, 0.55, 6, dark, [0.8, 0.2, 0]); b.sphere(s * 0.13, 0.03, lz + 0.03, 0.06, 0.04, 0.08, 6, dark, M0); });
+    });
+    var FC = [ROSE, VIOLET, MINT, hex("#ffd685")];
+    for (var k = 0; k < 9; k++) {   // shimmering feather ruff around the neck, swept back
+      var a = -Math.PI * 0.8 + k / 8 * Math.PI * 1.6;
+      b.sphere(Math.sin(a) * 0.23, 0.82 + Math.cos(a) * 0.22, 0.3, 0.032, 0.032, 0.16, 7, FC[k % 4], [0.45, 0.75, 0.9]);
+    }
+    for (var k2 = 0; k2 < 6; k2++) { b.sphere(0, 0.86 - k2 * 0.01, 0.28 - k2 * 0.14, 0.03, 0.09, 0.11, 7, FC[k2 % 4], [0.45, 0.75, 0.9]); }
+    for (var k3 = 0; k3 < 5; k3++) { b.sphere((k3 % 2 ? 0.04 : -0.04), 0.7 + k3 * 0.045, -0.6 - k3 * 0.11, 0.055, 0.05, 0.19, 7, FC[k3 % 4], [0.5, 0.9, 1]); }
+    [[0.1, 0.38, 0.05], [-0.12, 0.4, -0.2], [0, 0.36, 0.25]].forEach(function (d) { b.sphere(d[0], d[1], d[2], 0.04, 0.07, 0.04, 6, LIQ, [1, 0.5, 0]); });
+    return upload(b);
+  })();
+  var calmHalo = (function () { var b = new Builder(); b.ring(0, 0, 0, 0.35, 0.04, 16, hex("#c08cff"), [0.5, 2.4, 0]); return upload(b); })();
+  function birdMesh(wing) {
+    var b = new Builder(), GOLDB = hex("#f5c542"), m = [0.35, 0.9, 0.7];
+    b.sphere(0, 0, 0, 0.12, 0.12, 0.22, 10, GOLDB, m);
+    b.sphere(0, 0.09, 0.19, 0.085, 0.085, 0.085, 10, GOLDB, m);
+    b.sphere(0, 0.07, 0.3, 0.022, 0.02, 0.07, 6, hex("#c9932e"), [0.2, 0.5, 0]);
+    [-1, 1].forEach(function (s) {
+      b.sphere(s * 0.05, 0.11, 0.25, 0.016, 0.016, 0.012, 5, hex("#14141c"), M0);
+      b.sphere(s * 0.055, 0.075, 0.255, 0.012, 0.02, 0.01, 5, hex("#bfefff"), [0.6, 2.2, 0]);   // a glass tear
+      if (wing === "up") { b.sphere(s * 0.2, 0.12, 0, 0.13, 0.025, 0.12, 8, GOLDB, m); b.sphere(s * 0.36, 0.26, -0.02, 0.09, 0.02, 0.09, 8, hex("#ffe7a8"), m); }
+      else if (wing === "down") { b.sphere(s * 0.2, -0.03, 0, 0.13, 0.025, 0.12, 8, GOLDB, m); b.sphere(s * 0.34, -0.15, -0.02, 0.09, 0.02, 0.09, 8, hex("#ffe7a8"), m); }
+      else { b.sphere(s * 0.1, 0.02, -0.04, 0.04, 0.07, 0.19, 8, hex("#e8b84a"), m); }
+    });
+    [-0.04, 0, 0.04].forEach(function (o) { b.sphere(o, -0.02, -0.38, 0.025, 0.012, 0.24, 6, hex("#ffe7a8"), [0.4, 1.2, 0.6]); });
+    b.sphere(0, 0.19, 0.14, 0.015, 0.06, 0.04, 5, hex("#ffe7a8"), [0.4, 1.4, 0.6]);
+    return upload(b);
+  }
+  var birdFold = birdMesh("fold"), birdUp = birdMesh("up"), birdDown = birdMesh("down");
+  var fruitMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.13, 0.17, 0.13, 10, hex("#d8f4ff"), [1, 1.3, 0.8]); b.sphere(0, -0.15, 0, 0.04, 0.06, 0.04, 6, hex("#ffffff"), [1, 1.8, 0.8]); return upload(b); })();
+  var crystalMesh = (function () { var b = new Builder(); [[0, 0, 0, 0.22, 0.55], [0.25, -0.1, 0.1, 0.14, 0.35], [-0.2, -0.1, -0.12, 0.13, 0.32]].forEach(function (c) { b.sphere(c[0], c[1] + c[4], c[2], c[3], c[4], c[3], 5, hex("#e6f0ff"), [1, 1.2, 0.9]); }); return upload(b); })();
+  var swordMesh = function (feathered) {
+    var b = new Builder();
+    b.box(0, -0.03, 0, 0.05, 0.06, 0.24, 0, hex("#3a2418"), M0);
+    b.sphere(0, 0, -0.13, 0.045, 0.045, 0.045, 6, C.gold, [0.4, 0.8, 0]);
+    b.box(0, -0.04, 0.13, 0.32, 0.08, 0.05, 0, C.gold, [0.4, 0.9, 0]);
+    b.box(0, -0.012, 0.66, 0.085, 0.024, 1.0, 0, hex("#e6eef5"), [1, 0.6, 0.7]);
+    b.sphere(0, 0, 1.17, 0.042, 0.012, 0.07, 6, hex("#e6eef5"), [1, 0.6, 0.7]);
+    if (feathered) { [-1, 1].forEach(function (s) { b.sphere(s * 0.13, 0.04, 0.14, 0.03, 0.03, 0.12, 6, s > 0 ? ROSE : MINT, [0.9, 1.2, 1]); }); }
+    return upload(b);
+  };
+  var swordPlain = swordMesh(false), swordFeather = swordMesh(true);
+  var bladeMesh = (function () { var b = new Builder(); b.ring(0, 0, -0.06, 0.06, 0.022, 8, hex("#5a6878"), [0.6, 0.2, 0]); b.box(0, -0.01, 0.26, 0.05, 0.02, 0.42, 0, hex("#b8c4d0"), [0.6, 0.9, 0]); b.box(0, 0.0, 0.26, 0.012, 0.022, 0.4, 0, hex("#a6f06b"), [0.2, 1.8, 0]); return upload(b); })();
+  var lievMesh = (function () { var b = new Builder(); b.cyl(0, -0.15, 0, 0.032, 0.02, 0.8, 6, hex("#e9dcc0"), [0.2, 0.15, 0]); [0.05, 0.25, 0.45].forEach(function (y) { b.ring(0, y, 0, 0.034, 0.012, 8, GOLDC.amber, [0.2, 1.6, 0]); }); b.sphere(0, 0.7, 0, 0.055, 0.075, 0.055, 8, GOLDC.amber, [0.4, 2.6, 0.8]); return upload(b); })();
+  var arcMesh = (function () {
+    var b = new Builder(), up = [0, 1, 0], col = hex("#efeae0"), m = [1, 1.6, 0], n = 14;
+    for (var i = 0; i < n; i++) {
+      var a0 = -0.95 + i / n * 1.9, a1 = -0.95 + (i + 1) / n * 1.9, r0 = 0.8, r1 = 2.1;
+      var p00 = [Math.sin(a0) * r0, 0, Math.cos(a0) * r0], p01 = [Math.sin(a0) * r1, 0, Math.cos(a0) * r1], p10 = [Math.sin(a1) * r0, 0, Math.cos(a1) * r0], p11 = [Math.sin(a1) * r1, 0, Math.cos(a1) * r1];
+      b.tri(p00, p01, p11, up, up, up, col, m); b.tri(p00, p11, p10, up, up, up, col, m);
+    }
+    return upload(b);
+  })();
+  var bombMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.2, 0.2, 0.2, 10, C.mudGlow, [0.3, 2.4, 0.8]); return upload(b); })();
+  var blastMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 1, 1, 1, 14, C.mudGlow, [0.5, 2.2, 0.8]); return upload(b); })();
+  var healRing = (function () { var b = new Builder(); b.ring(0, 0, 0, 1, 0.06, 28, hex("#86ecff"), [0.3, 2.4, 0]); return upload(b); })();
+  var facetMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.12, 0.24, 0.12, 4, C.pearl, [1, 1.4, 0.8]); return upload(b); })();
+  var orbMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.16, 0.16, 0.16, 10, hex("#e6d9ff"), [0.6, 2.6, 0.8]); return upload(b); })();
+  var featherMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.05, 0.05, 0.26, 8, ROSE, [0.9, 1.4, 1]); b.sphere(0.06, 0.02, 0.02, 0.04, 0.04, 0.2, 8, MINT, [0.9, 1.4, 1]); return upload(b); })();
+  var puddleMesh = (function () { var b = new Builder(); b.disc(0, 0, 0, 0.85, 18, hex("#2e5470"), [1, 0.5, 0.6]); return upload(b); })();
+  var goldMote = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.05, 0.05, 0.05, 6, hex("#ffd685"), [0, 2.8, 0]); return upload(b); })();
 
   // ---------- Alio in motion: flying cars, hover bikes, citizens, the plaza hologram ----------
   function vehicleMesh(kind, col) {
@@ -1359,8 +1671,8 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   var overlay = document.getElementById("overlay"), frame = document.getElementById("frame");
   var near = null;
   promptEl.addEventListener("click", function () { interact(); });
-  function hideTalk() { talkEl.style.display = "none"; }
-  function say(name, text) { talkEl.innerHTML = "<b>" + name + "</b>" + text; talkEl.style.display = "block"; }
+  function hideTalk() { talkEl.style.display = "none"; if (dlg) { dlg.n.talking = 1.5; dlg = null; } }
+  function say(name, text) { if (dlg) { dlg.n.talking = 1.5; dlg = null; } talkEl.innerHTML = "<b>" + name + "</b>" + text; talkEl.style.display = "block"; }
   function openOverlay(title, src) {
     hideTalk();
     document.getElementById("overlay-title").textContent = title;
@@ -1380,23 +1692,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   }
   document.getElementById("overlay-close").addEventListener("click", closeOverlay);
   function interact() {
-    if (!near || overlay.style.display === "block") { return; }
+    if (!near || overlay.style.display === "block" || pc.dead || traveling) { return; }
     if (near.id === "shrine") { openOverlay("The Egg Shrine", "../egg-finder/"); }
     else if (near.id === "game") { openOverlay(near.game.name, "../" + near.game.path + "/"); }
     else if (near.id === "talk") {
-      var p = near.who;
-      p.talking = 6;
-      if (!prog.talked[p.name]) { prog.talked[p.name] = 1; saveProg(); }
-      var mq = currentMain();
-      if (p.name === "Grandma" && mq && mq.id === "egg" && questState(mq) === 1) {
-        say(p.name, "You want to see beyond the village? Our capital, Alio, is a short ride on the Skyrail from the station at the village edge. Towers taller than any ash tree. Be careful there. People in Alio change their bodies like clothes.");
-        setFlag("grandmaBeyond");
-      } else {
-        say(p.name, p.lines[p.step % p.lines.length]);
-        p.step++;
-      }
-      checkQuests();
-    } else if (near.id === "skyrail") {
+      if (dlg && dlg.n === near.who) { dlgChat(); } else { openDialog(near.who); }
+    } else if (interactWild(near)) { return; }
+    else if (near.id === "skyrail") {
       if (near.dest === "alio") { travelTo(ALIO_STATION.x - 3, ALIO_STATION.z - 2, false, "Alio", "Capital of Esmer"); }
       else { travelTo(STATION_V.x - 4, STATION_V.z - 2, false, "Home to the village", ""); }
     } else if (near.id === "atelier") { openSkin(); }
@@ -1408,11 +1710,16 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       else { travelTo(LIFT.x, LIFT.z + 2.5, false, "Alio", ""); }
     } else if (near.id === "waystone") {
       var w = near.stone;
-      if (!prog.stones[w.key]) { prog.stones[w.key] = Date.now(); saveProg(); toast("Waystone remembered", w.name); checkQuests(); }
+      prog.lastStone = w.key;
+      if (!prog.stones[w.key]) { prog.stones[w.key] = Date.now(); saveProg(); toast("Waystone remembered", w.name + ". If you fall, you'll wake here."); checkQuests(); }
       else { renderJournal(); journal.style.display = "block"; }
       near.label = "Rest at the Waystone (travel)";
     } else if (near.id === "monument") {
-      if (pet) { say("The Monument", "Your egg hums. For a moment the stone shimmers, and a picture of this very village appears inside it, glowing for you alone. Then it fades."); }
+      if (prog.inv.liev && !hasPower("forget") && isAwakeHours()) {
+        say("The Monument", "You touch the stone with your Liev. The shimmer pours into the wood, and for one long moment you see things forgetting what they are: a stone forgetting it is heavy, an anger forgetting why it started. Then you understand how to do it yourself. You learned Forgetting.");
+        learn("forget"); checkQuests();
+      } else if (prog.inv.liev && !hasPower("forget")) { say("The Monument", "Your Liev hums against the stone, but the shimmer stays faint. It waits for the dark hours, when the village is awake."); }
+      else if (pet) { say("The Monument", "Your egg hums. For a moment the stone shimmers, and a picture of this very village appears inside it, glowing for you alone. Then it fades."); }
       else { say("The Monument", "The stone looks blank to you. Some say it shimmers for those who carry an egg."); }
     }
   }
@@ -1421,7 +1728,9 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   var PROG_KEY = "andromeda_progress_v1";
   function loadProg() { try { var p = JSON.parse(localStorage.getItem(PROG_KEY) || "null"); if (p) { return p; } } catch (e) {} return { flags: {}, talked: {}, stones: {}, pools: {}, done: {} }; }
   var prog = loadProg();
-  ["flags", "talked", "stones", "pools", "done"].forEach(function (k) { prog[k] = prog[k] || {}; });
+  ["flags", "talked", "stones", "pools", "done", "inv", "weapons", "powers", "rel", "bonds", "heard", "met", "seen"].forEach(function (k) { prog[k] = prog[k] || {}; });
+  ["liev", "abalone", "feather", "fruit"].forEach(function (k) { prog.inv[k] = prog.inv[k] || 0; });
+  prog.equip = prog.equip || "fists"; prog.fox = prog.fox || 0;
   function saveProg() { try { localStorage.setItem(PROG_KEY, JSON.stringify(prog)); } catch (e) {} }
   function setFlag(k) { if (!prog.flags[k]) { prog.flags[k] = Date.now(); saveProg(); checkQuests(); } }
   function count(o) { return Object.keys(o).length; }
@@ -1433,6 +1742,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       { text: "Find the Egg Shrine and take your egg", done: function () { return !!pet; }, target: function () { return { x: SHRINE.x, z: SHRINE.z, name: "Egg Shrine" }; } },
       { text: "Ask Grandma about the world beyond the village", done: function () { return !!prog.flags.grandmaBeyond; }, target: function () { return npcTarget("Grandma"); } },
       { text: "Help your egg grow at the old arcade", done: function () { return !!pet && (pet.growth >= 5 || pet.stage > 0); }, target: function () { return { x: ARC.x, z: ARC.z, name: "The old arcade" }; } }
+    ] },
+    { id: "wood", main: true, title: "Into the Golden Wood", steps: [
+      { text: "Walk the Golden Road at the village's western edge", done: function () { return !!prog.flags.goldSeen; }, target: function () { return { x: GOLD_GATE.x, z: GOLD_GATE.z, name: "The Golden Road" }; } },
+      { text: "Carve a Liev from a glowing elder ash", done: function () { return !!prog.inv.liev; }, target: function () { return nearestOf(ELDERS, "Elder Ash"); } },
+      { text: "Gather three abalone stones", done: function () { return prog.inv.abalone >= 3 || !!prog.weapons.sword; }, target: function () { return nearestOf(OUTCROPS.filter(function (o) { return o.ready; }), "Abalone stones"); } },
+      { text: "Forge an abalone sword at Uncle's Mud Forge", done: function () { return !!prog.weapons.sword; }, target: function () { return { x: FORGE.x, z: FORGE.z, name: "Uncle's Mud Forge" }; } },
+      { text: "Drive back a foxrid, by blade or by kindness", done: function () { return prog.fox >= 1; }, target: function () { var f = nearestFoxAnywhere(); return f ? { x: f.x, z: f.z, name: "Foxrids" } : null; } }
     ] },
     { id: "road", main: true, title: "The Road to Alio", steps: [
       { text: "Find the Skyrail Station at the edge of the village", done: function () { return !!prog.flags.stationSeen; }, target: function () { return { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" }; } },
@@ -1454,6 +1770,12 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       { text: "Find the inverted fish over three different pools", need: 3, have: function () { return count(prog.pools); } }
     ] }
   ];
+  function nearestOf(list, name) {
+    var best = null, bd = 1e9;
+    list.forEach(function (o) { var d = Math.hypot(o.x - player.x, o.z - player.z); if (d < bd) { bd = d; best = o; } });
+    return best ? { x: best.x, z: best.z, name: name } : null;
+  }
+  function nearestFoxAnywhere() { var b = null, bd = 1e9; foxes.forEach(function (f) { if (f.state === "dead" || f.state === "calm") { return; } var d = Math.hypot(f.x - player.x, f.z - player.z); if (d < bd) { bd = d; b = f; } }); return b; }
   function stepDone(s) { return s.need ? s.have() >= s.need : s.done(); }
   function questState(q) {
     for (var i = 0; i < q.steps.length; i++) { if (!stepDone(q.steps[i])) { return i; } }
@@ -1481,8 +1803,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   function questTarget() {
     var m = currentMain(); if (!m) { return null; }
     var s = m.steps[questState(m)]; if (!s || !s.target) { return null; }
-    var tg = s.target();
-    if (inAlio(tg.x) !== inAlio(player.x)) { return inAlio(player.x) ? { x: ALIO_STATION.x, z: ALIO_STATION.z, name: "Skyrail home" } : { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" }; }
+    var tg = s.target(); if (!tg) { return null; }
+    var rT = region(tg.x), rP = region(player.x);
+    if (rT !== rP) {
+      if (rP === "alio") { return { x: ALIO_STATION.x, z: ALIO_STATION.z, name: "Skyrail home" }; }
+      if (rP === "gold") { return { x: GOLD_EXIT.x, z: GOLD_EXIT.z, name: "Golden Road home" }; }
+      return rT === "gold" ? { x: GOLD_GATE.x, z: GOLD_GATE.z, name: "The Golden Road" } : { x: STATION_V.x, z: STATION_V.z, name: "Skyrail Station" };
+    }
     if (player.roof && tg.name !== "Sky Lift") { return { x: LIFT_TOP.x, z: LIFT_TOP.z, name: "Sky Lift down" }; }
     return tg;
   }
@@ -1505,6 +1832,15 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       var prevOpen = QUESTS.some(function (o) { return o.main && QUESTS.indexOf(o) < QUESTS.indexOf(q) && questState(o) < o.steps.length; });
       if (!prevOpen || prog.done[q.id]) { h += block(q); mainsShown = true; }
     });
+    h += "<h3>BONDS</h3>" + (prog.title ? '<div style="color:#e6d3a1;font-size:13px">Your title: ' + prog.title + "</div>" : "");
+    ["Grandma", "Eldest Aunt", "Youngest Aunt", "Uncle", "Madison", "Elder Chief", "Second Chief", "Cousin"].forEach(function (nm) {
+      var n = byName[nm], L = LIFE[nm], req = bondsOf(nm).map(function (b) {
+        var st = bondState(b.id);
+        return st === 2 ? "&#10003; " + b.title : st === 1 ? "&#9670; " + b.title + ": " + b.goal() : "Ask " + nm + " if they need help";
+      }).join("<br>");
+      h += '<div class="bond"><span class="hearts">' + heartsHtml(nm) + "</span><b>" + nm + "</b> <span style=\"color:#a6a2b8;font-size:12px\">" + tier(nm) + "</span>" +
+        "<small>Wants: " + L.motive + "</small><small>Now: " + (n.hidden ? "asleep in the burrow" : activity(n)) + "</small>" + (req ? '<div style="font-size:13px;margin-top:4px">' + req + "</div>" : "") + "</div>";
+    });
     h += "<h3>SIDE QUESTS</h3>";
     QUESTS.forEach(function (q) { if (!q.main) { h += block(q); } });
     h += "<h3>WAYSTONES</h3>";
@@ -1518,7 +1854,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     journal.querySelectorAll("[data-travel]").forEach(function (b) {
       b.addEventListener("click", function () {
         var w = WAYSTONES.filter(function (s) { return s.key === b.dataset.travel; })[0];
-        journal.style.display = "none";
+        journal.style.display = "none"; prog.lastStone = w.key; saveProg();
         travelTo(w.x + 1.6, w.z + 1.6, false, w.name);
       });
     });
@@ -1537,6 +1873,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       petPos = { x: x - 1, y: player.y + 1.2, z: z + 1 }; trail = [];
       areaName = areaAt(x, z);
       if (inAlio(x)) { setFlag("reachedAlio"); }
+      if (inGold(x)) { setFlag("goldSeen"); }
       fadeEl.style.opacity = "0"; traveling = false;
       toast(title || areaName, line || "");
     }, 650);
@@ -1565,6 +1902,737 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   });
   var petTag = document.createElement("div"); petTag.className = "tag"; petTag.style.display = "none"; tagsEl.appendChild(petTag);
 
+  // =====================================================================
+  // ---------- SOUND: songs of sorrow and the sounds of battle ----------
+  var Snd = (function () {
+    var ctx = null, master = null, echo = null, on = true;
+    try { on = localStorage.getItem("andromeda_sound") !== "off"; } catch (e) {}
+    function init() {
+      if (ctx) { if (ctx.state === "suspended") { ctx.resume(); } return; }
+      var AC = window.AudioContext || window.webkitAudioContext; if (!AC) { return; }
+      try {
+        ctx = new AC(); master = ctx.createGain(); master.gain.value = on ? 0.7 : 0; master.connect(ctx.destination);
+        echo = ctx.createDelay(1.0); echo.delayTime.value = 0.34;
+        var fb = ctx.createGain(); fb.gain.value = 0.38; var eo = ctx.createGain(); eo.gain.value = 0.45;
+        echo.connect(fb); fb.connect(echo); echo.connect(eo); eo.connect(master);
+      } catch (e) { ctx = null; }
+    }
+    function out(vol, pan, wet) {
+      var g = ctx.createGain(); g.gain.value = vol; var node = g;
+      if (ctx.createStereoPanner) { var p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan || 0)); g.connect(p); node = p; }
+      node.connect(master); if (wet) { node.connect(echo); }
+      return g;
+    }
+    function tone(type, f0, f1, dur, vol, pan, wet, delay) {
+      if (!ctx || !on) { return; }
+      var t = ctx.currentTime + (delay || 0), o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) { o.frequency.exponentialRampToValueAtTime(f1, t + dur); }
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + Math.min(0.02, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(out(vol, pan, wet)); o.start(t); o.stop(t + dur + 0.05);
+    }
+    function noise(dur, f0, f1, vol, pan, q) {
+      if (!ctx || !on) { return; }
+      var t = ctx.currentTime, n = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / n); }
+      var s = ctx.createBufferSource(); s.buffer = buf; var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = q || 1.2;
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      s.connect(f); f.connect(out(vol, pan)); s.start(t);
+    }
+    // A song of sorrow: a slow, mostly falling minor phrase with a trembling voice that echoes through the trees.
+    var SCALE = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15];
+    function sorrow(vol, pan) {
+      if (!ctx || !on || vol < 0.01) { return 0; }
+      var t = ctx.currentTime + 0.05, base = 587.33 * (Math.random() < 0.5 ? 1 : 0.84), idx = 6 + Math.floor(Math.random() * 3);
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), g2 = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = "sine"; o2.type = "triangle"; g2.gain.value = 0.18;
+      lfo.frequency.value = 5.2; lg.gain.value = 9; lfo.connect(lg); lg.connect(o.frequency);
+      var notes = 5 + Math.floor(Math.random() * 3), at = t;
+      g.gain.setValueAtTime(0.0001, t);
+      for (var k = 0; k < notes; k++) {
+        idx = Math.max(0, Math.min(SCALE.length - 1, idx + (Math.random() < 0.72 ? -1 - Math.floor(Math.random() * 2) : 1 + Math.floor(Math.random() * 2))));
+        var f = base * Math.pow(2, SCALE[idx] / 12), d = 0.38 + Math.random() * 0.5 + (k === notes - 1 ? 0.8 : 0);
+        if (k === 0) { o.frequency.setValueAtTime(f, at); o2.frequency.setValueAtTime(f / 2, at); }
+        else { o.frequency.exponentialRampToValueAtTime(f, at + 0.12); o2.frequency.exponentialRampToValueAtTime(f / 2, at + 0.12); }
+        g.gain.exponentialRampToValueAtTime(1, at + 0.08); g.gain.exponentialRampToValueAtTime(0.35, at + d * 0.9);
+        at += d;
+      }
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(out(vol * 0.5, pan, true));
+      [o, o2, lfo].forEach(function (x) { x.start(t); x.stop(at + 0.5); });
+      return at - t;
+    }
+    return {
+      init: init, isOn: function () { return on; },
+      toggle: function () { on = !on; try { localStorage.setItem("andromeda_sound", on ? "on" : "off"); } catch (e) {} if (master) { master.gain.value = on ? 0.7 : 0; } return on; },
+      sorrow: sorrow,
+      swing: function () { noise(0.16, 2400, 700, 0.35, 0, 0.8); },
+      hit: function () { tone("sine", 180, 55, 0.18, 0.6); noise(0.08, 900, 300, 0.3); },
+      hurt: function () { tone("triangle", 220, 110, 0.25, 0.35); },
+      yip: function (pan, v) { tone("sawtooth", 520, 1250, 0.12, 0.08 * (v || 1), pan); tone("sawtooth", 1250, 480, 0.18, 0.07 * (v || 1), pan, false, 0.12); },
+      howl: function (pan, v) { tone("triangle", 380, 900, 0.5, 0.16 * (v || 1), pan, true); tone("triangle", 900, 520, 0.9, 0.14 * (v || 1), pan, true, 0.5); },
+      cast: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone("sine", f, 0, 0.5, 0.12, 0, true, i * 0.06); }); },
+      boom: function () { noise(0.6, 600, 60, 0.9, 0, 0.6); tone("sine", 110, 40, 0.5, 0.6); },
+      heal: function () { [392, 494, 587, 784].forEach(function (f, i) { tone("sine", f, f * 1.01, 0.9, 0.1, 0, true, i * 0.12); }); },
+      chime: function () { tone("sine", 880, 0, 0.3, 0.15, 0, true); tone("sine", 1320, 0, 0.4, 0.12, 0, true, 0.09); },
+      carve: function () { noise(0.5, 1800, 500, 0.3, 0, 2); tone("sine", 660, 990, 0.6, 0.1, 0, true, 0.45); },
+      fade: function () { tone("sine", 440, 110, 1.4, 0.3, 0, true); }
+    };
+  })();
+  ["pointerdown", "keydown"].forEach(function (ev) { window.addEventListener(ev, function () { Snd.init(); }, { passive: true }); });
+  var sndBtn = $("snd-btn");
+  function refreshSnd() { sndBtn.textContent = Snd.isOn() ? "Sound on (M)" : "Sound off (M)"; }
+  sndBtn.addEventListener("click", function () { Snd.toggle(); refreshSnd(); });
+  refreshSnd();
+  function panOf(x, z) { var dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz) || 1; return (dx * Math.cos(cam.yaw) - dz * Math.sin(cam.yaw)) / d; }
+  function volAt(x, z) { return Math.max(0, 1 - Math.hypot(x - player.x, z - player.z) / 40); }
+  function angDiff(a, b) { var d = a - b; while (d > Math.PI) { d -= Math.PI * 2; } while (d < -Math.PI) { d += Math.PI * 2; } return d; }
+  function turnTo(cur, want, k) { return cur + angDiff(want, cur) * Math.min(1, k); }
+
+  // ---------- WEAPONS, POWERS, HEALTH (from the story) ----------
+  var WEAPONS = {
+    fists: { name: "Bare hands", short: "Hands", dmg: 6, range: 1.7, cd: 0.45, arc: 1.0, desc: "Everyone starts here." },
+    blades: { name: "Scissor Blades", short: "Blades", dmg: 9, poison: 7, range: 2.0, cd: 0.3, arc: 1.1, desc: "The Eldest Aunt's good scissors, broken apart by Madison, smelted in blue mud and dipped in plant poison. Fast, and the poison keeps working." },
+    sword: { name: "Abalone Sword", short: "Sword", dmg: 24, range: 2.6, cd: 0.55, arc: 1.25, desc: "Forged from abalone stones in Uncle's Mud Forge. Long reach, heavy cuts." }
+  };
+  var POWERS = [
+    { key: "spark", name: "Mud Spark", cost: 30, n: "1", desc: "Throw a bomb of glistening blue mud. It bursts and hurts everything nearby.", from: "Madison will teach you (her request: Bigger Ones)" },
+    { key: "still", name: "Still Water", cost: 30, n: "2", desc: "Go still, like deep water, and heal. Twice as strong beside water.", from: "Grandma will teach you (her request: Tea of Glass)" },
+    { key: "kaleido", name: "Kaleidoscope", cost: 40, n: "3", desc: "Hold your center while facets of light spin around you, cutting whatever comes close and softening bites.", from: "The Youngest Aunt (her request: Songs of Sorrow)" },
+    { key: "forget", name: "Forgetting", cost: 25, n: "4", desc: "Make a creature forget its anger. It stops fighting and wanders off in peace.", from: "The monument, in the dark hours, with a Liev in hand" }
+  ];
+  function powerByKey(k) { return POWERS.filter(function (p) { return p.key === k; })[0]; }
+  var pc = { hp: 100, ess: 100, cd: 0, swingT: 0, swingDur: 0.25, swingSide: 1, iframe: 0, lastHurt: 99, kaleido: 0, kTick: 0, dead: false, healT: 0, healRate: 0, castT: 0 };
+  function maxHp() { return 100 + (prog.flags.warden ? 30 : 0); }
+  function wpn() { return prog.equip && prog.equip !== "fists" && prog.weapons[prog.equip] ? prog.equip : "fists"; }
+  function weaponDmg(k) { return WEAPONS[k].dmg * (k === "sword" && prog.flags.feathered ? 1.5 : 1); }
+  function hasPower(k) { return !!prog.powers[k]; }
+  var ITEM = { fruit: "Glass fruit", feather: "Shimmer feather", abalone: "Abalone stone" };
+
+  // floating numbers and messages in the world
+  var fxEl = $("fx"), fxs = [];
+  function fxNum(x, y, z, text, color) {
+    if (fxs.length > 30) { var old = fxs.shift(); old.el.remove(); }
+    var el = document.createElement("div"); el.className = "fx-num"; el.textContent = text; el.style.color = color || "#fff"; fxEl.appendChild(el);
+    fxs.push({ el: el, x: x, y: y, z: z, t: 0, dur: text.length > 6 ? 2.2 : 1.1 });
+  }
+  function fxText(text, color) { fxNum(player.x, player.y + 2.5, player.z, text, color || "#e6d3a1"); }
+
+  // ---------- FOXRIDS: coyote-like hunters with shimmering feathers and liquid skin ----------
+  var foxes = [];
+  function newFox(d, di, k) {
+    var a = k * 2.1 + di;
+    return { den: d, pack: di, x: d.x + Math.cos(a) * 3, z: d.z + Math.sin(a) * 3, face: a, tx: d.x, tz: d.z, hp: 48, max: 48, state: "wander",
+      t: Math.random() * 3, bite: 0, hurt: 0, poison: 0, poisonDps: 0, poisonTick: 0, calm: 0, deadT: 0, moving: false, spd: 0, counted: false, fled: false };
+  }
+  DENS.forEach(function (d, di) { for (var k = 0; k < 3; k++) { var f = newFox(d, di, k); f.id = foxes.length; foxes.push(f); } });
+  function nearestFox(maxD, hostileOnly) {
+    var best = null, bd = maxD;
+    foxes.forEach(function (f) {
+      if (f.state === "dead" || (hostileOnly && f.state === "calm")) { return; }
+      var d = Math.hypot(f.x - player.x, f.z - player.z); if (d < bd) { bd = d; best = f; }
+    });
+    return best;
+  }
+  function foxAggro(f) {
+    if (f.state === "chase" || f.state === "retreat" || f.state === "dead") { return; }
+    f.state = "chase"; f.calm = 0;
+    Snd.howl(panOf(f.x, f.z), volAt(f.x, f.z));
+    foxes.forEach(function (o) { if (o !== f && o.pack === f.pack && o.state === "wander" && Math.hypot(o.x - f.x, o.z - f.z) < 16) { o.state = "chase"; } });
+  }
+  function wanderStep(f, dt, rad) {
+    if (Math.hypot(f.tx - f.x, f.tz - f.z) < 0.3) {
+      f.t -= dt;
+      if (f.t <= 0) { var a = Math.random() * 6.28, r = Math.random() * rad; f.tx = f.den.x + Math.cos(a) * r; f.tz = f.den.z + Math.sin(a) * r; f.t = 2 + Math.random() * 4; }
+    }
+  }
+  function biteFox(f) {
+    f.bite = 1.3;
+    hurtPlayer(9 * (pc.kaleido > 0 ? 0.5 : 1));
+    Snd.yip(panOf(f.x, f.z), 1);
+    var pd = Math.hypot(player.x - f.x, player.z - f.z) || 1, side = f.id % 2 ? 1 : -1;
+    var ax = (f.x - player.x) / pd, az = (f.z - player.z) / pd;
+    f.state = "retreat"; f.t = 0.9; f.tx = f.x + ax * 4 + az * side * 2.5; f.tz = f.z + az * 4 - ax * side * 2.5;
+  }
+  function damageFox(f, amount, quiet) {
+    if (f.state === "dead") { return; }
+    f.hp -= amount;
+    fxNum(f.x, ground(f.x, f.z) + 1.5, f.z, "-" + Math.max(1, Math.round(amount)), quiet ? "#a6f06b" : "#ffffff");
+    if (!quiet) {
+      f.hurt = 0.25;
+      var dx = f.x - player.x, dz = f.z - player.z, d = Math.hypot(dx, dz) || 1; f.x += dx / d * 0.5; f.z += dz / d * 0.5;
+    }
+    if (f.hp <= 0) { killFox(f); return; }
+    if (f.state === "wander" || f.state === "calm") { foxAggro(f); }
+    if (f.hp < 15 && f.state === "chase" && !f.fled) { f.fled = true; f.state = "retreat"; f.t = 1.2; var rd = Math.hypot(f.x - player.x, f.z - player.z) || 1; f.tx = f.x + (f.x - player.x) / rd * 5; f.tz = f.z + (f.z - player.z) / rd * 5; }
+  }
+  function killFox(f) {
+    f.state = "dead"; f.deadT = 45; f.poison = 0;
+    Snd.yip(panOf(f.x, f.z), 0.6);
+    effects.push({ k: "puddle", x: f.x, y: ground(f.x, f.z) + 0.03, z: f.z, t: 0, dur: 7 });
+    var drops = Math.random() < 0.5 ? 2 : 1;
+    for (var i = 0; i < drops; i++) { loots.push({ x: f.x + (Math.random() - 0.5) * 1.2, z: f.z + (Math.random() - 0.5) * 1.2, t: 0 }); }
+    if (!f.counted) { f.counted = true; prog.fox = (prog.fox || 0) + 1; saveProg(); }
+    fxNum(f.x, ground(f.x, f.z) + 2, f.z, "The foxrid melts away", "#9fe3c4");
+    checkQuests();
+  }
+  function forgetFox(f) {
+    if (f.state === "dead") { return; }
+    f.state = "calm"; f.calm = 120; f.poison = 0; f.tx = f.x; f.tz = f.z;
+    fxNum(f.x, ground(f.x, f.z) + 2, f.z, "It forgot its anger", "#c08cff");
+    if (!f.counted) { f.counted = true; prog.fox = (prog.fox || 0) + 1; saveProg(); }
+    checkQuests();
+  }
+  function updateFoxes(dt) {
+    var inWood = inGold(player.x) && mode === "play" && !pc.dead && !traveling;
+    foxes.forEach(function (f) {
+      if (f.state === "dead") {
+        f.deadT -= dt;
+        if (f.deadT <= 0) { var nf = newFox(f.den, f.pack, Math.floor(Math.random() * 3)); for (var key in nf) { f[key] = nf[key]; } }
+        return;
+      }
+      if (f.hurt > 0) { f.hurt -= dt; }
+      if (f.bite > 0) { f.bite -= dt; }
+      if (f.poison > 0) {
+        f.poison -= dt; f.poisonTick += dt;
+        if (f.poisonTick >= 0.5) { f.poisonTick = 0; damageFox(f, f.poisonDps * 0.5, true); if (f.state === "dead") { return; } }
+      }
+      var pd = Math.hypot(player.x - f.x, player.z - f.z), denD = Math.hypot(f.x - f.den.x, f.z - f.den.z), speed = 1.6;
+      if (f.state === "calm") {
+        f.calm -= dt; if (f.calm <= 0) { f.state = "wander"; f.counted = false; }
+        speed = 1.1; wanderStep(f, dt, 10);
+      } else if (f.state === "wander") {
+        if (inWood && pd < 12) { foxAggro(f); }
+        wanderStep(f, dt, 7);
+      } else if (f.state === "chase") {
+        speed = 6.0;
+        if (!inWood || denD > 34 || pd > 26) { f.state = "wander"; f.tx = f.den.x; f.tz = f.den.z; f.t = 1; }
+        else {
+          f.tx = player.x + Math.sin(f.id * 1.7) * 0.7; f.tz = player.z + Math.cos(f.id * 1.7) * 0.7;
+          if (pd < 1.6 && f.bite <= 0) { biteFox(f); }
+          else if (Math.random() < dt * 0.25) { Snd.yip(panOf(f.x, f.z), volAt(f.x, f.z)); }
+        }
+      } else if (f.state === "retreat") {
+        speed = 5.0; f.t -= dt;
+        if (f.t <= 0) { f.state = inWood ? "chase" : "wander"; }
+      }
+      var dx = f.tx - f.x, dz = f.tz - f.z, d = Math.hypot(dx, dz);
+      if (f.hurt > 0.12) { speed = 0; }
+      if (d > 0.05 && speed > 0) {
+        var stp = Math.min(d, speed * dt); f.x += dx / d * stp; f.z += dz / d * stp;
+        f.face = turnTo(f.face, Math.atan2(dx, dz), dt * 10); f.moving = true; f.spd = speed;
+      } else { f.moving = false; f.spd = 0; }
+      if (f.state === "chase" && pd < 3) { f.face = turnTo(f.face, Math.atan2(player.x - f.x, player.z - f.z), dt * 12); }
+      for (var i = 0; i < solids.length; i++) {
+        var s = solids[i]; if (s[0] > -300) { continue; }
+        var ex = f.x - s[0], ez = f.z - s[1], el = Math.hypot(ex, ez), mn = s[2] + 0.4;
+        if (el < mn && el > 0.001) { f.x = s[0] + ex / el * mn; f.z = s[1] + ez / el * mn; }
+      }
+      var lx = f.x - GOLD.x, lz = f.z - GOLD.z, lr = Math.hypot(lx, lz);
+      if (lr > GOLD_R - 7) { f.x = GOLD.x + lx / lr * (GOLD_R - 7); f.z = GOLD.z + lz / lr * (GOLD_R - 7); }
+    });
+  }
+
+  // ---------- SORROW BIRDS: golden birds that sing songs of sorrow in the forest of gold ----------
+  var birds = [], songMotes = [];
+  for (var bI = 0; bI < 6; bI++) {
+    var pI = (bI * 2) % Math.max(1, PERCHES.length), pp = PERCHES[pI] || [GOLD.x, 6, GOLD.z];
+    birds.push({ id: bI, x: pp[0], y: pp[1], z: pp[2], perch: pI, state: "perch", t: 3 + bI * 2.5, sing: 0, face: bI, sx: 0, sy: 0, sz: 0, ex: 0, ey: 0, ez: 0, ft: 0, fdur: 1, arc: 3 });
+  }
+  function birdFly(b) {
+    var next = Math.floor(Math.random() * PERCHES.length); if (next === b.perch) { next = (next + 1) % PERCHES.length; }
+    var p = PERCHES[next]; b.perch = next; b.state = "fly"; b.ft = 0;
+    b.sx = b.x; b.sy = b.y; b.sz = b.z; b.ex = p[0]; b.ey = p[1]; b.ez = p[2];
+    var dist = Math.hypot(b.ex - b.sx, b.ez - b.sz); b.fdur = Math.max(1.5, dist / 7); b.arc = 2 + dist * 0.12;
+  }
+  function birdSing(b, pd) {
+    var vol = Math.pow(Math.max(0, 1 - pd / 34), 1.4), dur = Snd.sorrow(vol, panOf(b.x, b.z));
+    b.sing = dur || 4;
+    if (pd < 18 && !prog.heard[b.id]) {
+      prog.heard[b.id] = Date.now(); saveProg();
+      var heard = count(prog.heard);
+      toast("A song of sorrow", bondState("songs") === 1 ? heard + " of 3 sorrow birds heard" : "A golden bird sings of something the forest forgot.");
+      checkQuests();
+    }
+  }
+  function updateBirds(dt) {
+    var here = inGold(player.x) && mode === "play";
+    birds.forEach(function (b) {
+      if (b.sing > 0) {
+        b.sing -= dt;
+        if (here && Math.random() < dt * 5) { songMotes.push({ x: b.x + (Math.random() - 0.5) * 0.4, y: b.y + 0.3, z: b.z + (Math.random() - 0.5) * 0.4, t: 0 }); }
+      }
+      if (b.state === "perch") {
+        b.t -= dt;
+        var pd = Math.hypot(player.x - b.x, player.z - b.z);
+        if (here && pd < 2.5 && b.sing <= 0 && b.t > 0.5) { b.t = 0; }
+        if (b.t <= 0 && b.sing <= 0) {
+          if (here && pd < 34 && pd > 2.5 && Math.random() < 0.7) { birdSing(b, pd); b.t = 8 + Math.random() * 8; }
+          else { birdFly(b); }
+        }
+      } else {
+        b.ft += dt;
+        var k = Math.min(1, b.ft / b.fdur), e = k * k * (3 - 2 * k);
+        b.x = b.sx + (b.ex - b.sx) * e; b.z = b.sz + (b.ez - b.sz) * e; b.y = b.sy + (b.ey - b.sy) * e + Math.sin(k * Math.PI) * b.arc;
+        b.face = Math.atan2(b.ex - b.sx, b.ez - b.sz);
+        if (k >= 1) { b.state = "perch"; b.t = 2 + Math.random() * 5; }
+      }
+    });
+    songMotes.forEach(function (m) { m.t += dt; m.y += dt * 0.7; m.x += Math.sin(m.t * 3 + m.z) * dt * 0.3; });
+    songMotes = songMotes.filter(function (m) { return m.t < 2.2; });
+  }
+
+  // ---------- combat, powers, gathering ----------
+  var effects = [], loots = [];
+  function hurtPlayer(dmg) {
+    if (pc.iframe > 0 || pc.dead || mode !== "play") { return; }
+    pc.hp -= dmg; pc.iframe = 0.35; pc.lastHurt = 0;
+    Snd.hurt(); fxNum(player.x, player.y + 2.2, player.z, "-" + Math.round(dmg), "#ff8aa8");
+    var h = $("hurt"); h.style.transition = "none"; h.style.opacity = "1"; setTimeout(function () { h.style.transition = "opacity .5s"; h.style.opacity = "0"; }, 60);
+    if (pc.hp <= 0) { pc.hp = 0; playerFades(); }
+  }
+  function playerFades() {
+    pc.dead = true; setBoard(false); hideTalk(); Snd.fade();
+    toast("You fade into the gold", "The world lets go of you for a moment.");
+    fadeEl.style.opacity = "1";
+    setTimeout(function () {
+      var key = prog.lastStone && prog.stones[prog.lastStone] ? prog.lastStone : "heart";
+      var w = WAYSTONES.filter(function (s) { return s.key === key; })[0];
+      player.roof = false; player.x = w.x + 1.6; player.z = w.z + 1.6; player.y = ground(player.x, player.z);
+      petPos = { x: player.x - 1, y: player.y + 1.2, z: player.z + 1 }; trail = [];
+      pc.hp = maxHp(); pc.ess = 100; pc.dead = false; pc.kaleido = 0; pc.healT = 0;
+      foxes.forEach(function (f) { if (f.state === "chase" || f.state === "retreat") { f.state = "wander"; f.tx = f.den.x; f.tz = f.den.z; } });
+      areaName = areaAt(player.x, player.z);
+      fadeEl.style.opacity = "0";
+      toast("You wake again", "at the " + w.name + " Waystone");
+    }, 1500);
+  }
+  function strike() {
+    if (mode !== "play" || pc.dead || pc.cd > 0 || traveling || overlay.style.display === "block") { return; }
+    var k = wpn(), w = WEAPONS[k];
+    pc.cd = w.cd; pc.swingDur = Math.min(0.28, w.cd * 0.8); pc.swingT = pc.swingDur; pc.swingSide = -pc.swingSide;
+    hideTalk();
+    var tgt = nearestFox(4.5, true); if (tgt && inGold(player.x)) { player.face = Math.atan2(tgt.x - player.x, tgt.z - player.z); }
+    Snd.swing();
+    var hit = false;
+    foxes.forEach(function (f) {
+      if (f.state === "dead") { return; }
+      var dx = f.x - player.x, dz = f.z - player.z, d = Math.hypot(dx, dz);
+      if (d > w.range + 0.5) { return; }
+      if (Math.abs(angDiff(Math.atan2(dx, dz), player.face)) > w.arc && d > 0.9) { return; }
+      damageFox(f, weaponDmg(k));
+      if (w.poison && f.state !== "dead") { f.poison = 3; f.poisonDps = w.poison / 3; }
+      hit = true;
+    });
+    if (hit) { Snd.hit(); }
+  }
+  function nearWater() {
+    return mudList.some(function (m) { return Math.hypot(player.x - m[0], player.z - m[1]) < m[2] + 2.5; });
+  }
+  function npcSays(name, text) {
+    var n = byName[name]; if (!n || n.hidden || Math.hypot(n.x - player.x, n.z - player.z) > 20) { return false; }
+    n.bub = { text: text, t: 4 }; return true;
+  }
+  function usePower(k) {
+    if (mode !== "play" || pc.dead || traveling || overlay.style.display === "block") { return; }
+    var P = powerByKey(k); if (!P || !hasPower(k)) { return; }
+    if (!prog.inv.liev) { fxText("You need a Liev to channel this"); return; }
+    if (pc.ess < P.cost) { fxText("Not enough essence", "#9fe3c4"); return; }
+    var sy = player.y + 1.3;
+    if (k === "spark") {
+      var f = nearestFox(16, false), ex, ez;
+      if (f) { ex = f.x; ez = f.z; player.face = Math.atan2(ex - player.x, ez - player.z); }
+      else { ex = player.x + Math.sin(player.face) * 8; ez = player.z + Math.cos(player.face) * 8; }
+      effects.push({ k: "bomb", sx: player.x, sy: sy, sz: player.z, ex: ex, ez: ez, f: f, t: 0, dur: 0.55 });
+    } else if (k === "still") {
+      var amt = 45 * (nearWater() ? 2 : 1);
+      pc.healT = 1.5; pc.healRate = amt / 1.5; Snd.heal();
+      effects.push({ k: "rings", t: 0, dur: 1.6 });
+      fxText(nearWater() ? "Still as deep water (x2)" : "Still as water", "#86ecff");
+    } else if (k === "kaleido") {
+      pc.kaleido = 8; pc.kTick = 0;
+    } else if (k === "forget") {
+      var g = null, gd = 14;
+      foxes.forEach(function (o) { if (o.state === "dead" || o.state === "calm") { return; } var d = Math.hypot(o.x - player.x, o.z - player.z); if (d < gd) { gd = d; g = o; } });
+      if (!g) { fxText("Nothing near you is angry", "#c08cff"); return; }
+      player.face = Math.atan2(g.x - player.x, g.z - player.z);
+      effects.push({ k: "orb", sx: player.x, sy: sy, sz: player.z, f: g, t: 0, dur: 0.45 });
+    }
+    pc.ess -= P.cost; pc.castT = 0.4; Snd.cast(); hideTalk();
+  }
+  function eatFruit() {
+    if (mode !== "play" || pc.dead) { return; }
+    if (!prog.inv.fruit) { fxText("No glass fruit. Pick some from a weeping tree."); return; }
+    if (pc.hp >= maxHp() && pc.ess >= 100) { fxText("You're already whole"); return; }
+    prog.inv.fruit--; saveProg();
+    pc.hp = Math.min(maxHp(), pc.hp + 35); pc.ess = Math.min(100, pc.ess + 35);
+    Snd.chime(); fxText("+35 glass fruit", "#86ecff"); renderActions();
+  }
+  function learn(k) {
+    if (prog.powers[k]) { return; }
+    prog.powers[k] = Date.now(); saveProg();
+    var P = powerByKey(k); Snd.cast();
+    setTimeout(function () { toast("New power: " + P.name, "Press " + P.n + " or tap its button. It flows through your Liev."); }, 400);
+    renderActions();
+  }
+  function give(item, n) { prog.inv[item] = (prog.inv[item] || 0) + n; saveProg(); renderActions(); }
+  function updateCombat(dt) {
+    pc.cd = Math.max(0, pc.cd - dt); pc.swingT = Math.max(0, pc.swingT - dt); pc.iframe = Math.max(0, pc.iframe - dt); pc.castT = Math.max(0, pc.castT - dt);
+    pc.lastHurt += dt;
+    if (pc.dead) { return; }
+    pc.ess = Math.min(100, pc.ess + dt * (4 + (env.night || 0) * 2));
+    if (pc.lastHurt > 6) { pc.hp = Math.min(maxHp(), pc.hp + dt * 2); }
+    if (pc.healT > 0) { pc.healT -= dt; pc.hp = Math.min(maxHp(), pc.hp + pc.healRate * dt); }
+    if (pc.kaleido > 0) {
+      pc.kaleido -= dt; pc.kTick += dt;
+      if (pc.kTick >= 0.5) { pc.kTick = 0; foxes.forEach(function (f) { if (f.state !== "dead" && f.state !== "calm" && Math.hypot(f.x - player.x, f.z - player.z) < 2.8) { damageFox(f, 7, true); } }); }
+    }
+    // effects in flight
+    effects.forEach(function (e) {
+      e.t += dt;
+      if (e.k === "bomb" && e.f && e.f.state !== "dead" && !e.done) { e.ex = e.f.x; e.ez = e.f.z; }   // the bomb curves after its target
+      if (e.k === "bomb" && e.t >= e.dur && !e.done) {
+        e.done = true; var by = ground(e.ex, e.ez);
+        effects.push({ k: "blast", x: e.ex, y: by + 0.4, z: e.ez, t: 0, dur: 0.6 });
+        Snd.boom();
+        foxes.forEach(function (f) { if (f.state !== "dead" && Math.hypot(f.x - e.ex, f.z - e.ez) < 3.4) { damageFox(f, 34); } });
+        if (region(player.x) === "village") {
+          if (npcSays("Elder Chief", "No sparks near the burrows! I saw that!")) { addRel("Elder Chief", -1); }
+          npcSays("Madison", "Nice throw. Bigger next time.");
+        }
+      }
+      if (e.k === "orb" && e.t >= e.dur && !e.done) { e.done = true; forgetFox(e.f); }
+    });
+    effects = effects.filter(function (e) { return e.t < e.dur + (e.k === "bomb" || e.k === "orb" ? 0.01 : 0); });
+    // feathers the foxrids leave behind
+    loots.forEach(function (l) {
+      l.t += dt;
+      if (Math.hypot(l.x - player.x, l.z - player.z) < 2.0) { l.t = 999; give("feather", 1); Snd.chime(); fxText("+1 shimmer feather", "#e8a3cf"); }
+    });
+    loots = loots.filter(function (l) { return l.t < 120; });
+    // fruits and stones grow back
+    WEEPERS.forEach(function (w) { w.fruits.forEach(function (f) { if (!f.ok) { f.t -= dt; if (f.t <= 0) { f.ok = true; } } }); });
+    OUTCROPS.forEach(function (o) { if (!o.ready) { o.t -= dt; if (o.t <= 0) { o.ready = true; } } });
+  }
+  var forgeSpot = spots.filter(function (s) { return s.id === "forge"; })[0];
+  function refreshSpots() {
+    ELDERS.forEach(function (e) { e.spot.hidden = !!prog.inv.liev; });
+    OUTCROPS.forEach(function (o) { o.spot.hidden = !o.ready; });
+    WEEPERS.forEach(function (w) { var n = w.fruits.filter(function (f) { return f.ok; }).length; w.spot.hidden = n === 0; w.spot.label = "Pick a glass fruit (" + n + " left)"; });
+    forgeSpot.label = prog.weapons.sword ? "Mud Forge" : "Forge an abalone sword (" + Math.min(3, prog.inv.abalone || 0) + "/3 stones)";
+  }
+  function interactWild(s) {
+    if (s.id === "goldroad") { travelTo(GOLD_EXIT.x - 7, GOLD_EXIT.z + 1.5, false, "The Golden Wood", "Where the sorrow birds sing. Foxrids hunt here."); return true; }
+    if (s.id === "goldexit") { travelTo(GOLD_GATE.x + 4, GOLD_GATE.z, false, "The Village", "Home, under the ash trees."); return true; }
+    if (s.id === "elder") {
+      if (prog.inv.liev) { return true; }
+      prog.inv.liev = 1; saveProg(); Snd.carve();
+      say("Elder Ash", "You press your hand to the glowing heartwood and carve along the grain. A Liev comes free: a channel of living wood. Whatever power is inside you can flow through it now.");
+      toast("You carved a Liev", "Powers you learn will flow through it");
+      renderActions(); checkQuests(); return true;
+    }
+    if (s.id === "outcrop") {
+      if (!s.o.ready) { return true; }
+      s.o.ready = false; s.o.t = 240; give("abalone", 1); Snd.carve();
+      fxText("+1 abalone stone (" + prog.inv.abalone + ")", "#9fe3c4"); checkQuests(); return true;
+    }
+    if (s.id === "weeper") {
+      var fr = s.w.fruits.filter(function (f) { return f.ok; })[0]; if (!fr) { return true; }
+      fr.ok = false; fr.t = 120; give("fruit", 1); Snd.chime();
+      fxText("+1 glass fruit (" + prog.inv.fruit + ")", "#86ecff"); checkQuests(); return true;
+    }
+    if (s.id === "forge") {
+      if (prog.weapons.sword) { say("Uncle's Mud Forge", prog.flags.feathered ? "The blue mud glows. Your feathered abalone sword hums when you bring it close." : "The blue mud glows. Your abalone sword is already forged. Uncle says foxrid feathers would make its edge sing."); return true; }
+      if ((prog.inv.abalone || 0) >= 3) {
+        prog.inv.abalone -= 3; prog.weapons.sword = Date.now(); prog.equip = "sword"; saveProg();
+        Snd.boom(); setTimeout(Snd.chime, 300);
+        say("Uncle's Mud Forge", "You sink three abalone stones into the glowing mud. They soften like wax, and you draw them out as one long, shimmering blade. The Abalone Sword is yours, and in your hand.");
+        toast("Abalone Sword forged", "Press F to strike");
+        npcSays("Uncle", "Ha! That's my forge! Swing it like you mean it.");
+        renderActions(); checkQuests(); return true;
+      }
+      say("Uncle's Mud Forge", "Glistening blue mud, hot enough to melt stone. Bring three abalone stones from the Golden Wood to forge a sword. You have " + (prog.inv.abalone || 0) + ".");
+      return true;
+    }
+    return false;
+  }
+
+  // ---------- THE VILLAGERS' OWN LIVES: motives, moods, routines, friendships ----------
+  var LIFE = {
+    "Grandma": { motive: "Keep the family healthy, fed, and studying. She guards the old healing ways.", likes: { fruit: 3, feather: 1, abalone: 2 },
+      act: { home: "brewing tea in the burrow garden" },
+      about: "I raised half this village, little one. Healing is body, mind, and spirit together. The weeping trees in the Golden Wood cry fruit made of glass. Old women like me make tea of it." },
+    "Eldest Aunt": { motive: "Keep order in the family, and get her good scissors back.", likes: { abalone: 3, fruit: 2, feather: 1 },
+      act: { ring: "searching the village for her scissors", monument: "scolding someone at the monument" },
+      about: "Someone has to keep this family in line. I cut everyone's hair, I sew, I keep the books. And somebody stole my good scissors." },
+    "Youngest Aunt": { motive: "Swim, laugh, and understand why the golden birds sing so sadly.", likes: { fruit: 3, feather: 2, abalone: 1 },
+      act: { pool: "wading in the blue mud", shrine: "humming by the Egg Shrine" },
+      about: "Me? I'm the fun one. I swim at night and I listen. Lately the birds in the Golden Wood sound like they're grieving something nobody remembers." },
+    "Uncle": { motive: "Win at the arcade, just once, and keep the foxrids away from the burrows.", likes: { feather: 3, abalone: 2, fruit: 1 },
+      act: { arcade: "losing at the old arcade", forge: "working the Mud Forge", lantern: "fixing a lantern" },
+      about: "I keep the old Mud Forge hot. Blue mud melts stone if you know how. Bring three abalone stones to the forge and you'll have a blade worth carrying." },
+    "Cousin": { motive: "Play, race, and stay out of trouble (mostly).", likes: { feather: 3, fruit: 2, abalone: 1 },
+      act: { pool: "playing in the blue mud", pool2: "racing around the pools", ring: "playing tag", monument: "climbing the monument" },
+      about: "We're cousins, but we grew up like brothers and sisters. Every night is a new game." },
+    "Madison": { motive: "Figure out what doesn't add up, and win. Always win.", likes: { feather: 3, abalone: 3, fruit: 1 },
+      act: { arcade: "winning at the arcade", monument: "staring at the monument", pool: "mixing blue mud (suspiciously)", shrine: "studying the Egg Shrine" },
+      about: "I notice things. Small things. The monument. The shrine waking up for you. The foxrids getting bolder. None of it adds up yet. It will." },
+    "Madison's crew": { motive: "Follow Madison anywhere.", likes: { feather: 3, fruit: 2, abalone: 1 }, act: {},
+      about: "Where she goes, we go. That's the whole plan." },
+    "Elder Chief": { motive: "Keep the village safe: no sparks near the burrows, no foxrids on the Golden Road.", likes: { abalone: 3, fruit: 2, feather: 2 },
+      act: { pool: "guarding the mud pits", pool2: "guarding the mud pits", monument: "standing watch at the monument" },
+      about: "My job is simple. Nobody gets hurt. The foxrids come closer to the Golden Road every season, and the children keep making sparks." },
+    "Second Chief": { motive: "Understand the shrine and the monument, and why they wake for travelers like you.", likes: { abalone: 3, fruit: 2, feather: 1 },
+      act: { shrine: "tending the Egg Shrine", lantern: "lighting the lanterns" },
+      about: "I keep the shrine. It woke when you arrived, and the monument has been brighter ever since. Old stones remember things. I want to know what." }
+  };
+  var ACT = { arcade: "at the old arcade", pool: "by the blue mud", pool2: "by the blue mud", monument: "at the monument", shrine: "at the Egg Shrine",
+    lantern: "by the lanterns", ring: "walking the village ring", forge: "at the Mud Forge", home: "at home", follow: "following Madison", sleep: "asleep in the burrow", homeward: "heading home to sleep" };
+  function activity(n) { var L = LIFE[n.name] || {}, k = n.place || "home"; return (L.act && L.act[k]) || ACT[k] || ""; }
+  var CHAT = {
+    "Grandma": ["Have you eaten, {to}?", "Study first, {to}. Then play.", "The golden birds were singing sad again last night."],
+    "Eldest Aunt": ["{to}, have you seen my good scissors?", "Somebody in this family is a thief, and she's very small.", "Stand up straight, {to}."],
+    "Youngest Aunt": ["The water's warm tonight. Who's swimming?", "Did you hear the sorrow birds? It sounded like goodbye.", "{to}! Race you to the pools."],
+    "Uncle": ["One more round at the arcade. I can feel it.", "Foxrids by the Golden Road again. I saw the shimmer.", "The forge needs abalone, {to}. Lots of it."],
+    "Cousin": ["Tag! You're it, {to}!", "Did you see the fish swimming upside down?", "I'm not hiding. I'm thinking."],
+    "Madison": ["{to}, that doesn't add up and you know it.", "Watch the lantern. Three, two, one... see?", "I already know how this ends."],
+    "Elder Chief": ["No sparks near the burrows. I mean it, {to}.", "The foxrids are bolder this season.", "Keep the children off the Golden Road."],
+    "Second Chief": ["The shrine hums louder since the new one came.", "The monument was brighter last night. Did you see?", "Old stones remember, {to}."]
+  };
+  var REPLY = { "Grandma": "Mm. Eat something.", "Eldest Aunt": "Don't start with me.", "Youngest Aunt": "Ha! Fair.", "Uncle": "Bah. We'll see.",
+    "Cousin": "Nuh-uh!", "Madison": "Obviously.", "Elder Chief": "Hm. Noted.", "Second Chief": "So it is." };
+  var HURT = {
+    "Grandma": "You're hurt, little one. Sit. Go still, like water, and let it pass through you.",
+    "Madison": "You look terrible. Foxrids? They bite and run. Don't chase them. Let them come to you.",
+    "Elder Chief": "You're hurt. That's what the Golden Road does to people who wander it alone.",
+    "Uncle": "Who did that to you? Foxrids? Next time bring a real blade."
+  };
+  var NEWSKIN = {
+    "Grandma": "New face, same eyes. I'd know you anywhere.",
+    "Madison": "New skin? Your walk didn't change. That's how I knew it was you.",
+    "Eldest Aunt": "What did you do to yourself? Alio, I suppose. Hmph. It suits you.",
+    "Uncle": "Ha! Didn't recognize you. Alio's skin shops, eh?",
+    "Cousin": "Whoa! New body! Can I get one?"
+  };
+  var LOVE = {
+    "Grandma:fruit": "Glass fruit! I'll make tea for the whole family. You're a good one.",
+    "Uncle:feather": "A foxrid feather! The pack is thinner by one. Good.",
+    "Madison:feather": "Perfect fuse material. I mean... pretty. It's pretty.",
+    "Madison:abalone": "Abalone. Do you know what blue mud does to this? I do.",
+    "Second Chief:abalone": "Abalone. The shrine likes these. So do I.",
+    "Eldest Aunt:abalone": "Abalone! I'll set it in a comb. Finally, something nice in this family.",
+    "Cousin:feather": "SO shiny! I'm showing everyone!",
+    "Youngest Aunt:fruit": "It sings a little when you hold it to your ear. Did you know that?",
+    "Elder Chief:abalone": "Good stone. We'll use it to mark the Golden Road."
+  };
+  var bubEls = npcs.map(function () { var el = document.createElement("div"); el.className = "bubble"; tagsEl.appendChild(el); return el; });
+  function npcLife(n, dt) {
+    if (n.bub && n.bub.t > 0) { n.bub.t -= dt; }
+    if (n.bubNext) { n.bubNext.delay -= dt; if (n.bubNext.delay <= 0) { n.bub = { text: n.bubNext.text, t: 3.5 }; n.bubNext = null; } }
+    n.chatCd = (n.chatCd === undefined ? 8 + Math.random() * 20 : n.chatCd) - dt;
+    if (n.chatCd > 0 || n.hidden || n.follow || n.talking > 0 || !CHAT[n.name]) { return; }
+    if (Math.hypot(n.tx - n.x, n.tz - n.z) > 0.3) { return; }
+    n.chatCd = 6;
+    var other = null;
+    npcs.forEach(function (m) { if (m !== n && !m.hidden && !m.follow && !(m.talking > 0) && Math.hypot(m.x - n.x, m.z - n.z) < 3.6) { other = m; } });
+    if (!other) { return; }
+    var lines = CHAT[n.name], to = other.name === "Cousin" ? "cousin" : other.name;
+    n.bub = { text: lines[Math.floor(Math.random() * lines.length)].replace("{to}", to), t: 3.5 };
+    other.bubNext = { text: REPLY[other.name] || "Mm.", delay: 2.2 };
+    n.face = Math.atan2(other.x - n.x, other.z - n.z); other.face = Math.atan2(n.x - other.x, n.z - other.z);
+    n.wait = Math.max(n.wait, 5); other.wait = Math.max(other.wait, 5); other.tx = other.x; other.tz = other.z;
+    n.chatCd = 25 + Math.random() * 25; other.chatCd = Math.max(other.chatCd || 0, 15);
+  }
+
+  // ---------- BONDS: what each villager wants from you ----------
+  function rel(name) { return prog.rel[name] || 0; }
+  function addRel(name, k) { prog.rel[name] = Math.max(0, Math.min(100, rel(name) + k)); saveProg(); }
+  function tier(name) { var r = rel(name); return r >= 85 ? "Family" : r >= 60 ? "Close" : r >= 30 ? "Friend" : r >= 10 ? "Known" : "Stranger"; }
+  function heartsHtml(name) { var f = Math.min(5, Math.floor(rel(name) / 20)); var h = ""; for (var i = 0; i < 5; i++) { h += i < f ? "&#9829;" : '<span style="opacity:.28">&#9829;</span>'; } return h; }
+  function dayIndex() { return Math.floor((Date.now() + timeOffset) / MS_PER_HOUR / DAY_HOURS); }
+  function bondState(id) { return prog.bonds[id] || 0; }
+  var BONDS = [
+    { id: "tea", who: "Grandma", title: "Tea of Glass",
+      offer: "My old bones want glass tea. The weeping trees in the Golden Wood cry fruit made of glass. Bring me two, and I'll teach you how I heal.",
+      goal: function () { return "Bring Grandma 2 glass fruits (" + Math.min(2, prog.inv.fruit || 0) + "/2)"; },
+      ready: function () { return (prog.inv.fruit || 0) >= 2; },
+      finish: function () { prog.inv.fruit -= 2; learn("still"); return "She brews the fruit until the glass melts into light. \"When you are hurt, don't fight it. Go still, like deep water, and let it pass through you.\" You learned Still Water."; } },
+    { id: "scissors", who: "Eldest Aunt", title: "The Good Scissors",
+      offer: "My good scissors are gone. The ones I cut that girl's hair with. I have a feeling about who took them. Ask Madison. Don't let her charm you.",
+      goal: function () { return prog.flags.scissorsAsked ? "Tell the Eldest Aunt what happened to her scissors" : "Ask Madison about the Eldest Aunt's scissors"; },
+      ready: function () { return !!prog.flags.scissorsAsked; },
+      finish: function () { return "\"She WHAT? Broke them in half, melted them in blue mud and poisoned them with plants? To fight the big kids at the arcade?\" She laughs until she cries. \"That's going in the family stories. Keep the blades. Use them better than she did.\""; } },
+    { id: "spark", who: "Madison", title: "Bigger Ones",
+      offer: "The chiefs said no more blue mud bombs. They didn't say anything about bigger ones. I need two shimmer feathers from a foxrid for the fuse. And you'll need a Liev to throw it right.",
+      goal: function () { return "Bring Madison 2 shimmer feathers (" + Math.min(2, prog.inv.feather || 0) + "/2)"; },
+      ready: function () { return (prog.inv.feather || 0) >= 2; },
+      finish: function () { prog.inv.feather -= 2; learn("spark"); return "She packs the feathers into a ball of glistening blue mud and shows you how to throw it through your Liev. \"Don't tell the chiefs. Or do. They can't prove anything.\" You learned Mud Spark."; } },
+    { id: "pack", who: "Uncle", title: "Thin the Pack",
+      offer: "Foxrids come closer to the burrows every season. Bring me three of their shimmer feathers, proof the pack is thinning, and I'll feather your sword's edge in the forge.",
+      goal: function () { return prog.weapons.sword ? "Bring Uncle 3 shimmer feathers (" + Math.min(3, prog.inv.feather || 0) + "/3)" : "Forge an abalone sword first, then bring Uncle 3 shimmer feathers"; },
+      ready: function () { return !!prog.weapons.sword && (prog.inv.feather || 0) >= 3; },
+      finish: function () { prog.inv.feather -= 3; prog.flags.feathered = Date.now(); return "He works the feathers into the forge mud and draws your blade through it. The abalone drinks the shimmer. Your Abalone Sword now cuts half again as deep."; } },
+    { id: "songs", who: "Youngest Aunt", title: "Songs of Sorrow",
+      offer: "Will you go to the Golden Wood and listen to the sorrow birds? Three different ones, up close. Then come tell me what they sound like. I think they're singing about something everyone forgot.",
+      goal: function () { return "Listen to 3 different sorrow birds sing (" + Math.min(3, count(prog.heard)) + "/3)"; },
+      ready: function () { return count(prog.heard) >= 3; },
+      finish: function () { learn("kaleido"); return "You hum what you heard. She goes quiet. \"That's how it feels when everything around you breaks into pieces and you have to stay in the middle.\" She shows you how to hold your center while the light splits around you. You learned Kaleidoscope."; } },
+    { id: "stone", who: "Second Chief", title: "What the Stone Remembers",
+      offer: "The monument is brighter since you came. Carve a Liev from an elder ash, then touch the monument with it during the dark hours. Come tell me what it shows you.",
+      goal: function () { return hasPower("forget") ? "Tell the Second Chief what the monument showed you" : "Touch the monument with your Liev during the dark hours"; },
+      ready: function () { return hasPower("forget"); },
+      finish: function () { return "\"It showed you how things forget what they are?\" The Second Chief is quiet for a long time. \"Then use it gently. Forgetting is the oldest power there is.\""; } },
+    { id: "warden", who: "Elder Chief", title: "Warden of the Golden Road",
+      offer: "The foxrids are bold this season. Drive back five of them, by blade or by kindness, and the village will call you Warden of the Golden Road.",
+      accept: function () { prog.flags.wardenStart = prog.fox || 0; },
+      goal: function () { return "Defeat or calm 5 foxrids (" + Math.min(5, (prog.fox || 0) - (prog.flags.wardenStart || 0)) + "/5)"; },
+      ready: function () { return (prog.fox || 0) - (prog.flags.wardenStart || 0) >= 5; },
+      finish: function () { prog.flags.warden = Date.now(); prog.title = "Warden of the Golden Road"; pc.hp = maxHp(); return "The Elder Chief puts a hand on your shoulder. \"Warden of the Golden Road. The village will remember your name.\" You feel sturdier. (+30 health)"; } }
+  ];
+  function bondsOf(name) { return BONDS.filter(function (b) { return b.who === name; }); }
+  function bondMark(name) {
+    var bs = bondsOf(name), mark = "";
+    bs.forEach(function (b) { var st = bondState(b.id); if (st === 1 && b.ready()) { mark = " ✔"; } else if (st === 0 && !mark) { mark = " !"; } });
+    if (name === "Madison" && bondState("scissors") === 1 && !prog.flags.scissorsAsked) { mark = " ?"; }
+    return mark;
+  }
+  function lookKey() { return ch ? ch.race + ":" + ch.skin + ":" + ch.hair : ""; }
+
+  // ---------- conversations ----------
+  var dlg = null, GRANDMA_BEYOND = "You want to see beyond the village? Our capital, Alio, is a short ride on the Skyrail from the station at the village edge. Towers taller than any ash tree. Be careful there. People in Alio change their bodies like clothes. And to the west, the Golden Road runs into a forest of gold. Foxrids hunt there.";
+  function greetingFor(n) {
+    var me = ch && ch.name ? ch.name : "traveler", first = !prog.met[n.name], look = lookKey(), seen = prog.seen[n.name];
+    prog.seen[n.name] = look;
+    var mq = currentMain();
+    if (n.name === "Grandma" && mq && mq.id === "egg" && questState(mq) === 1) { setFlag("grandmaBeyond"); return GRANDMA_BEYOND; }
+    if (pc.hp < maxHp() * 0.45) { return HURT[n.name] || "You look hurt, " + me + ". Rest a while before you go back out there."; }
+    if (seen && seen !== look) { return NEWSKIN[n.name] || "You look different, " + me + ". New skin from Alio?"; }
+    if (n.name === "Uncle" && prog.weapons.sword && !prog.flags.uncleSawSword) { prog.flags.uncleSawSword = Date.now(); return "That blade! It came out of my forge, didn't it? Abalone sings when it's cut right. Swing it like you mean it."; }
+    if (first) { return n.lines[0]; }
+    var t = tier(n.name), hello = t === "Family" ? "There's my " + me + "." : t === "Close" ? me + "! Good to see you." : t === "Friend" ? "Hello again, " + me + "." : "Oh. Hello, " + me + ".";
+    var sleepy = !n.always && !isAwakeHours() ? " It's the bright hours. I should be asleep." : "";
+    var doing = activity(n);
+    return hello + sleepy + (doing ? " I'm " + doing + "." : "");
+  }
+  function openDialog(n) {
+    if (!prog.talked[n.name]) { prog.talked[n.name] = 1; }
+    var today = dayIndex();
+    if (prog.met[n.name] !== today) { if (prog.met[n.name] !== undefined) { addRel(n.name, 2); } else { addRel(n.name, 1); } }
+    var text = greetingFor(n);
+    prog.met[n.name] = today; saveProg();
+    n.talking = 9999; dlg = { n: n, text: text, view: "main" };
+    renderDialog(); checkQuests();
+  }
+  function closeDialog() { if (dlg) { dlg.n.talking = 1.5; dlg = null; } talkEl.style.display = "none"; }
+  function dlgSay(text, view) { dlg.text = text; dlg.view = view || "main"; renderDialog(); }
+  function dlgOptions() {
+    var n = dlg.n, o = [];
+    if (dlg.view === "gift") {
+      ["fruit", "feather", "abalone"].forEach(function (k) { if (prog.inv[k] > 0) { o.push({ label: ITEM[k] + " (" + prog.inv[k] + ")", fn: function () { giveGift(k); } }); } });
+      o.push({ label: "Back", fn: function () { dlgSay("Hm?"); } });
+      return o;
+    }
+    o.push({ label: "Chat", fn: dlgChat });
+    o.push({ label: "Your life", fn: function () { var L = LIFE[n.name] || {}; dlgSay((L.about || "") + '<br><span style="color:#a6a2b8;font-size:13px">What they want: ' + (L.motive || "") + "</span>"); } });
+    if (n.name === "Madison" && bondState("scissors") === 1 && !prog.flags.scissorsAsked) {
+      o.push({ label: "Ask about the scissors", gold: true, fn: function () {
+        prog.flags.scissorsAsked = Date.now(); prog.weapons.blades = Date.now(); if (!prog.weapons.sword) { prog.equip = "blades"; } saveProg(); addRel("Madison", 3);
+        Snd.chime(); renderActions(); checkQuests();
+        dlgSay("Her eyes go wide, then she grins. \"Fine. The big kids tried to take my arcade winnings. So I broke the scissors in half, smelted them with blue mud, and soaked them in plant poison. Don't look at me like that. It worked.\" She hands you two thin, glinting blades. \"Tell her I'm sorry. Kind of.\" You got the Scissor Blades.");
+      } });
+    }
+    bondsOf(n.name).forEach(function (b) {
+      var st = bondState(b.id);
+      if (st === 0) { o.push({ label: "Need any help?", gold: true, fn: function () { prog.bonds[b.id] = 1; if (b.accept) { b.accept(); } saveProg(); Snd.chime(); dlgSay(b.offer + '<br><span style="color:#e6d3a1;font-size:13px">New request: ' + b.title + "</span>"); checkQuests(); } }); }
+      else if (st === 1 && b.ready()) { o.push({ label: "I did it", gold: true, fn: function () { var msg = b.finish(); prog.bonds[b.id] = 2; addRel(n.name, 20); saveProg(); Snd.chime(); renderActions(); toast("Request complete", b.title); dlgSay(msg); checkQuests(); } }); }
+      else if (st === 1) { o.push({ label: "About your request", fn: function () { dlgSay(b.title + ": " + b.goal() + "."); } }); }
+    });
+    if ((prog.inv.fruit || 0) + (prog.inv.feather || 0) + (prog.inv.abalone || 0) > 0) { o.push({ label: "Give a gift", fn: function () { dlgSay("You open your satchel.", "gift"); } }); }
+    o.push({ label: "Goodbye", fn: closeDialog });
+    return o;
+  }
+  function dlgChat() { var n = dlg.n; n.step = (n.step || 0) + 1; dlgSay(n.lines[n.step % n.lines.length]); }
+  function giveGift(k) {
+    var n = dlg.n, L = LIFE[n.name] || { likes: {} }, like = L.likes[k] || 1;
+    prog.inv[k]--; addRel(n.name, like * 4 + 1); renderActions();
+    var line = like >= 3 ? (LOVE[n.name + ":" + k] || "Oh! This is exactly what I wanted. Thank you.") : like === 2 ? "That's kind of you. Thank you." : "Oh. Thank you, I suppose.";
+    Snd.chime(); dlgSay(line);
+  }
+  function renderDialog() {
+    if (!dlg) { return; }
+    var n = dlg.n, opts = dlgOptions();
+    dlg.opts = opts;
+    var doing = activity(n);
+    talkEl.innerHTML = '<div class="who"><b>' + Creature.esc(n.name) + '</b><span class="hearts" title="' + tier(n.name) + '">' + heartsHtml(n.name) + "</span></div>" +
+      '<div class="doing">' + tier(n.name) + (doing ? " &middot; " + doing : "") + "</div>" + dlg.text +
+      '<div class="opts">' + opts.map(function (op, i) { return '<button data-i="' + i + '"' + (op.gold ? ' class="gold"' : "") + ">" + (i + 1) + ". " + op.label + "</button>"; }).join("") + "</div>";
+    talkEl.style.display = "block";
+    talkEl.querySelectorAll("[data-i]").forEach(function (b) { b.addEventListener("click", function () { var op = dlg && dlg.opts[Number(b.dataset.i)]; if (op) { op.fn(); } }); });
+  }
+
+  // ---------- HUD: bars, action buttons, satchel ----------
+  var actionsEl = $("actions"), satchel = $("satchel"), actT = 0;
+  function renderActions() {
+    var h = '<button data-a="strike" id="a-strike">' + WEAPONS[wpn()].short + "<small>Strike F</small></button>";
+    POWERS.forEach(function (P) { if (hasPower(P.key)) { h += '<button data-a="' + P.key + '" id="a-' + P.key + '">' + P.name.replace("Kaleidoscope", "Kaleido") + "<small>" + P.cost + " &middot; " + P.n + "</small></button>"; } });
+    h += '<button data-a="fruit" id="a-fruit">Fruit &times;' + (prog.inv.fruit || 0) + "<small>Eat Q</small></button>";
+    actionsEl.innerHTML = h;
+    actionsEl.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () { var a = b.dataset.a; if (a === "strike") { strike(); } else if (a === "fruit") { eatFruit(); } else { usePower(a); } });
+    });
+    if (satchel.style.display === "block") { renderSatchel(); }
+  }
+  function updateHud(dt) {
+    var mh = maxHp();
+    $("hp-fill").style.width = (pc.hp / mh * 100).toFixed(1) + "%"; $("hp-txt").textContent = "Health " + Math.ceil(pc.hp) + " / " + mh;
+    $("ess-fill").style.width = pc.ess.toFixed(1) + "%"; $("ess-txt").textContent = "Essence " + Math.floor(pc.ess) + (prog.inv.liev ? "" : " (carve a Liev to channel it)");
+    actT += dt; if (actT < 0.15) { return; } actT = 0;
+    POWERS.forEach(function (P) {
+      var b = $("a-" + P.key); if (!b) { return; }
+      b.classList.toggle("off", !prog.inv.liev || pc.ess < P.cost);
+      b.classList.toggle("live", P.key === "kaleido" && pc.kaleido > 0);
+    });
+    var sb = $("a-strike"); if (sb) { sb.classList.toggle("off", pc.cd > 0); }
+  }
+  function renderSatchel() {
+    var h = "<h2>Satchel</h2>" + (prog.title ? '<div style="color:#e6d3a1">Title: ' + prog.title + "</div>" : "");
+    h += "<h3>LIEV</h3>" + (prog.inv.liev ? '<div class="row"><div>Liev<span>A channel of living wood, carved from an elder ash. Every power you know flows through it.</span></div></div>' :
+      '<div class="row"><div>No Liev yet<span>Carve one from a glowing elder ash in the Golden Wood. You need it to use any power.</span></div></div>');
+    h += "<h3>WEAPONS</h3>";
+    ["fists", "blades", "sword"].forEach(function (k) {
+      var own = k === "fists" || prog.weapons[k], W = WEAPONS[k];
+      if (!own) { return; }
+      var nm = W.name + (k === "sword" && prog.flags.feathered ? " (feathered)" : "");
+      h += '<div class="row"><div>' + nm + " &middot; " + Math.round(weaponDmg(k)) + " damage<span>" + W.desc + "</span></div><button data-eq=\"" + k + '"' + (wpn() === k ? ' class="on"' : "") + ">" + (wpn() === k ? "Equipped" : "Equip") + "</button></div>";
+    });
+    if (!prog.weapons.sword) { h += '<div class="row"><div style="color:#a6a2b8">Abalone Sword<span>Forge it at Uncle\'s Mud Forge with three abalone stones.</span></div></div>'; }
+    if (!prog.weapons.blades) { h += '<div class="row"><div style="color:#a6a2b8">Scissor Blades<span>Someone in the village knows where the Eldest Aunt\'s scissors went.</span></div></div>'; }
+    h += "<h3>POWERS</h3>";
+    POWERS.forEach(function (P) {
+      h += '<div class="row"><div' + (hasPower(P.key) ? "" : ' style="color:#a6a2b8"') + ">" + P.name + (hasPower(P.key) ? " &middot; key " + P.n + " &middot; " + P.cost + " essence" : " (not learned)") +
+        "<span>" + P.desc + (hasPower(P.key) ? "" : " Learn it from: " + P.from + ".") + "</span></div></div>";
+    });
+    h += "<h3>GATHERED</h3>";
+    ["fruit", "feather", "abalone"].forEach(function (k) { h += '<div class="row"><div>' + ITEM[k] + "</div><b>" + (prog.inv[k] || 0) + "</b></div>"; });
+    h += '<div class="row"><div>Foxrids driven back</div><b>' + (prog.fox || 0) + "</b></div>";
+    h += '<p style="color:#a6a2b8;font-size:12px">Glass fruit heals you (Q). Feathers and stones make good gifts and are wanted by people in the village.</p><button id="s-close">Close</button>';
+    satchel.innerHTML = h;
+    $("s-close").addEventListener("click", function () { satchel.style.display = "none"; });
+    satchel.querySelectorAll("[data-eq]").forEach(function (b) { b.addEventListener("click", function () { prog.equip = b.dataset.eq; saveProg(); renderActions(); renderSatchel(); }); });
+  }
+  function toggleSatchel() { if (satchel.style.display === "block") { satchel.style.display = "none"; return; } renderSatchel(); satchel.style.display = "block"; }
+  $("i-btn").addEventListener("click", toggleSatchel);
+  window.addEventListener("keydown", function (e) {
+    if (mode !== "play" || e.target.tagName === "INPUT" || e.repeat) { return; }
+    var k = e.key.toLowerCase();
+    if (dlg && /^[1-9]$/.test(k)) { var op = dlg.opts[Number(k) - 1]; if (op) { op.fn(); } return; }
+    if (k === "f") { strike(); }
+    else if (k === "q") { eatFruit(); }
+    else if (k === "i") { toggleSatchel(); }
+    else if (k === "m") { Snd.toggle(); refreshSnd(); }
+    else if (k === "1") { usePower("spark"); } else if (k === "2") { usePower("still"); } else if (k === "3") { usePower("kaleido"); } else if (k === "4") { usePower("forget"); }
+    else if (k === "escape") { satchel.style.display = "none"; closeDialog(); }
+  });
+
   // ---------- frame loop ----------
   var W = 1, H = 1;
   function resize() {
@@ -1579,6 +2647,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
 
   var lightArr = new Float32Array(48), lightCol = new Float32Array(36);
   var last = performance.now(), time = 0;
+  var fpsAcc = 0, fpsT = 0, fpsLast = performance.now(), fpsNow = 0;
 
   function project(vp, x, y, z) {
     var cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12], cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13], cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
@@ -1589,7 +2658,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
 
   function step(dt) {
     var mx = 0, mz = 0;
-    if (overlay.style.display !== "block") {
+    if (overlay.style.display !== "block" && !pc.dead) {
       if (keys.w || keys.arrowup) { mz += 1; }
       if (keys.s || keys.arrowdown) { mz -= 1; }
       if (keys.a || keys.arrowleft) { mx -= 1; }
@@ -1626,12 +2695,16 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     if (inAlio(player.x)) {
       if (player.roof) { player.x = Math.max(ROOF.x0 + 0.6, Math.min(ROOF.x1 - 0.6, player.x)); player.z = Math.max(ROOF.z0 + 0.6, Math.min(ROOF.z1 - 0.6, player.z)); }
       else { player.x = Math.max(ALIO.x - 58, Math.min(ALIO.x + 58, player.x)); player.z = Math.max(-58, Math.min(57, player.z)); }
+    } else if (inGold(player.x)) {
+      var gx = player.x - GOLD.x, gz = player.z - GOLD.z, gr = Math.hypot(gx, gz);
+      if (gr > GOLD_R - 5) { player.x = GOLD.x + gx / gr * (GOLD_R - 5); player.z = GOLD.z + gz / gr * (GOLD_R - 5); }
     } else {
       var pr = Math.hypot(player.x, player.z);
       if (pr > WORLD_R - 6) { player.x *= (WORLD_R - 6) / pr; player.z *= (WORLD_R - 6) / pr; }
     }
     player.y = ground(player.x, player.z) + (riding ? 0.45 + Math.sin(time * 3) * 0.04 : 0);
     questTick(dt);
+    updateCombat(dt); refreshSpots(); updateHud(dt);
 
     near = null;
     var best = 1e9;
@@ -1663,6 +2736,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
 
   function render() {
     var now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+    fpsAcc += 1; fpsT += (now - fpsLast) / 1000; fpsLast = now; if (fpsT > 1) { fpsNow = fpsAcc / fpsT; fpsAcc = 0; fpsT = 0; }
     var targetY = 1.4, camDist = cam.dist, pitch = cam.pitch;
     if (mode === "play") { step(dt); }
     else {
@@ -1683,10 +2757,12 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     }
 
     var cp = Math.cos(pitch), dist = camDist, eye;
+    var nearCan = canopies.filter(function (c) { return Math.abs(c[0] - player.x) < camDist + c[3] && Math.abs(c[2] - player.z) < camDist + c[3]; });
     for (;;) {
       eye = [player.x + Math.sin(cam.yaw) * dist * cp, player.y + targetY + Math.sin(pitch) * dist, player.z + Math.cos(cam.yaw) * dist * cp];
       var blocked = solids.some(function (s) { return s[2] > 1.5 && Math.hypot(eye[0] - s[0], eye[2] - s[1]) < s[2] + 0.6; }) ||
-        (!player.roof && eye[1] < 75 && rects.some(function (r) { return Math.abs(eye[0] - r[0]) < r[2] + 0.4 && Math.abs(eye[2] - r[1]) < r[3] + 0.4; }));
+        (!player.roof && eye[1] < 75 && rects.some(function (r) { return Math.abs(eye[0] - r[0]) < r[2] + 0.4 && Math.abs(eye[2] - r[1]) < r[3] + 0.4; })) ||
+        nearCan.some(function (c) { return Math.hypot(eye[0] - c[0], eye[1] - c[1], eye[2] - c[2]) < c[3] + 0.4; });
       if (!blocked || dist <= 2.5) { break; }
       dist -= 0.5;
     }
@@ -1697,6 +2773,11 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     gl.uniformMatrix4fv(U.uVP, false, vp);
     gl.uniform3fv(U.uCam, eye);
     computeEnv();
+    if (inGold(player.x)) {   // the forest of gold: warm amber air, glowing even at night
+      env.fog = lerp3(env.fog, [0.42, 0.3, 0.12].map(function (v) { return v * (0.45 + 0.55 * env.day); }), 0.55);
+      env.hor = lerp3(env.hor, [0.95, 0.7, 0.35].map(function (v) { return v * (0.35 + 0.65 * env.day); }), 0.45);
+      env.amb = lerp3(env.amb, [0.5, 0.42, 0.28], 0.3);
+    }
     gl.uniform3fv(U.uMoon, env.lightDir);
     gl.uniform3fv(U.uMoonCol, env.lightCol);
     gl.uniform3fv(U.uAmb, env.amb);
@@ -1707,7 +2788,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     gl.uniform3fv(U.uSkyTop, env.top); gl.uniform3fv(U.uSkyHor, env.hor);
     gl.uniform3fv(U.uSunDir, env.sun);
     gl.uniform3fv(U.uSunCol, lerp3([1.0, 0.55, 0.35], [1.0, 0.95, 0.8], env.day).map(function (v) { return v * Math.max(0, Math.min(1, env.sun[1] * 4 + 0.6)); }));
-    updateNpcs(dt); updateLizards(dt); updateCity(dt); cloudScroll += dt * 0.8;
+    updateNpcs(dt); updateLizards(dt); updateCity(dt); updateFoxes(dt); updateBirds(dt); cloudScroll += dt * 0.8;
     clockEl.textContent = "Hour " + (Math.floor(env.hour) + 1) + " of 37 \u00b7 " + (env.day > 0.6 ? "Day" : env.day > 0.15 ? (env.sun[0] > 0 ? "Dawn" : "Dusk") : "Night");
 
     // pick the 12 lights closest to the player
@@ -1736,11 +2817,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     gl.depthMask(true);
     gl.uniform1f(U.uNoFog, 0);
     draw(worldMesh, model(0, 0, 0, 0, 1));
+    if (inGold(player.x)) { draw(goldMesh, model(0, 0, 0, 0, 1)); }
     if (playerMesh && mode !== "title") { draw(playerMesh, model(player.x, player.y, player.z, player.face, ch.height)); }
+    if (playerMesh && mode === "play" && !pc.dead) { drawGear(); }
     if (scentMesh && (mode === "play" || mode === "emerge")) {
       trail.forEach(function (m, i) { draw(scentMesh, model(m.x, m.y + Math.sin(time * 2 + i) * 0.08, m.z, 0, 1 - i * 0.1)); });
     }
-    var here = !inAlio(player.x);
+    var reg = region(player.x), here = reg === "village";
     npcs.forEach(function (n, i) {
       if (n.hidden || !here) { return; }
       var bob = n.moving ? Math.abs(Math.sin(time * 9 + i)) * 0.04 : 0;
@@ -1755,7 +2838,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       var heading = Math.atan2(-Math.sin(a) * f.s, Math.cos(a) * f.s);
       draw(fishMesh, model2(x, ground(f.cx, f.cz) + f.h + Math.sin(time * 1.3 + f.r) * 0.3, z, heading, Math.sin(time * 3 + f.h) * 0.12, 1));
     });
-    if (!here) {
+    if (reg === "alio") {
       traffic.forEach(function (v) { var tp = trafficPos(v); draw(v.m, model(tp.x, v.y + (v.bike ? Math.sin(time * 4 + v.pos) * 0.05 : Math.sin(time + v.pos) * 0.3), tp.z, tp.rot, 1)); });
       citizens.forEach(function (c, i) { draw(c.mesh, model(c.x, c.wait > 0 ? 0 : Math.abs(Math.sin(time * 8 + i)) * 0.04, c.z, c.dir > 0 ? 0 : Math.PI, c.h)); });
     }
@@ -1763,10 +2846,12 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       if (Math.hypot(player.x - w.x, player.z - w.z) > 70) { return; }
       draw(prog.stones[w.key] ? stoneOn : stoneOff, model(w.x, w.y + 2.15 + Math.sin(time * 1.4 + w.x) * 0.1, w.z, time * 0.5, 1));
     });
+    if (reg === "gold") { drawWild(); }
+    drawEffectsOpaque();
     if (riding && mode === "play") { draw(boardMesh, model2(player.x, player.y - 0.06, player.z, player.face, Math.sin(time * 2) * 0.04, ch ? ch.height : 1)); }
     gl.uniform1f(U.uNoFog, 0.75);
     clouds.forEach(function (c) {
-      var x = ((c.x + cloudScroll * c.s + 90) % 180 + 180) % 180 - 90 + (inAlio(player.x) ? ALIO.x : 0);
+      var x = ((c.x + cloudScroll * c.s + 90) % 180 + 180) % 180 - 90 + (reg === "alio" ? ALIO.x : reg === "gold" ? GOLD.x : 0);
       draw(cloudMeshes[c.m], model(x, c.y + (inAlio(player.x) ? 50 : 0), c.z, 0, 1));
     });
     gl.uniform1f(U.uNoFog, 0);
@@ -1777,13 +2862,14 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       draw(moteMesh, model(x, ground(x, z) + m.h + Math.sin(time * m.s * 3 + m.p) * 0.4, z, 0, 1));
     });
     if (petMesh && mode === "play") { draw(petMesh, model(petPos.x, petPos.y, petPos.z, player.face + Math.sin(time) * 0.2, 1)); }
-    if (!here) {
+    if (reg === "alio") {
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
       gl.uniform1f(U.uAlpha, 0.5);
       draw(holoMesh, model(ALIO.x, 4.4 + Math.sin(time) * 0.3, ALIO.z, time * 0.4, 1));
       draw(holoRing, model2(ALIO.x, 4.4, ALIO.z, time * -0.7, 0.5, 1));
       gl.depthMask(true); gl.disable(gl.BLEND); gl.uniform1f(U.uAlpha, 1);
     }
+    drawEffectsBlended();
     if (sac && Math.hypot(player.x - sac.x, player.z - sac.z) < 80) {
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
       gl.uniform1f(U.uAlpha, mode === "create" ? 0.26 : 0.5 - sac.open * 0.12);
@@ -1804,12 +2890,117 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       if (p && active) { el.style.display = "block"; el.style.left = p.x + "px"; el.style.top = p.y + "px"; el.style.opacity = String(Math.max(0.25, 1 - dd / 20)); }
       else { el.style.display = "none"; }
     });
+    drawLabels(vp, dt, here, reg);
     if (pet && active) {
       var pp = project(vp, petPos.x, petPos.y + 0.9, petPos.z);
       if (pp) { petTag.style.display = "block"; petTag.textContent = pet.name; petTag.style.left = pp.x + "px"; petTag.style.top = pp.y + "px"; }
     } else { petTag.style.display = "none"; }
 
     requestAnimationFrame(render);
+  }
+
+  // ---------- drawing the new things: gear in your hands, creatures, power effects, labels ----------
+  function handAt(lx, ly, lz) {
+    var s = ch.height, c = Math.cos(player.face), n = Math.sin(player.face);
+    return [player.x + (lx * c + lz * n) * s, player.y + ly * s, player.z + (-lx * n + lz * c) * s];
+  }
+  function drawGear() {
+    var k = wpn(), w = ch.build || 1, sw = pc.swingT > 0 ? 1 - pc.swingT / pc.swingDur : -1;
+    var swingA = sw >= 0 ? pc.swingSide * (1.3 - sw * 2.6) : 0;
+    if (k === "sword") {
+      var h = handAt(-0.34 * w, 0.74, sw >= 0 ? 0.25 : 0.06);
+      draw(prog.flags.feathered ? swordFeather : swordPlain, model2(h[0], h[1], h[2], player.face + swingA, sw >= 0 ? 0.12 : 1.05, ch.height));
+    } else if (k === "blades") {
+      [-1, 1].forEach(function (sd) {
+        var bh = handAt(sd * 0.34 * w, 0.74, sw >= 0 ? 0.2 : 0.06);
+        draw(bladeMesh, model2(bh[0], bh[1], bh[2], player.face + (sw >= 0 ? swingA * (sd < 0 ? 1 : -0.6) : 0), sw >= 0 ? 0.2 : 1.2, ch.height));
+      });
+    }
+    if (prog.inv.liev && k !== "blades") {
+      var lh = handAt(0.34 * w, 0.72, 0.05);
+      draw(lievMesh, model2(lh[0], lh[1], lh[2], player.face, pc.castT > 0 ? 1.35 : 0.35, ch.height));
+    }
+  }
+  function drawWild() {
+    foxes.forEach(function (f) {
+      if (f.state === "dead" || Math.hypot(f.x - player.x, f.z - player.z) > 75) { return; }
+      var run = f.moving ? Math.min(1, f.spd / 6) : 0, gy = ground(f.x, f.z), ph = time * (6 + f.spd * 2) + f.id;
+      var bob = Math.abs(Math.sin(ph)) * 0.09 * run, pitch = Math.sin(ph) * 0.08 * run;
+      draw(foxMesh, model2(f.x, gy + bob, f.z, f.face, pitch, 1.15 * (f.hurt > 0 ? 1.08 : 1)));
+      if (f.state === "calm") { draw(calmHalo, model(f.x, gy + 1.5 + Math.sin(time * 2) * 0.05, f.z, time, 1)); }
+    });
+    birds.forEach(function (b) {
+      var m = b.state === "fly" ? (Math.sin(time * 18 + b.id) > 0 ? birdUp : birdDown) : birdFold;
+      var tilt = b.state === "fly" ? 0 : b.sing > 0 ? -0.35 + Math.sin(time * 6) * 0.06 : 0;
+      draw(m, model2(b.x, b.y, b.z, b.face, tilt, 1.7));
+    });
+    songMotes.forEach(function (m) { draw(goldMote, model(m.x, m.y, m.z, 0, Math.max(0.1, 1 - m.t / 2.4))); });
+    WEEPERS.forEach(function (w) {
+      if (Math.hypot(w.x - player.x, w.z - player.z) > 60) { return; }
+      w.fruits.forEach(function (f) { if (f.ok) { draw(fruitMesh, model(f.x, f.y + Math.sin(time * 1.5 + f.x) * 0.04, f.z, time * 0.3, 1)); } });
+    });
+    OUTCROPS.forEach(function (o) { if (o.ready && Math.hypot(o.x - player.x, o.z - player.z) < 60) { draw(crystalMesh, model(o.x, o.y + 0.9, o.z, time * 0.2, 1)); } });
+    loots.forEach(function (l) { draw(featherMesh, model2(l.x, ground(l.x, l.z) + 0.6 + Math.sin(time * 2.5 + l.x) * 0.15, l.z, time * 1.5, 0.4, 1.4)); });
+  }
+  function drawEffectsOpaque() {
+    effects.forEach(function (e) {
+      if (e.k === "bomb" && !e.done) {
+        var k = Math.min(1, e.t / e.dur), ey = ground(e.ex, e.ez) + 0.3;
+        draw(bombMesh, model(e.sx + (e.ex - e.sx) * k, e.sy + (ey - e.sy) * k + Math.sin(k * Math.PI) * 2.4, e.sz + (e.ez - e.sz) * k, time * 8, 1));
+      }
+      if (e.k === "orb" && !e.done) {
+        var k2 = Math.min(1, e.t / e.dur), ty = ground(e.f.x, e.f.z) + 0.9;
+        draw(orbMesh, model(e.sx + (e.f.x - e.sx) * k2, e.sy + (ty - e.sy) * k2, e.sz + (e.f.z - e.sz) * k2, 0, 1));
+      }
+    });
+    if (pc.kaleido > 0 && mode === "play") {
+      for (var i = 0; i < 6; i++) { var a = time * 3 + i / 6 * Math.PI * 2; draw(facetMesh, model2(player.x + Math.cos(a) * 1.8, player.y + 1.1 + Math.sin(time * 4 + i) * 0.25, player.z + Math.sin(a) * 1.8, a, 0.3, 1)); }
+    }
+  }
+  function drawEffectsBlended() {
+    var any = pc.swingT > 0 || effects.some(function (e) { return e.k === "blast" || e.k === "rings" || e.k === "puddle"; });
+    if (!any || mode !== "play") { return; }
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    if (pc.swingT > 0) { gl.uniform1f(U.uAlpha, 0.55 * pc.swingT / pc.swingDur); draw(arcMesh, model2(player.x, player.y + 0.95 * ch.height, player.z, player.face, 0, WEAPONS[wpn()].range / 2.1)); }
+    effects.forEach(function (e) {
+      var k = e.t / e.dur;
+      if (e.k === "blast") { gl.uniform1f(U.uAlpha, 0.6 * (1 - k)); draw(blastMesh, model(e.x, e.y, e.z, 0, 0.6 + k * 3)); }
+      if (e.k === "rings") { for (var i = 0; i < 3; i++) { var kk = (k + i / 3) % 1; gl.uniform1f(U.uAlpha, 0.7 * (1 - kk)); draw(healRing, model(player.x, player.y + 0.1 + kk * 2.2, player.z, time, 0.7 + kk * 0.4)); } }
+      if (e.k === "puddle") { gl.uniform1f(U.uAlpha, 0.85 * (1 - k)); draw(puddleMesh, model(e.x, e.y, e.z, 0, 1 + k * 0.4)); }
+    });
+    gl.depthMask(true); gl.disable(gl.BLEND); gl.uniform1f(U.uAlpha, 1);
+  }
+  var foxTagEls = foxes.map(function () { var el = document.createElement("div"); el.className = "tag"; el.style.display = "none"; tagsEl.appendChild(el); return el; });
+  function drawLabels(vp, dt, here, reg) {
+    spots.forEach(function (s, i) {
+      if (!s.npc) { return; }
+      var n = s.who, el = tagEls[i], dd = Math.hypot(player.x - n.x, player.z - n.z);
+      var txt = Creature.esc(n.name) + bondMark(n.name) + (dd < 10 && active ? '<br><span style="color:#a6a2b8;font-size:10px">' + activity(n) + "</span>" : "");
+      if (el._t !== txt) { el._t = txt; el.innerHTML = txt; }
+      if (!here) { el.style.display = "none"; }
+    });
+    npcs.forEach(function (n, i) {
+      var el = bubEls[i], show = here && active && n.bub && n.bub.t > 0 && !n.hidden && Math.hypot(n.x - player.x, n.z - player.z) < 22;
+      var p = show ? project(vp, n.x, ground(n.x, n.z) + 2.4 * n.look.height + 0.75, n.z) : null;
+      if (p) { if (el._t !== n.bub.text) { el._t = n.bub.text; el.textContent = n.bub.text; } el.style.display = "block"; el.style.left = p.x + "px"; el.style.top = p.y + "px"; }
+      else { el.style.display = "none"; }
+    });
+    foxes.forEach(function (f, i) {
+      var el = foxTagEls[i], dd = Math.hypot(f.x - player.x, f.z - player.z);
+      var show = reg === "gold" && active && f.state !== "dead" && dd < 16 && (f.state !== "wander" || f.hp < f.max);
+      var p = show ? project(vp, f.x, ground(f.x, f.z) + 1.6, f.z) : null;
+      if (!p) { el.style.display = "none"; return; }
+      var txt = f.state === "calm" ? "Foxrid (calm)" : 'Foxrid<div style="height:4px;width:54px;background:rgba(255,255,255,.18);margin-top:3px;border-radius:2px"><div style="height:4px;border-radius:2px;background:#e8a3cf;width:' + Math.max(0, f.hp / f.max * 100).toFixed(0) + '%"></div></div>';
+      if (el._t !== txt) { el._t = txt; el.innerHTML = txt; }
+      el.style.display = "block"; el.style.left = p.x + "px"; el.style.top = p.y + "px";
+    });
+    fxs.forEach(function (fx) {
+      fx.t += dt; fx.y += dt * 0.9;
+      var p = project(vp, fx.x, fx.y, fx.z);
+      if (!p || fx.t > fx.dur) { fx.el.style.display = "none"; return; }
+      fx.el.style.display = "block"; fx.el.style.left = p.x + "px"; fx.el.style.top = p.y + "px"; fx.el.style.opacity = String(Math.min(1, 2 * (1 - fx.t / fx.dur)));
+    });
+    fxs = fxs.filter(function (fx) { if (fx.t > fx.dur) { fx.el.remove(); return false; } return true; });
   }
 
   // ---------- toast, area names, guide arrow ----------
@@ -1827,7 +3018,13 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
       if (z > 40) { return "Alio Skyrail Station"; }
       return "Alio, Capital of Esmer";
     }
+    if (inGold(x)) {
+      var gl2 = Math.hypot(x - GOLD.x, z - GOLD.z);
+      for (var di = 0; di < DENS.length; di++) { if (Math.hypot(x - DENS[di].x, z - DENS[di].z) < 10) { return "Foxrid Den"; } }
+      return gl2 > 34 && x > GOLD.x + 20 ? "Edge of the Golden Wood" : "The Golden Wood";
+    }
     if (Math.hypot(x - STATION_V.x, z - STATION_V.z) < 8) { return "Skyrail Station"; }
+    if (Math.hypot(x - GOLD_GATE.x, z - GOLD_GATE.z) < 7) { return "The Golden Road"; }
     for (var i = 1; i < SPAWNS.length; i++) { if (Math.hypot(x - SPAWNS[i].x, z - SPAWNS[i].z) < 11) { return SPAWNS[i].name; } }
     return Math.hypot(x, z) < 29 ? "The Village" : "The Wilds";
   }
@@ -1861,7 +3058,10 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     ["hud-quest", "help", "clock"].forEach(function (id) { $(id).style.display = on ? "block" : "none"; });
     meBtn.style.display = on ? "block" : "none";
     $("hud-btns").style.display = on ? "flex" : "none";
-    if (!on) { journal.style.display = "none"; }
+    $("bars").style.display = on ? "block" : "none";
+    $("actions").style.display = on ? (stickEl.dataset.on ? "grid" : "flex") : "none";
+    if (!on) { journal.style.display = "none"; $("satchel").style.display = "none"; }
+    if (on) { renderActions(); var hp = $("help"); hp.style.opacity = "1"; clearTimeout(hp._t); hp._t = setTimeout(function () { hp.style.opacity = "0"; }, 45000); }
     stickEl.style.display = on && stickEl.dataset.on ? "block" : "none";
     if (!on) { guideEl.style.display = "none"; promptEl.style.display = "none"; meCard.style.display = "none"; }
   }
@@ -2018,6 +3218,7 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     mode = "play"; active = true;
     var sp = SPAWNS[ch.spawn || 0];
     areaName = areaAt(player.x, player.z);
+    pc.hp = maxHp(); pc.ess = 100;
     showHud(true); buildPet(); refreshMe(); refreshButtons(); checkQuests();
     toast("You emerged in " + sp.name, sp.line);
   }
@@ -2026,12 +3227,14 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
     ch = saved;
     var sp = SPAWNS[ch.spawn || 0], at = ch.pos || sp;
     player.x = at.x; player.z = at.z; player.y = ground(at.x, at.z);
-    player.face = Math.atan2(-at.x, -at.z); cam.yaw = player.face + Math.PI;
+    var cx0 = inGold(at.x) ? GOLD.x : inAlio(at.x) ? ALIO.x : 0, cz0 = inGold(at.x) ? GOLD.z : inAlio(at.x) ? ALIO.z : 0;
+    player.face = Math.atan2(cx0 - at.x, cz0 - at.z); cam.yaw = player.face + Math.PI;
     sac = { x: sp.x, z: sp.z, open: 1 };
     rebuildPlayer();
     mode = "play"; active = true; trail = [];
     areaName = areaAt(player.x, player.z);
     player.roof = false;
+    pc.hp = maxHp(); pc.ess = 100;
     showHud(true); buildPet(); refreshMe(); refreshButtons(); checkQuests();
     toast("Welcome back, " + ch.name, areaName);
   }
@@ -2071,7 +3274,10 @@ body.coarse #me-btn { left: auto; right: 12px; bottom: 150px; }
   updateQuest();
   window.__world = { player: player, spots: spots, interact: interact, closeOverlay: closeOverlay, nearest: function () { return near; },
     mode: function () { return mode; }, prog: function () { return prog; }, travelTo: function (x, z, r) { travelTo(x, z, r); }, ch: function () { return ch; }, spawns: SPAWNS, sac: function () { return sac; },
-    setHour: function (h) { timeOffset = 0; timeOffset = (h - worldHour()) * MS_PER_HOUR; }, npcs: npcs, env: function () { return env; } };
+    setHour: function (h) { timeOffset = 0; timeOffset = (h - worldHour()) * MS_PER_HOUR; }, npcs: npcs, env: function () { return env; },
+    pc: pc, foxes: foxes, birds: birds, strike: strike, usePower: usePower, give: give, learn: learn, eatFruit: eatFruit, openDialog: function (nm) { openDialog(byName[nm]); },
+    dlg: function () { return dlg; }, BONDS: BONDS, GOLD: GOLD, GOLD_GATE: GOLD_GATE, FORGE: FORGE, ELDERS: ELDERS, OUTCROPS: OUTCROPS, WEEPERS: WEEPERS, quest: function () { var m = currentMain(); return m ? m.title + " / " + m.steps[questState(m)].text : "none"; },
+    target: function () { return questTarget(); }, stats: function () { return { world: worldMesh.n, fps: fpsNow }; }, effects: function () { return effects; }, loots: function () { return loots; } };
   requestAnimationFrame(render);
 })();
 </script>
