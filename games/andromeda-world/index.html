@@ -199,6 +199,22 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   #hud-quest { max-width: 60vw; font-size: 12px; }
   #guide { top: auto; bottom: 156px; }
 }
+#story-meter { display: none; position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); z-index: 40; text-align: center; color: #eef2fb; font-size: 14px; text-shadow: 0 1px 3px #000; }
+#story-meter .bar { position: relative; width: 260px; height: 12px; margin-top: 6px; background: rgba(10, 9, 20, 0.7); border: 1px solid #3c5a86; border-radius: 6px; overflow: hidden; }
+#story-meter .fill { position: absolute; left: 0; top: 0; bottom: 0; background: #47b6ff; }
+#story-meter .zone { position: absolute; top: 0; bottom: 0; background: rgba(120, 220, 120, 0.45); }
+#story-vignette { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: 0; background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 20%, rgba(8, 30, 18, 0.95) 75%); transition: opacity 0.2s; }
+#story-card { display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, calc(100vw - 32px)); z-index: 60;
+  background: rgba(10, 9, 20, 0.88); border: 1px solid rgba(191, 231, 255, 0.25); border-radius: 14px; padding: 26px 28px 20px; box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(71, 182, 255, 0.12); backdrop-filter: blur(6px); }
+#story-card .sc-title { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8fb8d8; margin-bottom: 14px; }
+#story-card .sc-who { color: #e6d3a1; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.04em; }
+#story-card .sc-text { font-family: Georgia, "Times New Roman", serif; font-size: 20px; line-height: 1.6; color: #eef2fb; }
+#story-card .sc-text.said { font-style: normal; }
+#story-card button { margin-top: 18px; float: right; background: #1e2a44; color: #dfefff; border: 1px solid #3c5a86; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+#story-card button small { color: #8fb8d8; }
+.adult-gate { margin: 4px 0 12px; line-height: 1.6; }
+.adult-gate b { display: block; color: #e6d3a1; font-size: 17px; }
+.adult-gate span { display: block; color: #a6a2b8; font-size: 14px; margin-bottom: 6px; }
 </style>
 <link rel="stylesheet" href="../../shared/theme.css">
 </head>
@@ -284,6 +300,8 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.97.0"></script>
 <script src="../../shared/net-config.js"></script>
 <script src="../../shared/net.js"></script>
+<script src="story.js"></script>
+<script>document.write('<script src="maintenance.js?t=' + Date.now() + '"><\/script>');</script>
 <script>
 (function () {
   "use strict";
@@ -1257,6 +1275,8 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   var RING = []; for (var ri = 0; ri < 12; ri++) { var ra = ri / 12 * Math.PI * 2; RING.push([Math.cos(ra) * 16, Math.sin(ra) * 16]); }
   var PLACES = { arcade: [-22.5, 6.9], pool: [9, -17], pool2: [-9.5, 17.5], monument: [0, 5], shrine: [22, -5], lantern: [11.5, 4], grandma: [grandmaHome.x - 1.2, grandmaHome.z - 1.2], forge: [FORGE.x + 0.6, FORGE.z + 2.4],
     sanctuary: [0, -40], farm: [52, 4], orchard: [-50, 4] };
+  var STORY = window.STORY || { ch1: { steps: {}, friends: {} } };
+  function storyLines(nm) { var f = STORY.ch1 && STORY.ch1.friends && STORY.ch1.friends[nm]; return f && f.lines && f.lines.length ? f.lines : ["..."]; }
   function look(o) { return { race: 0, skin: o.skin, hair: o.hair, hairColor: o.hc, eyes: o.eyes || "#2b1a10", cloth: o.cloth, height: o.h, build: o.b || 1 }; }
   var npcs = [
     { name: "Grandma", home: grandmaHome, always: true, roam: 1.4, look: look({ skin: "#9a6440", hair: "Bun", hc: "#e8e4dc", cloth: "#5a3a6e", h: 0.9 }),
@@ -1267,6 +1287,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
         "Healing is body, mind, and spirit together. When you feel lost, go to the water and just be still.",
         "A day here is thirty-seven hours long. Don't waste the dark ones. That's when the village is awake."
       ] },
+    { name: "Grandpa", home: grandmaHome, always: true, roam: 1.8, look: look({ skin: "#7a4a2e", hair: "Shaved", hc: "#e8e4dc", cloth: "#3e4a3a", h: 0.98 }), lines: storyLines("Grandpa") },
     { name: "Eldest Aunt", home: null, homeIdx: 1, pts: ["monument", "lantern", "arcade", "ring"], look: look({ skin: "#7a4a2e", hair: "Long flow", hc: "#141018", cloth: "#2c3e50", h: 1.0 }),
       lines: [
         "If you see the little genius, tell her I want my good scissors back. The last time she took them, she turned them into weapons.",
@@ -1285,8 +1306,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
         "Don't bet against her at the arcade. I learned that the expensive way.",
         "Nights are long and bright here. Sleep through the day, like a proper burrow-dweller."
       ] },
-    { name: "Cousin", home: null, homeIdx: 1, pts: ["pool", "pool2", "orchard", "ring"], kid: true, look: look({ skin: "#9a6440", hair: "Curls", hc: "#141018", cloth: "#b03a3a", h: 0.64 }),
-      lines: ["Race you to the blue mud!", "She's our cousin, but she's basically our sister. Don't tell her I said that.", "The chiefs are watching the mud pits now. Ever since the sparks."] },
+    { name: "Bia", home: null, homeIdx: 1, pts: ["pool", "pool2", "orchard", "ring", "grandma"], look: look({ skin: "#9a6440", hair: "Curls", hc: "#141018", cloth: "#b03a3a", h: 0.9 }), lines: storyLines("Bia") },
     { name: "Cousin", home: null, homeIdx: 1, pts: ["pool2", "pool", "monument"], kid: true, look: look({ skin: "#7a4a2e", hair: "Short crop", hc: "#3a2418", cloth: "#2e9e5b", h: 0.6 }),
       lines: ["We're not making bombs. We're making very loud building material.", "Grandma says we have to study before we play. Every single night."] },
     { name: "Cousin", home: null, homeIdx: 0, pts: ["pool", "ring", "pool2"], kid: true, look: look({ skin: "#b98a6a", hair: "Braids", hc: "#141018", cloth: "#8f7fd1", h: 0.66 }),
@@ -1300,12 +1320,10 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
         "My crew follows me because I know what to do. It's not complicated.",
         "Grandma says I notice small things. Like how you just showed up from a petal sac and nobody here is surprised."
       ] },
-    { name: "Madison's crew", home: null, homeIdx: 4, follow: "Madison", slot: 0, kid: true, look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#4a2c1e", h: 0.74 }),
-      lines: ["We're ten and eleven. She's tiny. She's still the boss.", "If she says run, we run."] },
-    { name: "Madison's crew", home: null, homeIdx: 4, follow: "Madison", slot: 1, kid: true, look: look({ skin: "#9a6440", hair: "Long flow", hc: "#3a2418", cloth: "#2c3e50", h: 0.72 }),
-      lines: ["She figured out the arcade machines before any of us could even reach the buttons.", "Don't tell the chiefs where we're going."] },
-    { name: "Madison's crew", home: null, homeIdx: 6, follow: "Madison", slot: 2, kid: true, look: look({ skin: "#b98a6a", hair: "Locs", hc: "#141018", cloth: "#5a1f2e", h: 0.76 }),
-      lines: ["Following her is the most fun anybody in this village has ever had."] },
+    { name: "Migi", home: null, homeIdx: 4, follow: "Madison", slot: 0, kid: true, look: look({ skin: "#5a3825", hair: "Short crop", hc: "#141018", cloth: "#4a2c1e", h: 0.68 }), lines: storyLines("Migi") },
+    { name: "Armius", home: null, homeIdx: 4, follow: "Madison", slot: 1, kid: true, look: look({ skin: "#9a6440", hair: "Shaved", hc: "#3a2418", cloth: "#2c3e50", h: 0.7 }), lines: storyLines("Armius") },
+    { name: "Marla", home: null, homeIdx: 6, follow: "Madison", slot: 2, kid: true, look: look({ skin: "#b98a6a", hair: "Locs", hc: "#141018", cloth: "#5a1f2e", h: 0.67 }), lines: storyLines("Marla") },
+    { name: "Sady", home: null, homeIdx: 6, follow: "Madison", slot: 3, kid: true, look: look({ skin: "#7a4a2e", hair: "Braids", hc: "#141018", cloth: "#c08a3a", h: 0.8 }), lines: storyLines("Sady") },
     { name: "Elder Chief", home: null, homeIdx: 2, pts: ["pool", "monument", "ring", "farm"], look: look({ skin: "#7a4a2e", hair: "Shaved", hc: "#141018", cloth: "#2f5d6b", h: 1.02 }),
       lines: [
         "The glistening blue mud is for building homes, not for making little bombs. We have had enough sparks this season.",
@@ -1582,7 +1600,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
       var sp = { id: "mine", res: "ore", x: x, z: z, r: 2.6, label: "Mine deep ore", tag: "Deep ore", y: y + 2.2 }, o = { x: x, z: z, y: y, ready: true, t: 0, spot: sp }; sp.o = o; ORES.push(o); spots.push(sp);
     });
     // buried chests
-    [[-22, 30], [28, -28], [-36, -22], [40, 14], [4, 14], [-12, -40]].forEach(function (q, i) {
+    [[-22, 30], [16, 24], [-36, -22], [40, 14], [4, 14], [-12, -40]].forEach(function (q, i) {
       var x = G.x + q[0], z = G.z + q[1], y = caveHeight(x, z), rot = i * 0.9;
       world.box(x, y - 0.05, z, 1.2, 0.6, 0.8, rot, hex("#3a2a20"), [0.2, 0.05, 0]);
       world.box(x, y + 0.55, z, 1.24, 0.2, 0.84, rot, hex("#4a3426"), M0);
@@ -1612,6 +1630,147 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
     world = keep;
   })();
   var caveMesh = upload(caveB);
+
+  // ---------- STORY MODE, CHAPTER 1: the places (Buston's chapter, built for play) ----------
+  var HOP = { x: -30, z: 60 }, SHIVER = { x: -57, z: 63 }, TREEHOUSE = { x: -19, z: 66 }, TEMPLE = { x: 0, z: -9 };
+  var sSeed = 4242; function srnd() { sSeed = (sSeed * 16807) % 2147483647; return (sSeed - 1) / 2147483646; }
+  var storyMesh = (function () {
+    var b = new Builder();
+    // crystals galore, shining like diamonds in a ground of ash
+    var CRY = [hex("#e6f0ff"), hex("#9fe3c4"), hex("#c08cff"), hex("#bfe7ff")];
+    for (var i = 0; i < 70; i++) {
+      var a = srnd() * 6.28, r = 1.5 + srnd() * 11, x = HOP.x + Math.cos(a) * r, z = HOP.z + Math.sin(a) * r, y = ground(x, z), s = 0.08 + srnd() * 0.2;
+      b.sphere(x, y + s * 0.5, z, s * 0.45, s * 1.3, s * 0.45, 5, CRY[i % 4], [0.9, 1.3, 0.9]);
+    }
+    for (var j = 0; j < 26; j++) { var a2 = srnd() * 6.28, r2 = srnd() * 10, x2 = HOP.x + Math.cos(a2) * r2, z2 = HOP.z + Math.sin(a2) * r2; b.disc(x2, ground(x2, z2) + 0.04, z2, 0.8 + srnd() * 1.4, 10, hex("#4b4652"), M0); }
+    // the crew's tree house: a great ash with a platform, rails, a little roof and a rope ladder
+    var tx = TREEHOUSE.x, tz = TREEHOUSE.z, ty = ground(tx, tz), py = ty + 4.4;
+    b.cyl(tx, ty - 0.3, tz, 1.0, 0.55, 9.5, 12, C.ash, M0, 0.1);
+    for (var k = 0; k < 5; k++) { var ra = k * 1.26; b.cyl(tx + Math.cos(ra) * 0.7, ty - 0.2, tz + Math.sin(ra) * 0.7, 0.35, 0.05, 1.4, 6, C.ash, M0); }
+    b.box(tx, py, tz, 4.6, 0.22, 4.6, 0.35, C.wood, M0);
+    for (var e = 0; e < 4; e++) { var ea = 0.35 + e * Math.PI / 2, ex = Math.cos(ea) * 2.2, ez = Math.sin(ea) * 2.2; b.box(tx + ex, py + 0.22, tz + ez, 0.12, 0.8, 4.4, ea, C.wood, M0); }
+    b.box(tx, py + 1.0, tz, 2.6, 1.7, 2.4, 0.35, hex("#8a6a4c"), M0);
+    b.sphere(tx, py + 2.7, tz, 2.0, 0.9, 2.0, 10, C.thatch, M0, 0, 0.15);
+    b.sphere(tx, ty + 10.2, tz, 3.4, 2.2, 3.4, 12, C.ashLeaf, [0.1, 0, 0], undefined, 0.2);
+    b.sphere(tx + 1.6, ty + 9.2, tz - 0.8, 2.2, 1.6, 2.2, 10, C.leafDeep, [0.1, 0, 0], undefined, 0.2);
+    for (var l = 0; l < 6; l++) { b.box(tx + 2.5, ty + 0.4 + l * 0.68, tz + 0.2, 0.7, 0.07, 0.12, 0.35, C.wood, M0); }
+    [[-0.3, 1], [0.3, 1]].forEach(function (q) { b.cyl(tx + 2.5 + q[0] * 1.1, ty, tz + 0.2 + q[0] * 0.4, 0.03, 0.03, py - ty, 4, C.thatch, M0); });
+    b.sphere(tx - 1.2, py + 1.3, tz + 1.05, 0.12, 0.12, 0.12, 6, C.mudGlow, [0.3, 2.2, 0]);
+    solids.push([tx, tz, 1.1]);
+    lights.push([tx, py + 1.6, tz, 7, 0.25, 0.45, 0.7]);
+    // the temple pit of the Remembrance at the village center
+    var cx = TEMPLE.x, cz = TEMPLE.z, cy = ground(cx, cz);
+    b.ring(cx, cy, cz, 2.6, 0.5, 22, C.stone, M0);
+    b.ring(cx, cy + 0.42, cz, 2.6, 0.18, 22, C.gold, [0.4, 0.6, 0]);
+    b.disc(cx, cy + 0.06, cz, 2.4, 22, hex("#120f18"), M0);
+    for (var p = 0; p < 4; p++) { var pa = p * Math.PI / 2 + 0.4; b.cyl(cx + Math.cos(pa) * 3.6, cy, cz + Math.sin(pa) * 3.6, 0.22, 0.16, 2.1, 6, C.stone, M0); b.sphere(cx + Math.cos(pa) * 3.6, cy + 2.25, cz + Math.sin(pa) * 3.6, 0.2, 0.2, 0.2, 6, C.mudGlow, [0.3, 2.0, 0]); }
+    solids.push([cx, cz, 2.6]);
+    return upload(b);
+  })();
+  // the trees that don't move (and then do)
+  var shiverMesh = (function () {
+    var b = new Builder(), s = 1.5, h = 3.2 * s;
+    b.cyl(0, -0.2, 0, 0.32 * s, 0.17 * s, h, 8, C.ash, M0, 0.1);
+    b.sphere(0, h + 0.5 * s, 0, 1.7 * s, 1.15 * s, 1.7 * s, 12, C.leafDeep, M0, undefined, 0.2);
+    b.sphere(0.6 * s, h + 1.4 * s, -0.3 * s, 1.25 * s, 0.95 * s, 1.25 * s, 10, C.ashLeaf, [0.6, 0.4, 0], undefined, 0.2);
+    b.sphere(-0.7 * s, h + 1.1 * s, 0.4 * s, 1.1 * s, 0.85 * s, 1.1 * s, 10, C.ashLeaf, [0.6, 0.4, 0], undefined, 0.2);
+    return upload(b);
+  })();
+  var SHIVERS = [[-3, 0], [2.5, -2], [0.5, 3.2], [-4.5, -3.5], [4, 2.2]].map(function (q, i) { var x = SHIVER.x + q[0], z = SHIVER.z + q[1]; solids.push([x, z, 0.8]); return { x: x, z: z, y: ground(x, z), ph: i * 1.7 }; });
+  var hopTile = (function () { var b = new Builder(); b.box(0, -0.04, 0, 0.9, 0.08, 0.9, 0, hex("#bfe7ff"), [0.3, 1.6, 0.8]); return upload(b); })();
+  var hopPrint = (function () { var b = new Builder(); b.box(0, -0.04, 0, 0.9, 0.08, 0.9, 0, hex("#c08cff"), [0.5, 2.6, 0.9]); b.sphere(0, 0.05, 0, 0.18, 0.08, 0.22, 8, hex("#ffffff"), [0, 3, 0]); return upload(b); })();
+  var flameMesh = (function () { var b = new Builder(); b.cyl(0, 0, 0, 0.55, 0.0, 1.6, 9, hex("#2f8bff"), [0.4, 3.0, 0.6]); b.cyl(0, 0, 0, 0.3, 0.0, 1.1, 7, hex("#bfe7ff"), [0.2, 3.2, 0]); return upload(b); })();
+  var fireLight = [TEMPLE.x, ground(TEMPLE.x, TEMPLE.z) + 2.2, TEMPLE.z, 0, 0.2, 0.55, 1.0]; lights.push(fireLight);
+  spots.push({ id: "hop", x: HOP.x, z: HOP.z, r: 3.2, label: "Play air hopscotch", tag: "Hopscotch", y: ground(HOP.x, HOP.z) + 2.6, hidden: true });
+  spots.push({ id: "treehouse", x: TREEHOUSE.x + 2.6, z: TREEHOUSE.z + 0.6, r: 2.6, label: "Climb up into the tree house", tag: "The crew's tree house", y: ground(TREEHOUSE.x, TREEHOUSE.z) + 6.6 });
+  spots.push({ id: "temple", x: TEMPLE.x, z: TEMPLE.z, r: 5, label: "Join the Remembrance", tag: "Temple of the Remembrance", y: ground(TEMPLE.x, TEMPLE.z) + 3.2 });
+  // ---------- Chapter 1, part two: the Crystal Cave, the nest, the gear, the hush trees, Sady's farm ----------
+  var CRYCAVE = { x: -40, z: 73 }, NEST = { x: -44, z: 59 }, HUSH = { x: 72, z: 42 }, CUKOO = { x: -73, z: 30 };
+  var VINES = [[-76, 14], [-78, -6], [-70, -26]], PODS = [[70, 15], [75, -3], [68, -15]], METALS = [[44, -66], [35, -72]];
+  var CUKOO_TREES = [], NEST_HOLES = [], WELLNESS_BURN = [], nestMesh = null;
+  var story2Mesh = (function () {
+    var b = new Builder(), i, a;
+    // the Crystal Cave: a low arch of dark stone furred with crystals
+    var cx = CRYCAVE.x, cz = CRYCAVE.z, cy = ground(cx, cz), face = Math.atan2(-cz, -cx);
+    b.sphere(cx, cy - 1.2, cz, 4.2, 4.0, 3.6, 16, hex("#2a2632"), [0.03, 0.05, 0], 0, 0.15);
+    b.sphere(cx + Math.cos(face) * 2.9, cy + 0.2, cz + Math.sin(face) * 2.9, 1.5, 2.0, 1.5, 12, hex("#0b0b12"), M0);
+    var CRY = [hex("#e6f0ff"), hex("#9fe3c4"), hex("#c08cff")];
+    for (i = 0; i < 26; i++) { a = face + (srnd() - 0.5) * 3.4; var rr = 3.0 + srnd() * 1.6, s = 0.25 + srnd() * 0.45; b.sphere(cx + Math.cos(a) * rr, cy + srnd() * 2.2, cz + Math.sin(a) * rr, s * 0.35, s * 1.2, s * 0.35, 5, CRY[i % 3], [0.9, 1.6, 0.9]); }
+    solids.push([cx, cz, 3.6]);
+    lights.push([cx + Math.cos(face) * 4, cy + 1.5, cz + Math.sin(face) * 4, 8, 0.4, 0.5, 0.75]);
+    // the sliven nest: a pond where the water meets the land, heavy moss-grass, a chewed-paper mound and four breathing holes
+    var nx = NEST.x, nz = NEST.z, ny = ground(nx, nz);
+    b.disc(nx, ny + 0.06, nz, 7.5, 28, hex("#0b2a34"), [0.5, 0.4, 1]);
+    for (i = 0; i < 70; i++) { a = srnd() * 6.28; var mr = 6.2 + srnd() * 2.8; b.sphere(nx + Math.cos(a) * mr, ny + 0.1, nz + Math.sin(a) * mr, 0.5 + srnd() * 0.5, 0.25, 0.5 + srnd() * 0.5, 6, jit(hex("#2f5a3a"), 0.3), [0.2, 0.1, 0]); }
+    var nb = new Builder();
+    nb.sphere(nx, ny - 0.4, nz, 2.6, 2.6, 2.6, 14, hex("#cfc6b4"), [0.15, 0.2, 0], -0.2, 0.12);
+    for (i = 0; i < 9; i++) { a = i * 0.7; nb.ring(nx, ny + 0.4 + i * 0.22, nz, 2.5 - i * 0.22, 0.07, 18, hex("#b8ad98"), M0); }
+    for (i = 0; i < 4; i++) {
+      a = i * Math.PI / 2 + 0.6; var hx = nx + Math.cos(a) * 4.2, hz = nz + Math.sin(a) * 4.2;
+      nb.disc(hx, ny + 0.09, hz, 0.75, 14, hex("#050508"), M0); nb.ring(hx, ny + 0.05, hz, 0.85, 0.16, 12, hex("#9a8f7c"), M0);
+      NEST_HOLES.push({ x: hx, z: hz, i: i });
+    }
+    nestMesh = upload(nb);
+    // trees that grow a metallic skin
+    METALS.forEach(function (q) { var x = q[0], z = q[1], y = ground(x, z); b.cyl(x, y - 0.2, z, 0.55, 0.3, 6.5, 10, hex("#c9d2dc"), [0.8, 0.25, 0.6]); b.sphere(x, y + 7, z, 2.4, 1.6, 2.4, 12, hex("#3e5a52"), [0.2, 0, 0], undefined, 0.2); solids.push([x, z, 0.7]); });
+    // the hush trees: far, far away and very tall
+    [[0, 0], [5, -4], [-4, 5]].forEach(function (q, k) { var x = HUSH.x + q[0], z = HUSH.z + q[1], y = ground(x, z), h = 15 + k * 2; b.cyl(x, y - 0.2, z, 0.7, 0.35, h, 10, hex("#2d2a33"), [0.1, 0.05, 0]); b.sphere(x, y + h + 1, z, 3.2, 2.4, 3.2, 12, hex("#b9b6d8"), [0.5, 0.5, 0.3], undefined, 0.15); b.sphere(x + 1.4, y + h - 0.6, z, 2.2, 1.6, 2.2, 10, hex("#8e8bb6"), [0.5, 0.4, 0.3], undefined, 0.15); solids.push([x, z, 0.8]); });
+    // vines and poison pods
+    VINES.forEach(function (q) { var x = q[0], z = q[1], y = ground(x, z); b.cyl(x, y - 0.2, z, 0.4, 0.25, 5.5, 8, C.ash, M0); for (var v = 0; v < 6; v++) { var va = v * 1.05; b.cyl(x + Math.cos(va) * 0.5, y + 0.2, z + Math.sin(va) * 0.5, 0.05, 0.03, 4.8, 4, hex("#3f7a4a"), [0.3, 0.2, 0]); } b.sphere(x, y + 6, z, 2.0, 1.4, 2.0, 10, C.leafDeep, M0, undefined, 0.2); solids.push([x, z, 0.6]); });
+    PODS.forEach(function (q) { var x = q[0], z = q[1], y = ground(x, z); b.cyl(x, y, z, 0.05, 0.04, 1.4, 5, hex("#3f6a3a"), M0); b.sphere(x, y + 1.3, z, 0.28, 0.4, 0.28, 10, hex("#7a2a6e"), [0.6, 0.9, 0.5]); for (var f = 0; f < 5; f++) { var fa = f * 1.26; b.sphere(x + Math.cos(fa) * 0.3, y + 0.5, z + Math.sin(fa) * 0.3, 0.22, 0.05, 0.12, 6, hex("#3f6a3a"), M0); } });
+    // Sady's cukoo farm
+    for (i = 0; i < 8; i++) {
+      var tx = CUKOO.x + (i % 4) * 3.4 - 5, tz = CUKOO.z + Math.floor(i / 4) * 3.6 - 1.8, ty = ground(tx, tz);
+      b.cyl(tx, ty - 0.1, tz, 0.16, 0.1, 1.8, 6, C.wood, M0); b.sphere(tx, ty + 2.2, tz, 1.1, 0.9, 1.1, 9, hex("#3a6b40"), M0, undefined, 0.2);
+      for (var fr = 0; fr < 4; fr++) { var fa2 = fr * 1.57 + i; b.sphere(tx + Math.cos(fa2) * 0.9, ty + 1.9, tz + Math.sin(fa2) * 0.9, 0.2, 0.22, 0.2, 6, hex("#B3172B"), [0.4, 1.0, 0]); }
+      CUKOO_TREES.push({ x: tx, z: tz, y: ty + 2.2 });
+    }
+    b.box(CUKOO.x - 8, ground(CUKOO.x - 8, CUKOO.z) - 0.1, CUKOO.z + 4, 0.16, 1.2, 0.16, 0, C.wood, M0);
+    return upload(b);
+  })();
+  ORCH_RIPE.slice(0, Math.ceil(ORCH_RIPE.length / 3)).forEach(function (r) { WELLNESS_BURN.push({ x: r.x, z: r.z, y: r.y }); });
+  var lyrosMesh = (function () {
+    var b = new Builder(), fur = hex("#8a7d6a");
+    b.sphere(0, 1.1, 0, 0.45, 0.45, 0.85, 12, fur, [0.2, 0.05, 0]);
+    b.sphere(0, 1.55, 0.85, 0.22, 0.24, 0.32, 10, fur, [0.2, 0.05, 0]);
+    [[-0.22, 0.45], [0.22, 0.45], [-0.22, -0.5], [0.22, -0.5]].forEach(function (l) { b.cyl(l[0], 0, l[1], 0.07, 0.06, 0.95, 6, hex("#cfeaff"), [0.6, 0.9, 0.9]); });
+    [-1, 1].forEach(function (s) { for (var k = 0; k < 6; k++) { b.sphere(s * (0.12 + k * 0.05), 1.8 + k * 0.09 + (k % 2) * 0.05, 0.85 - k * 0.04, 0.09, 0.08, 0.09, 6, hex("#c9a6ff"), [0.9, 2.0, 0.6]); } });
+    b.sphere(-0.08, 1.62, 1.13, 0.03, 0.03, 0.02, 4, hex("#0b0b12"), M0); b.sphere(0.08, 1.62, 1.13, 0.03, 0.03, 0.02, 4, hex("#0b0b12"), M0);
+    return upload(b);
+  })();
+  function slivenMesh(up) {
+    var b = new Builder(), shell = hex("#d8cdb8"), band = hex("#E0662A"), dark = hex("#1A1210"), m = [0.08, 0.15, 0];
+    b.sphere(0, 0, 0.95, 0.32, 0.3, 0.34, 10, shell, m);
+    [-1, 1].forEach(function (s) { b.sphere(s * 0.17, 0.08, 1.15, 0.13, 0.13, 0.11, 8, dark, [0.9, 0.6, 0.5]); b.box(s * 0.12, -0.18, 1.32, 0.06, 0.06, 0.32, s * 0.4, dark, M0); });
+    b.sphere(0, 0, 0.45, 0.36, 0.34, 0.42, 10, shell, m);
+    for (var k = 0; k < 5; k++) { var z = -0.15 - k * 0.32, r = 0.42 - k * 0.06; b.sphere(0, -0.04 - k * 0.03, z, r, r * 0.9, 0.2, 10, k % 2 ? band : shell, m); }
+    b.cyl(0, -0.2, -1.75, 0.05, 0.0, 0.5, 5, dark, M0);
+    [-1, 1].forEach(function (s) {
+      var lift = up ? 0.55 : -0.15;
+      b.flat([s * 0.2, 0.25, 0.6], [s * 1.6, 0.25 + lift, 0.95], [s * 1.5, 0.25 + lift, 0.2], hex("#6a7480"), [0.15, 0.25, 0.4]);
+      b.flat([s * 0.2, 0.25, 0.6], [s * 1.5, 0.25 + lift, 0.2], [s * 0.4, 0.25, 0.1], hex("#6a7480"), [0.15, 0.25, 0.4]);
+      b.flat([s * 0.2, 0.25, 0.3], [s * 1.2, 0.2 + lift * 0.7, -0.3], [s * 0.35, 0.2, -0.4], hex("#5a6470"), [0.15, 0.25, 0.4]);
+      for (var l = 0; l < 3; l++) { b.box(s * 0.3, -0.35, 0.7 - l * 0.28, 0.05, 0.05, 0.5, s * 0.6, dark, M0); }
+    });
+    return upload(b);
+  }
+  var slivenUp = slivenMesh(true), slivenDown = slivenMesh(false);
+  var leafMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.22, 0.03, 0.12, 8, hex("#c9c6ee"), [0.5, 1.2, 0.5]); return upload(b); })();
+  var fuseMesh = (function () { var b = new Builder(); b.sphere(0, 0, 0, 0.32, 0.14, 0.32, 6, hex("#47b6ff"), [0.3, 3.0, 0.8]); return upload(b); })();
+  var stitchMesh = (function () { var b = new Builder(); b.box(0, -0.6, 0, 0.1, 1.2, 0.1, 0.7, hex("#ffe2b8"), [0.2, 1.3, 0]); b.box(0, -0.6, 0, 0.1, 1.2, 0.1, -0.7, hex("#ffe2b8"), [0.2, 1.3, 0]); return upload(b); })();
+  var handMesh = (function () {
+    var b = new Builder(), c = hex("#cfe0f0"), m = [0.5, 0.7, 0.4];
+    b.sphere(0, 0, 0, 1.1, 1.3, 0.35, 12, c, m);
+    [[-0.75, 1.5, 0.95], [-0.28, 1.75, 1.15], [0.2, 1.7, 1.1], [0.62, 1.45, 0.9]].forEach(function (f) { b.cyl(f[0], 0.9, 0, 0.17, 0.11, f[2] + 0.4, 7, c, m); });
+    b.cyl(-1.05, -0.2, 0, 0.19, 0.12, 1.1, 7, c, m);
+    return upload(b);
+  })();
+  spots.push({ id: "crycave", x: CRYCAVE.x + Math.cos(Math.atan2(-CRYCAVE.z, -CRYCAVE.x)) * 5.2, z: CRYCAVE.z + Math.sin(Math.atan2(-CRYCAVE.z, -CRYCAVE.x)) * 5.2, r: 3.4, label: "The Crystal Cave", tag: "The Crystal Cave", y: ground(CRYCAVE.x, CRYCAVE.z) + 4.4 });
+  VINES.forEach(function (q, i) { spots.push({ id: "c1vine", k: i, x: q[0] + 1.4, z: q[1], r: 2.4, label: "Pull down a vine", tag: "Vines", y: ground(q[0], q[1]) + 3, hidden: true }); });
+  PODS.forEach(function (q, i) { spots.push({ id: "c1pod", k: i, x: q[0], z: q[1], r: 2.0, label: "Squeeze the poison pod (hold E)", tag: "Poison pod", y: ground(q[0], q[1]) + 2.2, hidden: true }); });
+  METALS.forEach(function (q, i) { spots.push({ id: "c1skin", k: i, x: q[0] + 1.3, z: q[1], r: 2.4, label: "Pull the silver skin from the tree", tag: "Silver-skin tree", y: ground(q[0], q[1]) + 3.4, hidden: true }); });
+  spots.push({ id: "c1hush", x: HUSH.x - 3, z: HUSH.z - 1, r: 4, label: "Help Madison with the grapple", tag: "The hush trees", y: ground(HUSH.x, HUSH.z) + 5, hidden: true });
+  NEST_HOLES.forEach(function (h, i) { spots.push({ id: "c1hole", k: i, x: h.x, z: h.z, r: 1.6, label: "Pack miracled mud into the hole (hold E)", tag: "Breathing hole", y: ground(h.x, h.z) + 1.6, hidden: true }); });
 
 
 
@@ -1785,10 +1944,16 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
       var awake = n.always || awakeHours, speed = n.kid ? 2.0 : 1.35;
       if (n.hidden && awake) { n.hidden = false; n.place = "home"; n.x = n.home.x; n.z = n.home.z; n.wait = 1 + Math.random() * 3; n.tx = n.x; n.tz = n.z; }
       if (n.hidden) { n.place = "sleep"; return; }
-      if (!awake) { n.tx = n.home.x; n.tz = n.home.z; n.wait = 0; n.place = "homeward"; }
+      var hold = awake ? storyHold(n) : null;
+      if (hold) {
+        n.place = "story"; speed = hold.run ? 4.4 : 2.6;
+        if (n.talking > 0) { n.talking -= dt; n.face = Math.atan2(player.x - n.x, player.z - n.z); n.tx = n.x; n.tz = n.z; }
+        else { n.tx = hold.x; n.tz = hold.z; if (Math.hypot(n.tx - n.x, n.tz - n.z) < 0.3) { n.face = turnTo(n.face, Math.atan2(player.x - n.x, player.z - n.z), dt * 3); } }
+      }
+      else if (!awake) { n.tx = n.home.x; n.tz = n.home.z; n.wait = 0; n.place = "homeward"; }
       else if (n.follow) {
         n.place = "follow";
-        var L = byName[n.follow], off = [[-0.9, -1.1], [0.9, -1.2], [0, -1.9]][n.slot];
+        var L = byName[n.follow], off = [[-0.9, -1.1], [0.9, -1.2], [-0.6, -2.0], [0.7, -2.1]][n.slot];
         var c = Math.cos(L.face), s = Math.sin(L.face);
         n.tx = L.x + off[0] * c + off[1] * s; n.tz = L.z - off[0] * s + off[1] * c; speed = 2.4;
         if (L.hidden) { n.tx = n.home.x; n.tz = n.home.z; }
@@ -2446,6 +2611,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
       carve: function () { noise(0.5, 1800, 500, 0.3, 0, 2); tone("sine", 660, 990, 0.6, 0.1, 0, true, 0.45); },
       fade: function () { tone("sine", 440, 110, 1.4, 0.3, 0, true); },
       croak: function (pan, v) { tone("square", 140, 95, 0.12, 0.05 * v, pan); tone("square", 130, 90, 0.14, 0.05 * v, pan, false, 0.16); },
+      rumble: function (v) { noise(1.5, 160, 35, 0.55 * (v || 1), 0, 0.5); tone("sine", 46, 28, 1.5, 0.4 * (v || 1)); },
       dragon: function (pan) { tone("sawtooth", 220, 520, 0.7, 0.05, pan, true); tone("triangle", 520, 180, 1.4, 0.06, pan, true, 0.6); }
     };
   })();
@@ -2900,7 +3066,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   function uiOpen() {
     return mode !== "play" || overlay.style.display === "block" || journal.style.display === "block" || satchel.style.display === "block" ||
       $("people").style.display === "block" || $("acct").style.display === "block" || $("agegate").style.display === "block" || $("forge-panel").style.display === "block" ||
-      $("hearth-panel").style.display === "block" || meCard.style.display === "block" || !!dlg || $("chat").classList.contains("open");
+      $("hearth-panel").style.display === "block" || meCard.style.display === "block" || !!dlg || $("chat").classList.contains("open") || cardOpen();
   }
   // everything that can be hit by weapons and powers
   function targetsAll() {
@@ -3251,6 +3417,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   // ---------- farms, mining, chests ----------
   var RELICS = ["A cracked shard of petal sac", "A child's blue-mud bomb casing", "A carved arcade token, worn smooth", "A feather that is always warm", "A stone that hums an old lullaby", "A tooth from something very, very old"];
   function interactLife(s) {
+    if (interactStory(s)) { return true; }
     if (s.id === "pool7") { usePool(s.pool, s); return true; }
     if (s.id === "keeper") {
       var kl = ["Seven pools, seven waters. Healing, soul, transference, hearth, moon, mind and liver. Each one gives what it gives. Don't ask them for more.",
@@ -3479,7 +3646,394 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
       if (d.cry <= 0) { d.cry = 25 + Math.random() * 30; if (Math.hypot(d.x - player.x, d.z - player.z) < 120 && !inCave(player.x)) { Snd.dragon(panOf(d.x, d.z)); } }
     });
   }
+
+  // ---------- STORY MODE, CHAPTER 1: the quest, the scenes, and the friends ----------
+  var S1 = STORY.ch1 || {}, ST = S1.steps || {};
+  function flagDone(k) { return function () { return !!prog.flags[k]; }; }
+  function nearestMud() { var best = null, bd = 1e9; mudList.forEach(function (m) { var d = Math.hypot(m[0] - player.x, m[1] - player.z); if (d < bd) { bd = d; best = m; } }); return best; }
+  var CH1 = { id: "ch1", main: true, title: S1.title || "Chapter 1", steps: [
+    { k: "hop", text: ST.hop || "Play air hopscotch", done: flagDone("c1Hop"), target: function () { return { x: HOP.x, z: HOP.z, name: "Air hopscotch" }; } },
+    { k: "look", text: ST.look || "Talk to Madison", done: flagDone("c1Look"), target: function () { return npcTarget("Madison"); } },
+    { k: "trees", text: ST.trees || "Go see the trees", done: flagDone("c1Trees"), target: function () { return { x: SHIVER.x, z: SHIVER.z, name: "The trees that don't move" }; } },
+    { k: "mud", text: ST.mud || "Run into the blue mud!", done: flagDone("c1Mud"), target: function () { var m = nearestMud(); return { x: m[0], z: m[1], name: "Blue mud" }; } },
+    { k: "dinner", text: ST.dinner || "Go home for dinner", done: flagDone("c1Dinner"), target: function () { return npcTarget("Grandma"); } },
+    { k: "fire", text: ST.fire || "Go to the Remembrance", done: flagDone("c1Fire"), target: function () { return { x: TEMPLE.x, z: TEMPLE.z, name: "The Remembrance" }; } },
+    { k: "secret", text: ST.secret || "Go to the tree house", done: flagDone("c1Secret"), target: function () { return { x: TREEHOUSE.x + 2.6, z: TREEHOUSE.z + 0.6, name: "The crew's tree house" }; } }
+  ] };
+  QUESTS.unshift(CH1);
+  function c1Step() { return questState(CH1) < CH1.steps.length ? CH1.steps[questState(CH1)].k : "done"; }
+  function c1At(k) { return currentMain() === CH1 && c1Step() === k; }
+  function festival() { return c1At("fire") || c1At("secret"); }
+
+  // the story card: a quiet page of narration you read and click through
+  var cardEl = document.createElement("div"); cardEl.id = "story-card"; document.body.appendChild(cardEl);
+  var card = null;
+  function showCard(pages, done, title) {
+    if (!pages || !pages.length) { if (done) { done(); } return; }
+    if (document.exitPointerLock) { try { document.exitPointerLock(); } catch (e) {} }
+    hideTalk(); card = { pages: pages, i: 0, done: done, title: title || "" }; renderCard();
+  }
+  function renderCard() {
+    var p = card.pages[card.i], who = typeof p === "string" ? "" : p.who, text = typeof p === "string" ? p : p.text;
+    cardEl.innerHTML = (card.title ? '<div class="sc-title">' + Creature.esc(card.title) + "</div>" : "") +
+      (who ? '<div class="sc-who">' + Creature.esc(who) + "</div>" : "") +
+      '<div class="sc-text' + (who ? " said" : "") + '">' + Creature.esc(text) + "</div>" +
+      '<button id="sc-next">' + (card.i < card.pages.length - 1 ? "Continue" : "Close") + ' <small>(E)</small></button>';
+    cardEl.style.display = "block";
+    $("sc-next").addEventListener("click", nextCard);
+  }
+  function nextCard() {
+    if (!card) { return; }
+    card.i++;
+    if (card.i >= card.pages.length) { var d = card.done; card = null; cardEl.style.display = "none"; Snd.chime(); if (d) { d(); } return; }
+    renderCard();
+  }
+  window.addEventListener("keydown", function (e) {
+    if (!card) { return; }
+    if (e.key === "e" || e.key === "E" || e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); nextCard(); }
+    else if (e.key !== "Escape") { e.stopImmediatePropagation(); }
+  }, true);
+  function cardOpen() { return !!card; }
+
+  // where the crew and the village stand while the story needs them
+  var CREW = ["Madison", "Migi", "Armius", "Marla", "Sady"];
+  function ringAt(c, i, n, r) { var a = i / n * Math.PI * 2 + 0.3; return { x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r }; }
+  function storyHold(n) {
+    if (mode !== "play" || currentMain() !== CH1) { return null; }
+    var st = c1Step(), ci = CREW.indexOf(n.name);
+    if (["gear", "caught", "leaves", "dive", "boom", "horizon"].indexOf(st) >= 0) { return storyHold2(n, st, ci); }
+    if (ci >= 0) {
+      if (st === "hop" || st === "look") { return ringAt({ x: HOP.x + 1, z: HOP.z - 5.5 }, ci, 5, 2.0); }
+      if (st === "trees") { var dx = HOP.x - SHIVER.x, dz = HOP.z - SHIVER.z, dl = Math.hypot(dx, dz); return ringAt({ x: SHIVER.x + dx / dl * 11, z: SHIVER.z + dz / dl * 11 }, ci, 5, 1.8); }
+      if (st === "mud") { var m = mudList[1] || mudList[0]; var t = ringAt({ x: m[0], z: m[1] }, ci, 5, m[2] + 0.6); t.run = true; return t; }
+      if (st === "dinner") { return n.name === "Madison" ? { x: grandmaHome.x + 1.5, z: grandmaHome.z - 1.5 } : null; }
+      if (st === "fire" || st === "secret") { return ringAt({ x: TREEHOUSE.x + 3.6, z: TREEHOUSE.z }, ci, 5, 1.8); }
+      return null;
+    }
+    if (festival() && !n.kid) { var idx = npcs.indexOf(n); return ringAt(TEMPLE, idx, npcs.length, 6.5); }
+    return null;
+  }
+
+  // air hopscotch: squares drawn in the air with glowing ash; your head is what touches
+  var hopTiles = [];
+  (function () {
+    var ang = Math.atan2(HOP.z - TREEHOUSE.z, HOP.x - TREEHOUSE.x), fx = Math.cos(ang), fz = Math.sin(ang), sx = -fz, sz = fx;
+    [[0], [0], [0], [-0.55, 0.55], [0], [-0.55, 0.55]].forEach(function (row, ri) {
+      row.forEach(function (off) { hopTiles.push({ x: HOP.x + fx * (ri * 1.25 - 3) + sx * off, z: HOP.z + fz * (ri * 1.25 - 3) + sz * off, done: false }); });
+    });
+  })();
+  function headTop() { return 1.75 * (ch ? ch.height : 1); }
+  function tileY(t) { return ground(t.x, t.z) + headTop() + 0.6; }
+  var hopHelpShown = false;
+  function hopTick() {
+    if (!c1At("hop") || pc.dead) { return; }
+    if (!hopHelpShown && Math.hypot(player.x - HOP.x, player.z - HOP.z) < 8) { hopHelpShown = true; toast("Air hopscotch", S1.hopHelp || "Jump and touch each square with your head."); }
+    var head = player.y + headTop();
+    hopTiles.forEach(function (t) {
+      if (t.done) { return; }
+      if (Math.hypot(player.x - t.x, player.z - t.z) < 0.62 && head >= tileY(t) - 0.35) {
+        t.done = true; Snd.chime(); fxNum(t.x, tileY(t) + 0.4, t.z, "*", "#c08cff");
+        var left = hopTiles.filter(function (q) { return !q.done; }).length;
+        if (!left) { setFlag("c1Hop"); showCard((S1.noticeTrees || []), null, S1.title); }
+        else { fxText(left + " to go", "#bfe7ff"); }
+      }
+    });
+  }
+
+  // the vibration: not an earthquake, a tsunami under the ground
+  var quakeT = 0, quakeAmp = 0, rumbleT = 0;
+  function quakeTick(dt) {
+    var want = c1At("mud") ? 0.06 : 0;
+    if (quakeT > 0) { quakeT -= dt; want = Math.max(want, 0.16 * Math.min(1, quakeT / 2)); }
+    quakeAmp += (want - quakeAmp) * Math.min(1, dt * 3);
+    if (quakeAmp > 0.01 && mode === "play") { rumbleT -= dt; if (rumbleT <= 0) { rumbleT = 1.3; Snd.rumble(Math.min(1, quakeAmp * 8)); } }
+  }
+  var storyT = 0;
+  function storyTick(dt) {
+    hopTick(); quakeTick(dt); story2Tick(dt);
+    fireLight[3] = festival() ? 16 : 0;
+    storyT += dt; if (storyT < 0.25) { return; } storyT = 0;
+    if (mode !== "play" || card || uiOpen() || traveling || pc.dead) { return; }
+    var hs = spots.filter(function (s) { return s.id === "hop"; })[0]; if (hs) { hs.hidden = !c1At("hop"); }
+    if (story2Slow()) { return; }
+    if (currentMain() === CH1 && !prog.flags.c1Open) { prog.flags.c1Open = Date.now(); saveProg(); showCard(S1.opening || [], null, S1.title); return; }
+    if (c1At("trees") && Math.hypot(player.x - SHIVER.x, player.z - SHIVER.z) < 12) {
+      quakeT = 7; setFlag("c1Trees"); showCard(S1.vibration || [], null, S1.title); return;
+    }
+    if (c1At("mud")) {
+      var m = nearestMud();
+      if (m && Math.hypot(player.x - m[0], player.z - m[1]) < m[2] + 1.2) { setFlag("c1Mud"); showCard([{ who: "Madison", text: S1.madisonThinks || "" }], null, S1.title); return; }
+    }
+    if (c1At("fire") && Math.hypot(player.x - TEMPLE.x, player.z - TEMPLE.z) < 9) { setFlag("c1Fire"); showCard(S1.remembrance || [], null, S1.title); }
+  }
+  function interactStory(s) {
+    if (interactStory2(s)) { return true; }
+    if (s.id === "hop") { toast("Air hopscotch", S1.hopHelp || ""); return true; }
+    if (s.id === "treehouse") {
+      if (c1At("secret")) {
+        fadeEl.style.opacity = "1";
+        setTimeout(function () { fadeEl.style.opacity = "0"; showCard(S1.secret || [], function () { setFlag("c1Secret"); toast(S1.title || "Chapter 1", S1.partEnd || ""); }, S1.title); }, 700);
+      } else { say("The crew's tree house", c1Step() === "done" || prog.flags.c1Secret ? "Dyonys pieces are still scattered across the floor up there." : "The crew built this. Nobody's up there right now."); }
+      return true;
+    }
+    if (s.id === "temple") {
+      if (festival()) { if (!prog.flags.c1Fire) { setFlag("c1Fire"); showCard(S1.remembrance || [], null, S1.title); } else { say("The Remembrance", "The blue fire burns. The whole village is here."); } }
+      else { say("Temple of the Remembrance", "Once a year, miracled mud goes in here and burns blue."); }
+      return true;
+    }
+    return false;
+  }
+  function storyOptions(n, o) {
+    if (n.name === "Madison" && c1At("look")) {
+      o.push({ label: "What is that, on the horizon?", gold: true, fn: function () { closeDialog(); showCard(S1.madisonTrees || [], function () { setFlag("c1Look"); }, S1.title); } });
+    }
+    if (n.name === "Madison" && c1At("hop")) { o.push({ label: "Hopscotch?", fn: function () { dlgSay(S1.hopHelp || ""); } }); }
+    if (n.name === "Grandma" && c1At("dinner")) {
+      o.push({ label: "Sit down for dinner", gold: true, fn: function () { closeDialog(); showCard(S1.dinner || [], function () { setFlag("c1Dinner"); }, S1.title); } });
+    }
+  }
+  function drawStory(reg) {
+    if (reg !== "village") { return; }
+    draw(storyMesh, model(0, 0, 0, 0, 1));
+    var st = currentMain() === CH1 ? c1Step() : "done", wild = st === "look" || st === "trees" ? 1 : st === "mud" ? 0.6 : 0;
+    SHIVERS.forEach(function (t) {
+      var w = 0.015 + wild * 0.09, rx = Math.sin(time * (2.5 + wild * 9) + t.ph) * w, ry = Math.sin(time * (1.7 + wild * 6) + t.ph * 2) * w * 2;
+      draw(shiverMesh, model2(t.x, t.y, t.z, ry, rx, 1));
+    });
+    if (st === "hop" || (prog.flags.c1Hop && !prog.flags.c1Secret)) {
+      hopTiles.forEach(function (t) { draw(t.done || prog.flags.c1Hop ? hopPrint : hopTile, model(t.x, tileY(t) + Math.sin(time * 2 + t.x) * 0.04, t.z, 0, 1)); });
+    }
+    if (festival()) {
+      var gy = ground(TEMPLE.x, TEMPLE.z);
+      for (var i = 0; i < 6; i++) {
+        var a = i * 1.05, r = i === 0 ? 0 : 1.2, f = 0.8 + 0.35 * Math.sin(time * 9 + i * 2.1) + 0.15 * Math.sin(time * 23 + i);
+        draw(flameMesh, model(TEMPLE.x + Math.cos(a + time * 0.3) * r, gy + 0.1, TEMPLE.z + Math.sin(a + time * 0.3) * r, time * 0.8 + i, (i === 0 ? 1.6 : 0.9) * f));
+      }
+    }
+  }
+  // ---------- Chapter 1, part two: training, caught, alone, the dive, the boom, the horizon ----------
+  var ST2 = S1.steps2 || {};
+  prog.c1g = prog.c1g || { crystal: 0, vine: {}, pod: 0, skin: 0, burst: 0 };
+  prog.c1holes = prog.c1holes || {};
+  function gearLeft() { var g = prog.c1g; return { crystal: Math.max(0, 2 - g.crystal), vine: Math.max(0, 3 - Object.keys(g.vine).length), pod: Math.max(0, 2 - g.pod), skin: Math.max(0, 1 - g.skin) }; }
+  function gearText() { var g = prog.c1g; return (ST2.gear || "Gather the gear") + " (crystals " + Math.min(2, g.crystal) + "/2, vines " + Math.min(3, Object.keys(g.vine).length) + "/3, pods " + Math.min(2, g.pod) + "/2, silver skin " + Math.min(1, g.skin) + "/1)"; }
+  function holesPacked() { return Object.keys(prog.c1holes).length; }
+  function caveFront() { var f = Math.atan2(-CRYCAVE.z, -CRYCAVE.x); return { x: CRYCAVE.x + Math.cos(f) * 5.2, z: CRYCAVE.z + Math.sin(f) * 5.2 }; }
+  function nearestOfList(list, name) { var b = null, bd = 1e9; list.forEach(function (q) { var d = Math.hypot(q[0] - player.x, q[1] - player.z); if (d < bd) { bd = d; b = q; } }); return b ? { x: b[0], z: b[1], name: name } : null; }
+  CH1.steps.push(
+    { k: "gear", text: gearText(), done: flagDone("c1Gear"), target: function () {
+      var L = gearLeft(), c = caveFront();
+      if (L.crystal) { return { x: c.x, z: c.z, name: "The Crystal Cave" }; }
+      if (L.vine) { return nearestOfList(VINES.filter(function (q, i) { return !prog.c1g.vine[i]; }), "Vines"); }
+      if (L.pod) { return nearestOfList(PODS, "Poison pods"); }
+      return nearestOfList(METALS, "Silver-skin trees"); } },
+    { k: "caught", text: ST2.caught || "Meet the crew at the Crystal Cave", done: flagDone("c1Caught"), target: function () { var c = caveFront(); return { x: c.x, z: c.z, name: "The Crystal Cave" }; } },
+    { k: "leaves", text: ST2.leaves || "Catch hush leaves", done: flagDone("c1Leaves"), target: function () { return { x: HUSH.x - 3, z: HUSH.z - 1, name: "The hush trees" }; } },
+    { k: "dive", text: ST2.dive || "Pack the holes", done: flagDone("c1Dive"), target: function () { var l = NEST_HOLES.filter(function (h) { return !prog.c1holes[h.i]; }).map(function (h) { return [h.x, h.z]; }); return nearestOfList(l.length ? l : [[NEST.x, NEST.z]], "The sliven nest"); } },
+    { k: "boom", text: ST2.boom || "Connect the path", done: flagDone("c1Boom"), target: function () { var c = caveFront(); return { x: c.x, z: c.z, name: "The Crystal Cave" }; } },
+    { k: "horizon", text: ST2.horizon || "Look into the fire", done: flagDone("c1Horizon"), target: function () { return { x: NEST.x + 9, z: NEST.z, name: "The fire" }; } }
+  );
+  var meterEl = document.createElement("div"); meterEl.id = "story-meter"; document.body.appendChild(meterEl);
+  var vignetteEl = document.createElement("div"); vignetteEl.id = "story-vignette"; document.body.appendChild(vignetteEl);
+  var eHeld = false;
+  window.addEventListener("keydown", function (e) { if (e.key === "e" || e.key === "E") { eHeld = true; } });
+  window.addEventListener("keyup", function (e) { if (e.key === "e" || e.key === "E") { eHeld = false; } });
+  var pod = null, packing = null, leafGame = null, boomSeq = null;
+  function meter(label, p, zone) {
+    meterEl.style.display = "block";
+    meterEl.innerHTML = "<div>" + Creature.esc(label) + "</div><div class='bar'>" + (zone ? "<span class='zone' style='left:" + zone[0] * 100 + "%;width:" + (zone[1] - zone[0]) * 100 + "%'></span>" : "") + "<span class='fill' style='width:" + Math.min(100, p * 100).toFixed(1) + "%'></span></div>";
+  }
+  function hideMeter() { meterEl.style.display = "none"; }
+  function startPod(s) { if (prog.c1g.pod >= 2) { return; } pod = { s: s, t: 0 }; toast("Poison pod", S1.podHelp || ""); }
+  function podTick(dt) {
+    if (!pod) { return; }
+    if (Math.hypot(player.x - pod.s.x, player.z - pod.s.z) > 3) { pod = null; hideMeter(); return; }
+    if (eHeld) { pod.t += dt / 1.6; meter("Squeeze gently...", pod.t, [0.42, 0.7]); if (pod.t >= 1) { burstPod(); } return; }
+    if (pod.t > 0) {
+      var t = pod.t; pod = null; hideMeter();
+      if (t >= 0.42 && t <= 0.7) { prog.c1g.pod++; saveProg(); Snd.chime(); fxText(S1.podOk || "Gently done.", "#b8f06b"); gearCheck(); }
+      else if (t > 0.7) { burstPod(); }
+      else { fxText("Too gentle. Nothing came out.", "#a6a2b8"); }
+    }
+  }
+  function burstPod() {
+    var s = pod ? pod.s : null; pod = null; hideMeter();
+    Snd.boom(); hurtPlayer(10); poisonPlayer(8, "Rash!"); prog.c1g.burst++; saveProg();
+    if (s) { effects.push({ k: "blast", x: s.x, y: ground(s.x, s.z) + 1.3, z: s.z, t: 0, dur: 0.6 }); }
+    if (prog.c1g.burst === 1) { showCard([S1.podBurst || "It explodes."], null, S1.title); }
+  }
+  function gearCheck() {
+    CH1.steps.filter(function (x) { return x.k === "gear"; })[0].text = gearText();
+    var L = gearLeft(); if (!L.crystal && !L.vine && !L.pod && !L.skin && !prog.flags.c1Gear) { setFlag("c1Gear"); showCard([S1.gearDone || "The gear is ready."], null, S1.title); }
+    updateQuest();
+  }
+  // the hush leaves: Madison shakes the branches, you catch them before they hit the ground
+  function startLeaves() { if (leafGame) { return; } leafGame = { leaves: [], caught: 0, next: 0.5 }; toast("The hush trees", S1.leavesHelp || ""); }
+  function leafTick(dt) {
+    if (!leafGame) { return; }
+    if (!c1At("leaves") || Math.hypot(player.x - HUSH.x, player.z - HUSH.z) > 16) { leafGame = null; hideMeter(); return; }
+    leafGame.next -= dt;
+    if (leafGame.next <= 0 && leafGame.leaves.length < 3) {
+      leafGame.next = 1.6 + Math.random() * 1.2; var a = Math.random() * 6.28, r = 2 + Math.random() * 4.5, x = HUSH.x - 3 + Math.cos(a) * r, z = HUSH.z - 1 + Math.sin(a) * r;
+      leafGame.leaves.push({ x: x, z: z, y: ground(x, z) + 13, ph: Math.random() * 6 });
+    }
+    var head = player.y + headTop();
+    leafGame.leaves = leafGame.leaves.filter(function (l) {
+      l.y -= dt * 2.4; l.x += Math.sin(time * 1.7 + l.ph) * dt * 0.8;
+      var g = ground(l.x, l.z);
+      if (Math.hypot(player.x - l.x, player.z - l.z) < 1.3 && l.y < head + 0.6 && l.y > g + 0.2) { leafGame.caught++; Snd.chime(); fxText((S1.leafGot || "Caught one.") + " (" + leafGame.caught + "/6)", "#c9c6ee"); return false; }
+      if (l.y <= g + 0.05) { fxNum(l.x, g + 0.5, l.z, S1.leafLost || "Ruined.", "#a6a2b8"); return false; }
+      return true;
+    });
+    meter("Hush leaves caught", leafGame.caught / 6);
+    if (leafGame.caught >= 6) { leafGame = null; hideMeter(); setFlag("c1Leaves"); showCard([S1.suit || "She's invisible. A little."], null, S1.title); }
+  }
+  // the dive: hold to pack, while the moss closes in
+  function startPack(s) { if (prog.c1holes[s.k]) { return; } if (!prog.flags.c1DiveIntro) { prog.flags.c1DiveIntro = Date.now(); saveProg(); showCard([S1.diveStart || ""], null, S1.title); return; } packing = { s: s, p: 0, panic: false }; toast("The dive", S1.diveHelp || ""); }
+  function packTick(dt) {
+    var vis = 0;
+    if (packing) {
+      if (Math.hypot(player.x - packing.s.x, player.z - packing.s.z) > 2.2 || !c1At("dive")) { packing = null; hideMeter(); }
+      else {
+        packing.p = eHeld ? packing.p + dt / 3.2 : Math.max(0, packing.p - dt * 0.6);
+        meter("Packing miracled mud", packing.p); vis = Math.min(0.85, packing.p * 0.95);
+        if (packing.p > 0.55 && !packing.panic) { packing.panic = true; fxText(S1.divePanic || "", "#ff8aa8"); }
+        if (packing.p >= 1) {
+          prog.c1holes[packing.s.k] = Date.now(); saveProg(); Snd.chime(); packing = null; hideMeter();
+          fxText(holesPacked() + " of 4 holes packed", "#bfe7ff");
+          if (holesPacked() >= 4) { setFlag("c1Dive"); showCard([S1.diveDone || ""], null, S1.title); }
+        }
+      }
+    }
+    vignetteEl.style.opacity = String(vis);
+  }
+  // the hidden path and the boom
+  var PATH = [];
+  (function () {
+    var c = { x: CRYCAVE.x + Math.cos(Math.atan2(-CRYCAVE.z, -CRYCAVE.x)) * 4.2, z: CRYCAVE.z + Math.sin(Math.atan2(-CRYCAVE.z, -CRYCAVE.x)) * 4.2 };
+    var d = Math.hypot(NEST.x - c.x, NEST.z - c.z), n = Math.ceil(d / 1.4);
+    for (var i = 0; i <= n; i++) { var t = i / n, x = c.x + (NEST.x - c.x) * t * (1 - 6.5 / d), z = c.z + (NEST.z - c.z) * t * (1 - 6.5 / d); PATH.push({ x: x + Math.sin(t * 9) * 0.8, z: z }); }
+    var last = PATH[PATH.length - 1], a0 = Math.atan2(last.z - NEST.z, last.x - NEST.x);
+    for (var k = 1; k <= 30; k++) { var a = a0 + k / 30 * Math.PI * 2; PATH.push({ x: NEST.x + Math.cos(a) * 6.5, z: NEST.z + Math.sin(a) * 6.5 }); }
+    PATH.forEach(function (p) { p.y = ground(p.x, p.z) + 0.12; });
+  })();
+  function startBoom() { if (boomSeq) { return; } showCard([S1.boomStart || "", S1.boomConnect || ""], function () { boomSeq = { t: 0, blown: false }; Snd.cast(); }, S1.title); }
+  function boomTick(dt) {
+    if (!boomSeq) { return; }
+    boomSeq.t += dt;
+    var lit = Math.floor(boomSeq.t / 2.8 * PATH.length);
+    if (lit >= PATH.length && !boomSeq.blown) {
+      boomSeq.blown = true; quakeT = 7;
+      [0, 0.35, 0.8].forEach(function (d, i) { setTimeout(function () { Snd.boom(); }, d * 1000); });
+      NEST_HOLES.concat([{ x: NEST.x, z: NEST.z }]).forEach(function (h) { effects.push({ k: "blast", x: h.x, y: ground(h.x, h.z) + 1, z: h.z, t: 0, dur: 1.4 }); });
+      sliven.forEach(function (sv) { sv.dead = 999; });
+      setTimeout(function () { setFlag("c1Boom"); showCard((S1.boom || []).concat(S1.cost || []), null, S1.title); }, 1600);
+    }
+    if (boomSeq.t > 6) { boomSeq = null; }
+  }
+  // the sliven: enormous, fast, unpredictable. They skip from place to place with nothing in between.
+  var sliven = [0, 1, 2].map(function (i) { return { x: NEST.x, z: NEST.z, y: 4, tx: NEST.x, tz: NEST.z, ty: 4, face: 0, t: i * 0.4, hp: 40, dead: 0, sting: 0, hurt: 0, i: i }; });
+  function slivenActive() { return (c1At("dive") || c1At("boom") && !boomSeq) && region(player.x) === "village"; }
+  function updateSliven(dt) {
+    if (!slivenActive()) { return; }
+    var pd0 = Math.hypot(player.x - NEST.x, player.z - NEST.z), hunt = pd0 < 16 && !pc.dead && !pc.astral;
+    sliven.forEach(function (s) {
+      if (s.dead > 0) { s.dead -= dt; if (s.dead <= 0) { s.hp = 40; s.x = NEST.x; s.z = NEST.z; s.y = 3; } return; }
+      if (s.hurt > 0) { s.hurt -= dt; } if (s.sting > 0) { s.sting -= dt; }
+      s.t -= dt;
+      if (s.t <= 0) {
+        s.t = 0.35 + Math.random() * 0.8;
+        if (hunt && Math.random() < 0.6 && s.sting <= 0) { s.tx = player.x + (Math.random() - 0.5) * 2; s.tz = player.z + (Math.random() - 0.5) * 2; s.ty = player.y + headTop() * 0.8; }
+        else { var a = Math.random() * 6.28, r = 3 + Math.random() * 8; s.tx = NEST.x + Math.cos(a) * r; s.tz = NEST.z + Math.sin(a) * r; s.ty = ground(s.tx, s.tz) + 2 + Math.random() * 5; }
+        if (volAt(s.x, s.z) > 0.05 && Math.random() < 0.4) { Snd.yip(panOf(s.x, s.z), 0.4); }
+      }
+      var dx = s.tx - s.x, dy = s.ty - s.y, dz = s.tz - s.z, d = Math.hypot(dx, dy, dz);
+      if (d > 0.05) { var k = Math.min(1, dt * 9); s.x += dx * k; s.y += dy * k; s.z += dz * k; s.face = Math.atan2(dx, dz); }
+      if (hunt && s.sting <= 0 && Math.hypot(player.x - s.x, player.z - s.z) < 1.4 && Math.abs(player.y + headTop() * 0.7 - s.y) < 1.4) {
+        s.sting = 2.2; hurtPlayer(9); Snd.hit(); s.t = 0; s.tx = s.x + (s.x - player.x) * 4; s.tz = s.z + (s.z - player.z) * 4; s.ty = s.y + 3;
+      }
+    });
+  }
+  extraTargets.push(function (out) {
+    if (!slivenActive()) { return; }
+    sliven.forEach(function (s) {
+      if (s.dead > 0) { return; }
+      out.push({ ref: s, x: s.x, z: s.z, y: s.y, r: 1.1, hurt: function (dmg) {
+        s.hp -= dmg; s.hurt = 0.2; fxNum(s.x, s.y + 1, s.z, "-" + Math.round(dmg), "#ffffff");
+        if (s.hp <= 0) { s.dead = 22; Snd.boom(); fxNum(s.x, s.y + 1.5, s.z, "The sliven falls", "#E0662A"); }
+        else { s.t = 0; }
+      } });
+    });
+  });
+  var guardMesh = buildFigure(look({ skin: "#7a4a2e", hair: "Shaved", hc: "#141018", cloth: "#2f3e5a", h: 1.05, b: 1.1 }));
+  function story2Tick(dt) {
+    podTick(dt); leafTick(dt); packTick(dt); boomTick(dt); updateSliven(dt);
+  }
+  function story2Slow() {
+    var st = currentMain() === CH1 ? c1Step() : "done";
+    spots.forEach(function (s) {
+      if (s.id === "c1vine") { s.hidden = st !== "gear" || !!prog.c1g.vine[s.k]; }
+      else if (s.id === "c1pod") { s.hidden = st !== "gear" || prog.c1g.pod >= 2; }
+      else if (s.id === "c1skin") { s.hidden = st !== "gear" || prog.c1g.skin >= 1; }
+      else if (s.id === "c1hush") { s.hidden = st !== "leaves"; }
+      else if (s.id === "c1hole") { s.hidden = st !== "dive" || !!prog.c1holes[s.k]; }
+    });
+    if (st === "gear") { var gs = CH1.steps.filter(function (x) { return x.k === "gear"; })[0]; if (gs.text !== gearText()) { gs.text = gearText(); updateQuest(); } }
+    if (st === "gear" && !prog.flags.c1GearIntro) { prog.flags.c1GearIntro = Date.now(); saveProg(); showCard((S1.gearStart || []).concat([S1.mist || ""]), null, S1.title); return true; }
+    if (st === "leaves" && !prog.flags.c1Alone) { prog.flags.c1Alone = Date.now(); saveProg(); showCard(S1.alone || [], null, S1.title); return true; }
+    if (st === "horizon" && Math.hypot(player.x - NEST.x, player.z - NEST.z) < 13) {
+      showCard(S1.horizon || [], function () { showCard(S1.ending || [], function () { setFlag("c1Horizon"); toast(S1.title || "Chapter 1", S1.chapterEnd || "End of Chapter 1"); }, S1.chapterEnd || ""); }, S1.title); return true;
+    }
+    return false;
+  }
+  function interactStory2(s) {
+    var st = currentMain() === CH1 ? c1Step() : "done";
+    if (s.id === "crycave") {
+      if (st === "gear" && prog.c1g.crystal < 2) { prog.c1g.crystal++; give("crystal", 1); saveProg(); Snd.carve(); fxText(S1.crystalGot || "+1 crystal", "#9fe3c4"); gearCheck(); }
+      else if (st === "caught") { showCard(S1.caught || [], function () { setFlag("c1Caught"); }, S1.title); }
+      else if (st === "boom") { startBoom(); }
+      else { say("The Crystal Cave", "Grey stone, crystals in the walls. From here you can see the ash trees."); }
+      return true;
+    }
+    if (s.id === "c1vine") { if (!prog.c1g.vine[s.k]) { prog.c1g.vine[s.k] = 1; saveProg(); Snd.carve(); fxText(S1.vineGot || "Rope.", "#9fe3c4"); gearCheck(); } return true; }
+    if (s.id === "c1pod") { startPod(s); return true; }
+    if (s.id === "c1skin") { if (prog.c1g.skin < 1) { showCard(S1.skinFall || [], function () { prog.c1g.skin = 1; saveProg(); gearCheck(); }, S1.title); } return true; }
+    if (s.id === "c1hush") { startLeaves(); return true; }
+    if (s.id === "c1hole") { startPack(s); return true; }
+    return false;
+  }
+  function storyHold2(n, st, ci) {
+    var c = caveFront();
+    if (st === "caught") { return ci >= 0 ? ringAt(c, ci, 5, 2.2) : null; }
+    if (st === "leaves") { return n.name === "Madison" ? { x: HUSH.x - 1.5, z: HUSH.z + 1.5 } : null; }
+    if (st === "dive") { return n.name === "Madison" ? { x: NEST.x + 8.5, z: NEST.z + 1 } : null; }
+    if (st === "boom") { return n.name === "Madison" ? { x: c.x + 1.2, z: c.z + 1.2 } : null; }
+    if (st === "horizon") { if (n.name === "Madison") { return { x: NEST.x + 9.5, z: NEST.z - 1 }; } if (!n.kid) { return ringAt({ x: NEST.x + 4, z: NEST.z }, npcs.indexOf(n), npcs.length, 11); } }
+    return null;
+  }
+  function drawStory2(reg) {
+    if (reg !== "village") { return; }
+    draw(story2Mesh, model(0, 0, 0, 0, 1));
+    if (currentMain() === CH1 && ["dive", "boom", "horizon"].indexOf(c1Step()) >= 0) { draw(nestMesh, model(0, 0, 0, 0, 1)); }
+    var lyY = ground(40, -60); draw(lyrosMesh, model(40 + Math.sin(time * 0.1) * 2, lyY, -61, time * 0.1 + 1, 1));
+    var st = currentMain() === CH1 ? c1Step() : "done";
+    NEST_HOLES.forEach(function (h) { if (prog.c1holes[h.i]) { draw(fuseMesh, model(h.x, ground(h.x, h.z) + 0.1, h.z, 0, 3.5)); } });
+    if (slivenActive()) { sliven.forEach(function (s) { if (s.dead > 0) { return; } draw(Math.sin(time * 40 + s.i) > 0 ? slivenUp : slivenDown, model2(s.x, s.y, s.z, s.face, 0.1, 1.15 * (s.hurt > 0 ? 1.08 : 1))); }); }
+    if (st === "caught") { var c = caveFront(); [[2.5, 3], [-2.5, 3.4]].forEach(function (o, i) { draw(guardMesh, model(c.x + o[0], ground(c.x + o[0], c.z + o[1]), c.z + o[1], Math.atan2(-o[0], -o[1]), 1.05)); }); }
+    if (leafGame) { leafGame.leaves.forEach(function (l) { draw(leafMesh, model2(l.x, l.y, l.z, time * 2 + l.ph, Math.sin(time * 3 + l.ph) * 0.6, 1.4)); }); }
+    if (boomSeq) { var lit = Math.min(PATH.length, Math.floor(boomSeq.t / 2.8 * PATH.length)); for (var i = 0; i < lit; i++) { var p = PATH[i]; draw(fuseMesh, model(p.x, p.y, p.z, 0, 1 + 0.3 * Math.sin(time * 12 + i))); } }
+    if (prog.flags.c1Boom && !prog.flags.c1Horizon) {
+      CUKOO_TREES.concat(WELLNESS_BURN).forEach(function (t, i) { var f = 0.7 + 0.3 * Math.sin(time * 8 + i * 1.3); draw(flameMesh, model(t.x, t.y + 0.4, t.z, time + i, 1.7 * f)); draw(flameMesh, model(t.x + 0.6, t.y - 0.3, t.z - 0.4, time * 1.3 + i, 1.1 * f)); });
+      for (var j = 0; j < 7; j++) { var a = j * 0.9; draw(flameMesh, model(NEST.x + Math.cos(a) * 2.5, ground(NEST.x, NEST.z) + 0.3, NEST.z + Math.sin(a) * 2.5, time * 0.5 + j, 2 + 0.5 * Math.sin(time * 7 + j))); }
+    }
+    if (st === "horizon") {
+      var hy = ground(NEST.x, NEST.z) + 4.5, gl0 = 0.6 + 0.4 * Math.sin(time * 1.3);
+      for (var k = 0; k < 14; k++) { var sy = hy + 6 - k * 0.85, sx = NEST.x - 7 + Math.sin(k * 0.7 + time * 0.4) * 0.5 * gl0; draw(stitchMesh, model(sx, sy, NEST.z + 6, Math.PI / 2, 0.8 + (k % 3 === 0 ? 0.3 * Math.sin(time * 2 + k) : 0))); }
+      draw(handMesh, model2(NEST.x - 7.5, hy + 1 + Math.sin(time * 0.8) * 0.3, NEST.z + 5, Math.PI / 2, -0.25, 1.9 + 0.15 * Math.sin(time)));
+    }
+  }
   function drawLife(reg, fpNow) {
+    drawStory(reg); drawStory2(reg);
     if (reg === "village") { drawHuts(fpNow); }
     RURU_RIPE.concat(ORCH_RIPE).forEach(function (r) { if (r.ok && reg === "village" && Math.hypot(r.x - player.x, r.z - player.z) < 60) { draw(r.spot.res === "husk" ? ripeHusk : ripePod, model(r.x, r.y + Math.sin(time * 2 + r.x) * 0.04, r.z, time * 0.4, 1)); } });
     CRYSTALS.forEach(function (o) { if (o.ready && reg === "cave") { draw(crystalMesh, model(o.x, o.y + 0.2, o.z, time * 0.3, 1.3)); } });
@@ -3530,8 +4084,8 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
     "Madison": { motive: "Figure out what doesn't add up, and win. Always win.", likes: { feather: 3, abalone: 3, fruit: 1 },
       act: { arcade: "winning at the arcade", monument: "staring at the monument", pool: "mixing blue mud (suspiciously)", shrine: "studying the Egg Shrine" },
       about: "I notice things. Small things. The monument. The shrine waking up for you. The foxrids getting bolder. None of it adds up yet. It will." },
-    "Madison's crew": { motive: "Follow Madison anywhere.", likes: { feather: 3, fruit: 2, abalone: 1 }, act: {},
-      about: "Where she goes, we go. That's the whole plan." },
+    "Grandpa": { motive: "", likes: { fruit: 3, abalone: 1, feather: 1 }, act: { home: "listening on the burrow step" }, about: "" },
+    "Bia": { motive: "", likes: { feather: 3, fruit: 2, abalone: 2 }, act: { pool: "by the blue mud", grandma: "at Grandma's burrow" }, about: "" },
     "Elder Chief": { motive: "Keep the village safe: no sparks near the burrows, no foxrids on the Golden Road.", likes: { abalone: 3, fruit: 2, feather: 2 },
       act: { pool: "guarding the mud pits", pool2: "guarding the mud pits", monument: "standing watch at the monument" },
       about: "My job is simple. Nobody gets hurt. The foxrids come closer to the Golden Road every season, and the children keep making sparks." },
@@ -3542,6 +4096,11 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   var ACT = { arcade: "at the old arcade", pool: "by the blue mud", pool2: "by the blue mud", monument: "at the monument", shrine: "at the Egg Shrine",
     lantern: "by the lanterns", ring: "walking the village ring", forge: "at the Mud Forge", home: "at home", follow: "following Madison", sleep: "asleep in the burrow", homeward: "heading home to sleep" };
   function activity(n) { var L = LIFE[n.name] || {}, k = n.place || "home"; return (L.act && L.act[k]) || ACT[k] || ""; }
+  Object.keys((STORY.ch1 || {}).friends || {}).forEach(function (nm) {
+    var f = STORY.ch1.friends[nm], L = LIFE[nm] || (LIFE[nm] = { likes: { fruit: 2, feather: 2, abalone: 1 }, act: {} });
+    L.about = f.about || L.about || ""; L.motive = f.motive || L.motive || "";
+  });
+  ACT.story = "on an adventure with the crew";
   var CHAT = {
     "Grandma": ["Have you eaten, {to}?", "Study first, {to}. Then play.", "The golden birds were singing sad again last night."],
     "Eldest Aunt": ["{to}, have you seen my good scissors?", "Somebody in this family is a thief, and she's very small.", "Stand up straight, {to}."],
@@ -3688,6 +4247,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
     }
     o.push({ label: "Chat", fn: dlgChat });
     o.push({ label: "Your life", fn: function () { var L = LIFE[n.name] || {}; dlgSay((L.about || "") + '<br><span style="color:#a6a2b8;font-size:13px">What they want: ' + (L.motive || "") + "</span>"); } });
+    storyOptions(n, o);
     if (n.name === "Madison" && bondState("scissors") === 1 && !prog.flags.scissorsAsked) {
       o.push({ label: "Ask about the scissors", gold: true, fn: function () {
         prog.flags.scissorsAsked = Date.now(); prog.weapons.blades = Date.now(); if (!prog.weapons.sword) { prog.equip = "blades"; } saveProg(); addRel("Madison", 3);
@@ -3964,6 +4524,10 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
       var ldx = lookAtPt[0] - eye[0], ldy = lookAtPt[1] - eye[1], ldz = lookAtPt[2] - eye[2], ll = Math.hypot(ldx, ldy, ldz) || 1;
       lastDir = [ldx / ll, ldy / ll, ldz / ll];
     }
+    if (quakeAmp > 0.005 && mode === "play") {
+      var qx = Math.sin(time * 31) * quakeAmp, qy = Math.sin(time * 23 + 1) * quakeAmp * 0.8, qz = Math.cos(time * 27) * quakeAmp;
+      eye = [eye[0] + qx, eye[1] + qy, eye[2] + qz]; lookAtPt = [lookAtPt[0] + qx * 0.5, lookAtPt[1] + qy * 0.5, lookAtPt[2] + qz * 0.5];
+    }
     lastEye = eye.slice();
     var vp = mul(perspective(fpNow ? 1.2 : 1.0, W / H, 0.06, 600), lookAt(eye, lookAtPt, [0, 1, 0]));
     updateXhair(dt);
@@ -3985,13 +4549,13 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
     gl.uniform3fv(U.uMoonCol, env.lightCol);
     gl.uniform3fv(U.uAmb, env.amb);
     gl.uniform3fv(U.uFog, env.fog);
-    gl.uniform1f(U.uFogD, 0.022 - env.day * 0.008);
+    gl.uniform1f(U.uFogD, (0.022 - env.day * 0.008) * (typeof CH1 !== "undefined" && c1At("gear") && region(player.x) === "village" ? 2.6 : 1));
     gl.uniform1f(U.uTime, time);
     gl.uniform1f(U.uPointK, env.pointK);
     gl.uniform3fv(U.uSkyTop, env.top); gl.uniform3fv(U.uSkyHor, env.hor);
     gl.uniform3fv(U.uSunDir, env.sun);
     gl.uniform3fv(U.uSunCol, lerp3([1.0, 0.55, 0.35], [1.0, 0.95, 0.8], env.day).map(function (v) { return v * Math.max(0, Math.min(1, env.sun[1] * 4 + 0.6)); }));
-    updateNpcs(dt); updateLizards(dt); updateCity(dt); updateFoxes(dt); updateBirds(dt); updateRebreebs(dt); updateEnts(dt); updateDragons(dt); cloudScroll += dt * 0.8;
+    updateNpcs(dt); updateLizards(dt); updateCity(dt); updateFoxes(dt); updateBirds(dt); updateRebreebs(dt); updateEnts(dt); updateDragons(dt); storyTick(dt); cloudScroll += dt * 0.8;
     clockEl.textContent = "Hour " + (Math.floor(env.hour) + 1) + " of 37 \u00b7 " + (env.day > 0.6 ? "Day" : env.day > 0.15 ? (env.sun[0] > 0 ? "Dawn" : "Dusk") : "Night") + netLabel();
 
     // pick the 12 lights closest to the player
@@ -4225,7 +4789,7 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   // =====================================================================
   // ---------- THE SHARED WORLD: other players, chat, parties, accounts ----------
   var NET = window.Net || null, others = {}, chatLog = [], netT = 0, rankT = 50, lastSent = null, netRegion = null, myBub = null;
-  var SHARE_FLAGS = { grandmaBeyond: 1, stationSeen: 1, reachedAlio: 1, goldSeen: 1, spire: 1 };
+  var SHARE_FLAGS = { grandmaBeyond: 1, stationSeen: 1, reachedAlio: 1, goldSeen: 1, spire: 1, c1Hop: 1, c1Look: 1, c1Trees: 1, c1Mud: 1, c1Dinner: 1, c1Fire: 1, c1Secret: 1, c1Caught: 1, c1Leaves: 1, c1Dive: 1, c1Boom: 1, c1Horizon: 1 };
   var REGION_NAME = { village: "The Village", alio: "Alio", gold: "The Golden Wood" };
   function lookOf(c) { return { race: c.race, skin: c.skin, hair: c.hair, hairColor: c.hairColor, eyes: c.eyes, cloth: c.cloth, height: c.height, build: c.build }; }
   function netMeta() { return { name: ch.name, look: lookOf(ch), title: prog.title || "", region: region(player.x) }; }
@@ -4755,7 +5319,19 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
   meBtn.addEventListener("click", function () { meCard.style.display = meCard.style.display === "block" ? "none" : "block"; });
 
   function titleScreen() {
-    var saved = Character.load(), box = $("choices");
+    var saved = Character.load(), box = $("choices"), adult = null;
+    try { adult = localStorage.getItem("andromeda_adult"); } catch (e) {}
+    if (window.ANDROMEDA_CLOSED && !/[?&]dev\b/.test(location.search)) {
+      box.innerHTML = '<div class="adult-gate"><b>Closed for updates</b><span>' + Creature.esc(window.ANDROMEDA_CLOSED_MESSAGE || "Come back soon.") + "</span></div>";
+      return;
+    }
+    if (adult !== "yes") {
+      box.innerHTML = '<div class="adult-gate"><b>For adults only (18+)</b><span>This world has violence, horror, and drug themes.</span>Are you 18 or older?</div>' +
+        '<button class="main" id="t-adult">I am 18 or older</button><button id="t-minor">I am under 18</button>';
+      $("t-adult").addEventListener("click", function () { try { localStorage.setItem("andromeda_adult", "yes"); } catch (e) {} if (NET && NET.setAge) { NET.setAge("yes"); } titleScreen(); });
+      $("t-minor").addEventListener("click", function () { box.innerHTML = '<div class="adult-gate"><b>Sorry, this world is for adults 18 and over.</b><span>Come back when you\'re older.</span></div>'; });
+      return;
+    }
     if (saved && saved.name) {
       box.innerHTML = '<button class="main" id="t-continue">Continue as ' + Creature.esc(saved.name) + '</button><button id="t-new">Start a new life</button>';
       $("t-continue").addEventListener("click", function () { continueLife(saved); });
@@ -4786,6 +5362,9 @@ body.coarse #chat { top: 122px; bottom: auto; width: 60vw; }
     target: function () { return questTarget(); },
     cam: cam, setView: setView, view: function () { return view; }, equip: equipSlot, down: primaryDown, up: primaryUp, projs: function () { return projs; }, setPitch: function (p) { fpPitch = p; },
     aim: function () { return { eye: lastEye, dir: lastDir }; }, stats: function () { return { world: worldMesh.n, fps: fpsNow }; }, effects: function () { return effects; }, loots: function () { return loots; } };
+  window.__world.story = function () { return { tiles: hopTiles, step: c1Step(), card: card ? card.i + 1 + '/' + card.pages.length : null, head: headTop(), HOP: HOP, SHIVER: SHIVER, TEMPLE: TEMPLE, TREEHOUSE: TREEHOUSE, quake: quakeAmp, cave: caveFront(), NEST: NEST, HUSH: HUSH, holes: NEST_HOLES, c1g: prog.c1g, packed: holesPacked(), leaves: leafGame ? leafGame.caught : null, sliven: sliven.map(function (v) { return [Math.round(v.x), Math.round(v.y), Math.round(v.z), v.dead > 0]; }), boom: !!boomSeq, VINES: VINES, PODS: PODS, METALS: METALS }; };
+  window.__world.leafPos = function () { if (!leafGame || !leafGame.leaves.length) { return null; } var l = leafGame.leaves.slice().sort(function (a, b) { return a.y - b.y; })[0]; return [l.x, l.z]; };
+  window.__world.storyFlags = function (list) { list.forEach(function (k) { prog.flags[k] = Date.now(); }); saveProg(); checkQuests(); };
   requestAnimationFrame(render);
 })();
 </script>
